@@ -16,7 +16,7 @@ export default function MapPage() {
     let map: any;
     (async () => {
       const mb = await import('mapbox-gl');
-      mb.default.accessToken = MAPBOX_TOKEN;
+      mb.default.accessToken = 'pk.eyJ1Ijoic2plZmZlcnkiLCJhIjoiY21wcTMybnJkMGl6NDJxb2kwMHdveWc2eCJ9.7-_wuAUyICHe1qg5OOqAvg';
       map = new mb.default.Map({
         container: containerRef.current!,
         style: 'mapbox://styles/mapbox/dark-v11',
