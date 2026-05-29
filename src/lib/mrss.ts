@@ -206,6 +206,16 @@ export function findEpisodeByGuid(episodes: Episode[], guid: string): Episode | 
   return episodes.find((e) => e.guid === guid);
 }
 
+/**
+ * Most recent episodes by publish date. We surface these as a "this week"
+ * reference on the site (the VOD library itself isn't hosted here).
+ */
+export function recentEpisodes(episodes: Episode[], limit = 8): Episode[] {
+  return [...episodes]
+    .sort((a, b) => b.pubDateISO.localeCompare(a.pubDateISO))
+    .slice(0, limit);
+}
+
 export function formatDuration(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = sec % 60;

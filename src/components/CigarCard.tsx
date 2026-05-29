@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { Star } from 'lucide-react';
+import { Star, Heart, MessageCircle } from 'lucide-react';
 import type { Cigar, HumidorStatus } from '@/types';
+import { getCigarSocial } from '@/lib/mock-data';
 
 interface CigarCardProps {
   cigar: Cigar;
@@ -42,6 +43,7 @@ export function CigarCard({ cigar, quantity, status, yourRating }: CigarCardProp
             <span className="ml-1 text-ember-100">· {STATUS_LABEL[status]}</span>
           )}
         </div>
+        <Social cigarId={cigar.id} />
       </div>
 
       <div className="shrink-0 text-right">
@@ -54,5 +56,20 @@ export function CigarCard({ cigar, quantity, status, yourRating }: CigarCardProp
         </div>
       </div>
     </Link>
+  );
+}
+
+function Social({ cigarId }: { cigarId: string }) {
+  const s = getCigarSocial(cigarId);
+  if (s.likes === 0 && s.comments.length === 0) return null;
+  return (
+    <div className="mt-1.5 flex items-center gap-3 text-[11px] text-smoke-400">
+      <span className="inline-flex items-center gap-1">
+        <Heart size={11} strokeWidth={1.5} /> {s.likes.toLocaleString()}
+      </span>
+      <span className="inline-flex items-center gap-1">
+        <MessageCircle size={11} strokeWidth={1.5} /> {s.comments.length}
+      </span>
+    </div>
   );
 }

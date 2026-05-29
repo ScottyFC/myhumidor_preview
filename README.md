@@ -5,21 +5,24 @@ A premium cigar rating, collection, and discovery platform. Built with Next.js
 
 ## What's wired up
 
-- **`/`** — Editorial home page with the latest episodes pulled live from your MRSS feed.
-- **`/watch`** — Episode grid grouped by series (8 series, 191 episodes from your feed).
-- **`/watch/[guid]`** — Individual episode page with HTML5/HLS player, featured-cigar
-  lower-third overlay, multilingual subtitle tracks, and a persistent sidebar.
-- **`/live`** — The public 24/7 CigarTV linear feed (Amagi HLS) that consumers can watch.
-  No viewership data is shown here — that's private to lounge owners.
-- **`/dashboard`** — Private lounge-owner view: viewership for **their own location only**
-  (viewers now, watch-hours, 7-day trend, credits today, credit balance, and a credit ledger).
-  In production it's gated by auth + RLS so an owner only sees their lounge.
-- **`/humidor`** — Personal collection view with status filters (mock data).
-- **`/cigars/[slug]`** — Cigar detail page with community averages and the three-axis rating form.
-- **`/lounges`** — The Lounge Program pitch page.
-- **`/map`** — Cigar Maps (renders Mapbox if you set `NEXT_PUBLIC_MAPBOX_TOKEN`, otherwise
-  shows a styled placeholder + lounge list).
-- **`/api/episodes`** — JSON API exposing the parsed catalog (for mobile and TV clients).
+- **`/`** — Editorial home page: hero, "This week on CigarTV" (the 6 most recent episodes from
+  your MRSS feed, each linking to the cigar featured in it), a Top Cigars preview, and the
+  Lounge Program pitch. The VOD library is intentionally not hosted here — episodes are
+  *referenced*, not played.
+- **`/top`** — Top Cigars in the US: a ranked leaderboard (mock data) with trend indicators and
+  one-tap **Add to humidor** on every row.
+- **`/humidor`** — Personal collection with status filters and like/comment counts per cigar.
+- **`/cigars/[slug]`** — Cigar profile: community rating averages, three-axis rating form,
+  **Add to humidor**, and a **likes + comments** community thread.
+- **`/map`** — Cigar Maps, now wired to your Mapbox token (dark theme, ember pins for verified
+  lounges). Falls back to a styled placeholder + list if the token is missing.
+- **`/lounges`** — The Lounge Program pitch page, with a link into the owner dashboard.
+- **`/dashboard`** — Private lounge-owner view. Shows the **live CigarTV feed** (Amagi HLS) playing
+  on that lounge's stick, plus viewership for **their own location only** (viewers now, watch-hours,
+  7-day trend, credits today, balance, ledger). In production it's gated by auth + RLS so an owner
+  only ever sees their lounge. This is the only place the live stream and viewership live.
+- **`/api/episodes`** — JSON API exposing the parsed feed (for the recent-episodes reference,
+  mobile, and TV clients).
 - **`supabase/schema.sql`** — Full Postgres schema with RLS policies, triggers that
   maintain rating aggregates, PostGIS for geo queries on lounges, and a seeded badge
   taxonomy.

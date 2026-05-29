@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BadgeCheck, Users, Clock, Zap, Wallet, Tv, Lock, ArrowRight } from 'lucide-react';
 import { getOwnerDashboard } from '@/lib/mock-data';
+import { LiveStream } from '@/components/LiveStream';
 import { cn } from '@/lib/utils';
 
 export const metadata = {
@@ -57,21 +58,17 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        {/* 7-day watch hours */}
+        {/* Live channel on this lounge's stick */}
         <section className="lg:col-span-2">
-          <div className="eyebrow mb-4">Watch-hours · last 7 days</div>
-          <div className="flex items-end justify-between gap-3 rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-5" style={{ height: 220 }}>
-            {d.watchHours7d.map((x) => (
-              <div key={x.day} className="flex flex-1 flex-col items-center justify-end gap-2">
-                <div className="text-[11px] tabular text-smoke-400">{x.hours.toFixed(1)}</div>
-                <div
-                  className="w-full rounded-t bg-ember-400/80"
-                  style={{ height: `${(x.hours / maxHours) * 130}px` }}
-                />
-                <div className="text-[11px] uppercase tracking-wider text-smoke-400">{x.day}</div>
-              </div>
-            ))}
+          <div className="eyebrow mb-4 flex items-center gap-2">
+            <Tv size={13} strokeWidth={1.5} className="text-ember-400" />
+            On your screen now
           </div>
+          <LiveStream />
+          <p className="mt-3 text-xs text-smoke-400">
+            This is the live CigarTV feed currently playing on {d.device.serial}. Viewing time on
+            this device is what accrues your credits.
+          </p>
         </section>
 
         {/* Credit ledger */}
@@ -104,6 +101,23 @@ export default function DashboardPage() {
           </Link>
         </section>
       </div>
+
+      {/* 7-day watch hours */}
+      <section className="mt-8">
+        <div className="eyebrow mb-4">Watch-hours · last 7 days</div>
+        <div className="flex items-end justify-between gap-3 rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-5" style={{ height: 220 }}>
+          {d.watchHours7d.map((x) => (
+            <div key={x.day} className="flex flex-1 flex-col items-center justify-end gap-2">
+              <div className="text-[11px] tabular text-smoke-400">{x.hours.toFixed(1)}</div>
+              <div
+                className="w-full rounded-t bg-ember-400/80"
+                style={{ height: `${(x.hours / maxHours) * 130}px` }}
+              />
+              <div className="text-[11px] uppercase tracking-wider text-smoke-400">{x.day}</div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <p className="mt-8 text-xs leading-relaxed text-smoke-400">
         Numbers shown are example data. In production this view is gated by auth — a lounge owner

@@ -3,13 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Box, Search, PlayCircle, MapPin, User, Radio } from 'lucide-react';
+import { Box, Search, MapPin, User, Flame } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
   { href: '/humidor', label: 'Humidor', icon: Box },
-  { href: '/watch', label: 'Watch', icon: PlayCircle },
-  { href: '/live', label: 'Live', icon: Radio },
+  { href: '/top', label: 'Top Cigars', icon: Flame },
   { href: '/map', label: 'Map', icon: MapPin },
   { href: '/lounges', label: 'Lounges', icon: Search },
 ];

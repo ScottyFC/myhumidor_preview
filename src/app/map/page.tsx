@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { MOCK_LOUNGES } from '@/lib/mock-data';
 import { MapPin, BadgeCheck } from 'lucide-react';
 
@@ -15,8 +16,6 @@ export default function MapPage() {
     let map: any;
     (async () => {
       const mb = await import('mapbox-gl');
-      // @ts-ignore — runtime CSS
-      await import('mapbox-gl/dist/mapbox-gl.css');
       mb.default.accessToken = MAPBOX_TOKEN;
       map = new mb.default.Map({
         container: containerRef.current!,

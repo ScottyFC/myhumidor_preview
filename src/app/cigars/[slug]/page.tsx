@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, MapPin } from 'lucide-react';
-import { findCigarBySlug, MOCK_LOUNGES } from '@/lib/mock-data';
+import { findCigarBySlug, MOCK_LOUNGES, getCigarSocial } from '@/lib/mock-data';
 import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
+import { CigarCommunity } from '@/components/CigarCommunity';
+import { AddToHumidorButton } from '@/components/AddToHumidorButton';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -15,6 +17,7 @@ export default async function CigarPage({ params }: PageProps) {
   if (!cigar) notFound();
 
   const nearby = MOCK_LOUNGES.filter((l) => l.verified).slice(0, 3);
+  const social = getCigarSocial(cigar.id);
 
   return (
     <div className="mx-auto max-w-5xl px-6 pt-6">
@@ -75,6 +78,9 @@ export default async function CigarPage({ params }: PageProps) {
                 {cigar.ratingCount.toLocaleString()} ratings
               </div>
             </div>
+            <div className="mt-5">
+              <AddToHumidorButton cigarId={cigar.id} />
+            </div>
           </div>
         </div>
       </div>
@@ -82,6 +88,11 @@ export default async function CigarPage({ params }: PageProps) {
       {/* ─── Rating Form ──────────────────────────────────────────────── */}
       <div className="mt-12">
         <RatingForm cigarId={cigar.id} />
+      </div>
+
+      {/* ─── Community: likes + comments ──────────────────────────────── */}
+      <div className="mt-8">
+        <CigarCommunity social={social} />
       </div>
 
       {/* ─── Nearby in stock ──────────────────────────────────────────── */}

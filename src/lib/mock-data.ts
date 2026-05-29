@@ -129,6 +129,177 @@ export const MOCK_CIGARS: Cigar[] = [
     appearanceAvg: 4.4,
     overallAvg: 4.4,
   },
+  {
+    id: 'cig_padron_family_reserve_50',
+    slug: 'padron-family-reserve-no-50',
+    brand: 'Padrón',
+    line: 'Family Reserve',
+    vitola: 'No. 50',
+    wrapper: 'Maduro',
+    binder: 'Nicaragua',
+    filler: 'Nicaragua',
+    lengthIn: 5.5,
+    ringGauge: 54,
+    countryOfOrigin: 'Nicaragua',
+    msrp: 34,
+    ratingCount: 1640,
+    flavorAvg: 4.9,
+    burnAvg: 4.8,
+    appearanceAvg: 4.8,
+    overallAvg: 4.9,
+  },
+  {
+    id: 'cig_aging_room_quattro',
+    slug: 'aging-room-quattro-nicaragua-maestro',
+    brand: 'Aging Room',
+    line: 'Quattro Nicaragua',
+    vitola: 'Maestro',
+    wrapper: 'Habano',
+    binder: 'Nicaragua',
+    filler: 'Nicaragua',
+    lengthIn: 5.5,
+    ringGauge: 54,
+    countryOfOrigin: 'Dominican Republic',
+    msrp: 11,
+    ratingCount: 980,
+    flavorAvg: 4.6,
+    burnAvg: 4.5,
+    appearanceAvg: 4.5,
+    overallAvg: 4.6,
+  },
+  {
+    id: 'cig_ep_carrillo_pledge',
+    slug: 'ep-carrillo-pledge-prequel',
+    brand: 'E.P. Carrillo',
+    line: 'Pledge',
+    vitola: 'Prequel',
+    wrapper: 'Connecticut Habano',
+    binder: 'Nicaragua',
+    filler: 'Nicaragua',
+    lengthIn: 6,
+    ringGauge: 50,
+    countryOfOrigin: 'Dominican Republic',
+    msrp: 13,
+    ratingCount: 1210,
+    flavorAvg: 4.7,
+    burnAvg: 4.6,
+    appearanceAvg: 4.6,
+    overallAvg: 4.7,
+  },
+  {
+    id: 'cig_davidoff_late_hour',
+    slug: 'davidoff-winston-churchill-the-late-hour-robusto',
+    brand: 'Davidoff',
+    line: 'Winston Churchill The Late Hour',
+    vitola: 'Robusto',
+    wrapper: 'Ecuador Habano',
+    binder: 'Mexico',
+    filler: 'Dominican, Nicaragua',
+    lengthIn: 5,
+    ringGauge: 48,
+    countryOfOrigin: 'Dominican Republic',
+    msrp: 21,
+    ratingCount: 870,
+    flavorAvg: 4.6,
+    burnAvg: 4.7,
+    appearanceAvg: 4.7,
+    overallAvg: 4.6,
+  },
+  {
+    id: 'cig_lfd_andalusian_bull',
+    slug: 'la-flor-dominicana-andalusian-bull',
+    brand: 'La Flor Dominicana',
+    line: 'Andalusian Bull',
+    vitola: 'Figurado',
+    wrapper: 'Ecuador Habano',
+    binder: 'Dominican',
+    filler: 'Dominican',
+    lengthIn: 6.5,
+    ringGauge: 58,
+    countryOfOrigin: 'Dominican Republic',
+    msrp: 16,
+    ratingCount: 1520,
+    flavorAvg: 4.8,
+    burnAvg: 4.6,
+    appearanceAvg: 4.7,
+    overallAvg: 4.7,
+  },
+  {
+    id: 'cig_tatuaje_brown_label',
+    slug: 'tatuaje-brown-label-noella',
+    brand: 'Tatuaje',
+    line: 'Brown Label',
+    vitola: 'Noella',
+    wrapper: 'Ecuador Habano',
+    binder: 'Nicaragua',
+    filler: 'Nicaragua',
+    lengthIn: 5.13,
+    ringGauge: 42,
+    countryOfOrigin: 'Nicaragua',
+    msrp: 9,
+    ratingCount: 1340,
+    flavorAvg: 4.5,
+    burnAvg: 4.5,
+    appearanceAvg: 4.4,
+    overallAvg: 4.5,
+  },
+  {
+    id: 'cig_perdomo_20th',
+    slug: 'perdomo-20th-anniversary-maduro-robusto',
+    brand: 'Perdomo',
+    line: '20th Anniversary Maduro',
+    vitola: 'Robusto',
+    wrapper: 'Nicaragua Maduro',
+    binder: 'Nicaragua',
+    filler: 'Nicaragua',
+    lengthIn: 5,
+    ringGauge: 56,
+    countryOfOrigin: 'Nicaragua',
+    msrp: 10,
+    ratingCount: 1990,
+    flavorAvg: 4.5,
+    burnAvg: 4.6,
+    appearanceAvg: 4.5,
+    overallAvg: 4.5,
+  },
+  {
+    id: 'cig_ashton_vsg',
+    slug: 'ashton-vsg-robusto',
+    brand: 'Ashton',
+    line: 'Virgin Sun Grown',
+    vitola: 'Robusto',
+    wrapper: 'Ecuador Sun Grown',
+    binder: 'Dominican',
+    filler: 'Dominican',
+    lengthIn: 5.5,
+    ringGauge: 50,
+    countryOfOrigin: 'Dominican Republic',
+    msrp: 14,
+    ratingCount: 1760,
+    flavorAvg: 4.6,
+    burnAvg: 4.5,
+    appearanceAvg: 4.6,
+    overallAvg: 4.6,
+  },
+  {
+    id: 'cig_rocky_patel_decade',
+    slug: 'rocky-patel-decade-toro',
+    brand: 'Rocky Patel',
+    line: 'Decade',
+    vitola: 'Toro',
+    wrapper: 'Ecuador Sumatra',
+    binder: 'Nicaragua',
+    filler: 'Nicaragua',
+    lengthIn: 6.5,
+    ringGauge: 52,
+    countryOfOrigin: 'Honduras',
+    msrp: 12,
+    ratingCount: 1430,
+    flavorAvg: 4.4,
+    burnAvg: 4.4,
+    appearanceAvg: 4.5,
+    overallAvg: 4.4,
+  },
 ];
 
 export const MOCK_HUMIDOR: HumidorEntry[] = [
@@ -391,4 +562,83 @@ export function getOwnerDashboard(): DashboardData {
       { id: 'cl_5', delta: 2000, reason: 'Padrón Month bonus multiplier', recordedAt: 'Thu' },
     ],
   };
+}
+
+// ─── TOP CIGARS IN THE US (ranked leaderboard, mock) ──────────────────────────
+export type Trend = 'up' | 'down' | 'same' | 'new';
+
+export interface RankedCigar {
+  rank: number;
+  trend: Trend;
+  cigar: Cigar;
+}
+
+// Hand-tuned trend movement for the leaderboard. In production this is derived
+// from week-over-week change in rating volume + average.
+const TREND_BY_ID: Record<string, Trend> = {
+  cig_padron_family_reserve_50: 'same',
+  cig_fuente_opus_x: 'up',
+  cig_padron_1964_exclusivo: 'down',
+  cig_lfd_andalusian_bull: 'up',
+  cig_ep_carrillo_pledge: 'new',
+  cig_my_father_le_bijou: 'same',
+  cig_ashton_vsg: 'up',
+  cig_aging_room_quattro: 'new',
+  cig_davidoff_late_hour: 'down',
+  cig_drew_estate_liga_9: 'same',
+  cig_tatuaje_brown_label: 'up',
+  cig_perdomo_20th: 'down',
+  cig_west_tampa_red: 'new',
+  cig_rocky_patel_decade: 'same',
+  cig_oliva_serie_v: 'down',
+};
+
+export function getTopCigars(limit = 15): RankedCigar[] {
+  return [...MOCK_CIGARS]
+    .sort((a, b) => b.overallAvg - a.overallAvg || b.ratingCount - a.ratingCount)
+    .slice(0, limit)
+    .map((cigar, i) => ({
+      rank: i + 1,
+      trend: TREND_BY_ID[cigar.id] ?? 'same',
+      cigar,
+    }));
+}
+
+// ─── COMMUNITY: LIKES + COMMENTS ON CIGARS ────────────────────────────────────
+export interface CigarComment {
+  id: string;
+  author: string;
+  handle: string;
+  body: string;
+  createdAt: string;
+  likes: number;
+}
+
+export interface CigarSocial {
+  likes: number;
+  comments: CigarComment[];
+}
+
+// Seeded community activity per cigar. In production these come from `likes`
+// and `comments` tables keyed on cigar_id, written by authenticated users.
+const SOCIAL_BY_ID: Record<string, CigarSocial> = {
+  cig_padron_1964_exclusivo: {
+    likes: 312,
+    comments: [
+      { id: 'c1', author: 'Marco D.', handle: 'marco.ybor', body: 'Aged two of these 18 months. The cocoa really comes forward. Worth the wait.', createdAt: '2d ago', likes: 14 },
+      { id: 'c2', author: 'Renee P.', handle: 'reneesmokes', body: 'My benchmark maduro. Burn is flawless every single time.', createdAt: '5d ago', likes: 9 },
+      { id: 'c3', author: 'Sean', handle: 'sean.tampa', body: 'Pairs unreal with a cup of Cuban coffee. Tried it after the Padrón episode dropped.', createdAt: '1w ago', likes: 21 },
+    ],
+  },
+  cig_fuente_opus_x: {
+    likes: 489,
+    comments: [
+      { id: 'c4', author: 'Tomás G.', handle: 'tomasg', body: 'The unicorn. Finally found a box at Corona Cigar. Every bit as good as the hype.', createdAt: '1d ago', likes: 33 },
+      { id: 'c5', author: 'Will H.', handle: 'willhavana', body: 'Spicy on the first third then settles into cedar and pepper. Top 3 all time for me.', createdAt: '4d ago', likes: 12 },
+    ],
+  },
+};
+
+export function getCigarSocial(cigarId: string): CigarSocial {
+  return SOCIAL_BY_ID[cigarId] ?? { likes: 0, comments: [] };
 }
