@@ -61,6 +61,10 @@ export function findCatalogCigar(uuid: string): CatalogCigar | undefined {
   return allCigars().find((c) => c.uuid === uuid);
 }
 
+export function findCatalogCigarBySlug(slug: string): CatalogCigar | undefined {
+  return allCigars().find((c) => c.slug === slug);
+}
+
 export function searchStores(query: string, limit = 25, offset = 0): SearchResult<CatalogStore> {
   const q = query.trim().toLowerCase();
   const source = allStores();
