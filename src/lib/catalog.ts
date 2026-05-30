@@ -82,3 +82,7 @@ export function searchStores(query: string, limit = 25, offset = 0): SearchResul
 export function catalogStats() {
   return { cigars: allCigars().length, stores: allStores().length };
 }
+
+export function findCatalogStoreBySlug(slug: string): CatalogStore | undefined {
+  return allStores().find((s) => s.slug === slug);
+}

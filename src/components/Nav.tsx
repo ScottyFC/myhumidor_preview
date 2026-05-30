@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { Box, Search, MapPin, User, Flame, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 
 const TABS = [
   { href: '/humidor', label: 'Humidor', icon: Box },
@@ -17,14 +17,6 @@ const TABS = [
 
 export function Nav() {
   const pathname = usePathname();
-  const router = useRouter();
-  const [q, setQ] = useState('');
-
-  function submitSearch(e: React.FormEvent) {
-    e.preventDefault();
-    const query = q.trim();
-    router.push(query ? `/search?q=${encodeURIComponent(query)}` : '/search');
-  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-ember-400/15 bg-char/85 backdrop-blur-md">
@@ -43,21 +35,8 @@ export function Nav() {
           </span>
         </Link>
 
-        {/* Desktop search */}
-        <form onSubmit={submitSearch} className="relative hidden flex-1 md:block">
-          <Search
-            size={15}
-            strokeWidth={1.5}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-smoke-400"
-          />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search 23,500+ cigars and shops…"
-            aria-label="Search cigars and shops"
-            className="w-full rounded-md border-[0.5px] border-ember-400/20 bg-char/60 py-2 pl-9 pr-3 text-sm focus:border-ember-400 focus:outline-none"
-          />
-        </form>
+        {/* Desktop search with autocomplete */}
+        <SearchAutocomplete className="hidden flex-1 md:block" />
 
         <nav className="hidden items-center gap-1 md:flex">
           {TABS.filter((t) => t.href !== '/search').map((tab) => {

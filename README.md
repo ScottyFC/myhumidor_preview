@@ -10,7 +10,11 @@ A premium cigar rating, collection, and discovery platform. Built with Next.js
   Lounge Program pitch. The VOD library is intentionally not hosted here — episodes are
   *referenced*, not played.
 - **`/search`** — Front-end search over the full database: 23.5k cigars and 713 shops, with tabs,
-  live results, add-to-humidor on each cigar, and a search field in the top nav on every page.
+  live results, add-to-humidor on each cigar, and a **typeahead autocomplete** in the top-nav search
+  field (keyboard-navigable, jumps straight to a cigar or lounge profile).
+- **`/lounges/[slug]`** — Every lounge has its own profile (resolves both demo lounges and the 713
+  imported stores): address, contact, hours, menu status, and a **Claim this lounge** flow for
+  owners — submit verification, then manage your menu from the dashboard.
 - **`/top`** — Top Cigars in the US: a ranked leaderboard (mock data) with trend indicators and
   one-tap **Add to humidor** on every row.
 - **`/humidor`** — Personal collection with status filters and like/comment counts per cigar.

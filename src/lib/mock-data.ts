@@ -434,6 +434,31 @@ export function findCigarBySlug(slug: string): Cigar | undefined {
   return MOCK_CIGARS.find((c) => c.slug === slug);
 }
 
+/**
+ * Map a demo Lounge to the CatalogStore shape so lounge profiles and the claim
+ * flow can treat demo lounges and the 713 imported stores identically.
+ */
+export function mockLoungeAsStore(slug: string) {
+  const l = MOCK_LOUNGES.find((x) => x.slug === slug);
+  if (!l) return undefined;
+  return {
+    id: l.id,
+    slug: l.slug,
+    name: l.name,
+    address: l.address,
+    city: l.city,
+    state: l.state,
+    lat: l.lat,
+    lng: l.lng,
+    verified: l.verified,
+    phone: l.phone ?? '',
+    email: '',
+    website: l.website ?? '',
+    hours: l.hours ?? '',
+    inventoryCount: l.inventoryCount,
+  };
+}
+
 export function findFeaturedForEpisode(guid: string): { cigar: Cigar; nearby: Lounge[] } | null {
   const feat = MOCK_FEATURED.find((f) => f.episodeGuid === guid);
   if (!feat) {

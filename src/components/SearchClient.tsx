@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Loader2, Star, MapPin, Phone, Globe, BadgeCheck } from 'lucide-react';
+import { Search, Loader2, Star, MapPin, Phone, BadgeCheck } from 'lucide-react';
 import type { CatalogCigar, CatalogStore } from '@/types';
 import { cn, formatUSD } from '@/lib/utils';
 import { AddToHumidorButton } from '@/components/AddToHumidorButton';
@@ -200,7 +200,12 @@ function LoungeResults({
         {stores.map((s) => (
           <div key={s.id} className="rounded-lg border-[0.5px] border-ember-400/15 bg-char/40 p-4">
             <div className="flex items-start justify-between gap-2">
-              <div className="font-display text-base font-medium leading-tight">{s.name}</div>
+              <Link
+                href={`/lounges/${s.slug}`}
+                className="font-display text-base font-medium leading-tight hover:text-ember-100"
+              >
+                {s.name}
+              </Link>
               {s.verified && (
                 <BadgeCheck size={15} strokeWidth={1.5} className="shrink-0 text-ember-400" />
               )}
@@ -209,22 +214,15 @@ function LoungeResults({
               <MapPin size={11} strokeWidth={1.5} />
               {[s.address, s.city, s.state].filter(Boolean).join(', ')}
             </div>
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-smoke-200">
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-smoke-200">
               {s.phone && (
                 <span className="inline-flex items-center gap-1">
                   <Phone size={11} strokeWidth={1.5} /> {s.phone}
                 </span>
               )}
-              {s.website && (
-                <a
-                  href={s.website.startsWith('http') ? s.website : `https://${s.website}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-ember-100 hover:underline"
-                >
-                  <Globe size={11} strokeWidth={1.5} /> Website
-                </a>
-              )}
+              <Link href={`/lounges/${s.slug}`} className="text-ember-100 hover:underline">
+                View lounge →
+              </Link>
             </div>
           </div>
         ))}
