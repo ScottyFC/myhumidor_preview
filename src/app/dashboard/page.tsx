@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BadgeCheck, Users, Clock, Zap, Wallet, Tv, Lock, ArrowRight } from 'lucide-react';
+import { BadgeCheck, Users, Clock, Zap, Wallet, Tv, Lock, ArrowRight, Package } from 'lucide-react';
 import { getOwnerDashboard } from '@/lib/mock-data';
 import { LiveStream } from '@/components/LiveStream';
 import { cn } from '@/lib/utils';
@@ -48,6 +48,13 @@ export default function DashboardPage() {
           </div>
         </div>
       </header>
+
+      {/* Quick actions */}
+      <div className="mb-6">
+        <Link href="/dashboard/inventory" className="btn-primary">
+          <Package size={15} strokeWidth={1.5} /> Manage inventory
+        </Link>
+      </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

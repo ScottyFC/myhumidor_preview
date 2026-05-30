@@ -58,6 +58,24 @@ create table if not exists public.cigars (
 create index if not exists cigars_brand_idx on public.cigars(brand_id);
 create index if not exists cigars_overall_idx on public.cigars(overall_avg desc);
 
+-- Flat catalog imported from Cigars.csv (23.5k rows). This is the searchable
+-- master list the lounge inventory picker reads from. Kept separate from the
+-- normalized `cigars` table above (which carries community ratings); link the
+-- two by slug/uuid as you enrich the catalog over time.
+create table if not exists public.catalog_cigars (
+  id uuid primary key,
+  brand text not null,
+  name text not null,
+  country text,
+  price numeric(8,2),
+  size text,
+  slug text not null
+);
+create index if not exists catalog_cigars_brand_idx on public.catalog_cigars(brand);
+create index if not exists catalog_cigars_name_idx on public.catalog_cigars using gin (to_tsvector('english', name));
+alter table public.catalog_cigars enable row level security;
+create policy "catalog is public" on public.catalog_cigars for select using (true);
+
 -- ════════════════════════════════════════════════════════════════════════════
 -- RATINGS
 -- ════════════════════════════════════════════════════════════════════════════
@@ -155,6 +173,7 @@ create table if not exists public.lounges (
   owner_id uuid references public.profiles(id) on delete set null,
   phone text,
   website text,
+  email text,
   hours text,
   created_at timestamptz not null default now()
 );

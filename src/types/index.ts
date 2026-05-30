@@ -1,3 +1,40 @@
+// ─── FULL CATALOG (loaded from Cigars.csv / stores.csv datasets) ─────────────
+export interface CatalogCigar {
+  uuid: string;
+  brand: string;
+  name: string;
+  country: string;
+  price: number | null;
+  size: string;
+  slug: string;
+}
+
+export interface CatalogStore {
+  id: string;
+  slug: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  lat: number | null;
+  lng: number | null;
+  verified: boolean;
+  phone: string;
+  email: string;
+  website: string;
+  hours: string;
+}
+
+// ─── INVENTORY (lounge dashboard) ─────────────────────────────────────────────
+export interface InventoryItem {
+  cigarId: string;
+  brand: string;
+  name: string;
+  size: string;
+  price: number; // lounge's set price
+  quantity: number;
+}
+
 // ─── EPISODE (parsed from CigarTV MRSS feed) ─────────────────────────────────
 export interface Episode {
   guid: string;

@@ -1,26 +1,17 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { MOCK_LOUNGES } from '@/lib/mock-data';
 import { MapPin, BadgeCheck } from 'lucide-react';
 
-const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2plZmZlcnkiLCJhIjoiY21wcTMybnJkMGl6NDJxb2kwMHdveWc2eCJ9.7-_wuAUyICHe1qg5OOqAvg';
-const MAPBOX_CSS_ID = 'mapbox-gl-css';
-const MAPBOX_CSS_HREF = 'https://api.mapbox.com/mapbox-gl-js/v3.6.2/mapbox-gl.css';
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 export default function MapPage() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!MAPBOX_TOKEN || !containerRef.current) return;
-
-    if (!document.getElementById(MAPBOX_CSS_ID)) {
-      const link = document.createElement('link');
-      link.id = MAPBOX_CSS_ID;
-      link.rel = 'stylesheet';
-      link.href = MAPBOX_CSS_HREF;
-      document.head.appendChild(link);
-    }
 
     let map: any;
     (async () => {

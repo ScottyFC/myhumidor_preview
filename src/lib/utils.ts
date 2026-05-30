@@ -22,3 +22,7 @@ export function pluralize(n: number, singular: string, plural?: string): string 
 export function computeOverall(flavor: number, burn: number, appearance: number): number {
   return Math.round((flavor * 0.5 + burn * 0.3 + appearance * 0.2) * 10) / 10;
 }
+
+export function formatUSD(n: number): string {
+  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
