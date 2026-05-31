@@ -14,14 +14,51 @@ create extension if not exists "postgis"; -- for geo queries on lounges
 -- USERS
 -- ════════════════════════════════════════════════════════════════════════════
 -- Supabase auth.users is the source of truth. We mirror profile data here.
+--
+-- account_type splits consumers from lounges. public_id is a TYPED identifier
+-- derived from the auth UUID whose first 4 chars encode the type:
+--   USER-<32 hex>  → consumer
+--   LNGE-<32 hex>  → lounge
+-- This is what the UI shows and what provisions the TV stick. The raw UUID (id)
+-- stays the join key everywhere.
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
+  public_id text unique not null,
+  account_type text not null default 'consumer' check (account_type in ('consumer','lounge')),
   handle text unique not null,
   display_name text not null,
   avatar_url text,
   role text not null default 'consumer' check (role in ('consumer','lounge_owner','admin')),
   created_at timestamptz not null default now()
 );
+create index if not exists profiles_public_id_idx on public.profiles(public_id);
+
+-- Auto-create a profile when a user signs up (manual or OAuth). The account type
+-- is passed in auth metadata at sign-up (options.data.account_type); the typed
+-- public_id is derived from the new auth UUID.
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer as $$
+declare
+  acct text := coalesce(new.raw_user_meta_data->>'account_type', 'consumer');
+  tag  text := case when acct = 'lounge' then 'LNGE' else 'USER' end;
+begin
+  insert into public.profiles (id, public_id, account_type, role, handle, display_name)
+  values (
+    new.id,
+    tag || '-' || replace(new.id::text, '-', ''),
+    acct,
+    case when acct = 'lounge' then 'lounge_owner' else 'consumer' end,
+    coalesce(new.raw_user_meta_data->>'handle', split_part(new.email, '@', 1)),
+    coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1))
+  );
+  return new;
+end $$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- CIGAR CATALOG
@@ -73,8 +110,65 @@ create table if not exists public.catalog_cigars (
 );
 create index if not exists catalog_cigars_brand_idx on public.catalog_cigars(brand);
 create index if not exists catalog_cigars_name_idx on public.catalog_cigars using gin (to_tsvector('english', name));
+-- Trigram indexes for fuzzy / typo-tolerant search and duplicate detection
+create extension if not exists pg_trgm;
+create index if not exists catalog_cigars_name_trgm on public.catalog_cigars using gin (name gin_trgm_ops);
+create index if not exists catalog_cigars_brand_trgm on public.catalog_cigars using gin (brand gin_trgm_ops);
 alter table public.catalog_cigars enable row level security;
 create policy "catalog is public" on public.catalog_cigars for select using (true);
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- USER-SUBMITTED CIGARS (moderation queue)
+-- ════════════════════════════════════════════════════════════════════════════
+-- Users propose cigars here; they never write to catalog_cigars directly. An
+-- admin (or automated check) approves a submission, which copies it into the
+-- catalog and credits the submitter. Photos live in Supabase Storage — only the
+-- URL is stored here.
+create table if not exists public.cigar_submissions (
+  id uuid primary key default uuid_generate_v4(),
+  submitted_by uuid references public.profiles(id) on delete set null,
+  brand text not null,
+  name text not null,
+  country text,
+  size text,
+  price numeric(8,2),
+  photo_url text,
+  notes text,
+  status text not null default 'pending' check (status in ('pending','approved','rejected')),
+  reviewed_by uuid references public.profiles(id) on delete set null,
+  reviewed_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists submissions_status_idx on public.cigar_submissions(status);
+create index if not exists submissions_user_idx on public.cigar_submissions(submitted_by);
+-- catch likely duplicates against existing submissions
+create index if not exists submissions_name_trgm on public.cigar_submissions using gin (name gin_trgm_ops);
+
+alter table public.cigar_submissions enable row level security;
+
+-- Anyone signed in can submit
+create policy "users submit cigars" on public.cigar_submissions
+  for insert with check (auth.uid() = submitted_by);
+-- Submitters see their own submissions and their status
+create policy "users see own submissions" on public.cigar_submissions
+  for select using (auth.uid() = submitted_by);
+-- Admins review everything
+create policy "admins review submissions" on public.cigar_submissions
+  for all using (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+  );
+
+-- Helper: fuzzy duplicate check before accepting a submission.
+-- SELECT * FROM find_similar_cigars('padron 1964', 0.4);
+create or replace function public.find_similar_cigars(q text, threshold real default 0.3)
+returns table (id uuid, brand text, name text, slug text, similarity real)
+language sql stable as $$
+  select c.id, c.brand, c.name, c.slug, similarity(c.name, q) as similarity
+  from public.catalog_cigars c
+  where c.name % q
+  order by similarity desc
+  limit 8
+$$;
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- RATINGS
@@ -229,22 +323,32 @@ create index if not exists featured_cigar_idx on public.featured_cigars(cigar_id
 -- ════════════════════════════════════════════════════════════════════════════
 -- TV DEVICES & CREDIT ECONOMY
 -- ════════════════════════════════════════════════════════════════════════════
+-- Each lounge's TV stick is provisioned with the lounge's typed public_id
+-- (LNGE-…). The stick reports watch time against lounge_public_id; the ingest
+-- endpoint validates the LNGE- prefix before accepting an event (cheap reject of
+-- bad/consumer IDs without a DB hit), resolves it to the lounge, and a scheduled
+-- job converts accepted watch time into credits in credit_ledger.
 create table if not exists public.tv_devices (
   id uuid primary key default uuid_generate_v4(),
   lounge_id uuid not null references public.lounges(id) on delete cascade,
+  lounge_public_id text not null,            -- LNGE-… the stick is keyed to
   serial text not null unique,
+  paired_at timestamptz,
   last_seen timestamptz,
   created_at timestamptz not null default now()
 );
+create index if not exists tv_devices_public_idx on public.tv_devices(lounge_public_id);
 
 create table if not exists public.viewership_events (
   id uuid primary key default uuid_generate_v4(),
   device_id uuid not null references public.tv_devices(id) on delete cascade,
+  lounge_public_id text not null,            -- denormalized for fast rollups
   episode_guid text references public.episodes(guid) on delete set null,
   duration_sec int not null,
   recorded_at timestamptz not null default now()
 );
 create index if not exists viewership_device_idx on public.viewership_events(device_id, recorded_at desc);
+create index if not exists viewership_lounge_idx on public.viewership_events(lounge_public_id, recorded_at desc);
 
 create table if not exists public.credit_ledger (
   id uuid primary key default uuid_generate_v4(),

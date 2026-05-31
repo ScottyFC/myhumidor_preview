@@ -6,7 +6,7 @@ import { findCatalogCigarBySlug } from '@/lib/catalog';
 import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
 import { CigarCommunity } from '@/components/CigarCommunity';
-import { AddToHumidorButton } from '@/components/AddToHumidorButton';
+import { AddToCollection } from '@/components/AddToCollection';
 import { formatUSD } from '@/lib/utils';
 
 interface PageProps {
@@ -138,7 +138,7 @@ export default async function CigarPage({ params }: PageProps) {
                 </div>
               </div>
               <div className="mt-5">
-                <AddToHumidorButton cigarId={view.id} />
+                <AddToCollection variant="full" seed={{ cigarId: view.id, slug, brand: view.brand, name: view.headline, size: view.vitola }} />
               </div>
             </div>
           ) : (
@@ -148,7 +148,7 @@ export default async function CigarPage({ params }: PageProps) {
                 This cigar is in the catalog but no one has rated it yet. Be the first.
               </p>
               <div className="mt-4">
-                <AddToHumidorButton cigarId={view.id} />
+                <AddToCollection variant="full" seed={{ cigarId: view.id, slug, brand: view.brand, name: view.headline, size: view.vitola }} />
               </div>
             </div>
           )}

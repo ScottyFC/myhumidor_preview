@@ -2,10 +2,12 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Box, Search, MapPin, User, Flame, Store } from 'lucide-react';
+import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
+import { getSession, onAuthChange, signOut, type Session } from '@/lib/auth';
 
 const TABS = [
   { href: '/humidor', label: 'Humidor', icon: Box },
@@ -17,6 +19,12 @@ const TABS = [
 
 export function Nav() {
   const pathname = usePathname();
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    setSession(getSession());
+    return onAuthChange(() => setSession(getSession()));
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 border-b border-ember-400/15 bg-char/85 backdrop-blur-md">
@@ -65,10 +73,38 @@ export function Nav() {
           <Link href="/search" aria-label="Search" className="btn-ghost p-2 md:hidden">
             <Search size={16} strokeWidth={1.5} />
           </Link>
-          <button className="btn-ghost text-xs">
-            <User size={14} strokeWidth={1.5} />
-            <span className="hidden sm:inline">Sign in</span>
-          </button>
+
+          {session ? (
+            <>
+              {session.type === 'lounge' && (
+                <Link href="/dashboard" className="btn-ghost text-xs">
+                  <LayoutDashboard size={14} strokeWidth={1.5} />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+              )}
+              <div className="flex items-center gap-2 rounded-md border-[0.5px] border-ember-400/20 bg-char/60 py-1 pl-2.5 pr-1">
+                <span className="hidden text-xs sm:inline">
+                  <span className="text-paper">{session.displayName}</span>
+                  <span className="ml-1.5 rounded bg-ember-400/15 px-1 py-0.5 text-[9px] uppercase tracking-wider text-ember-100">
+                    {session.type === 'lounge' ? 'Lounge' : 'Member'}
+                  </span>
+                </span>
+                <button
+                  onClick={signOut}
+                  aria-label="Sign out"
+                  title="Sign out"
+                  className="flex h-6 w-6 items-center justify-center rounded text-smoke-400 hover:text-paper"
+                >
+                  <LogOut size={14} strokeWidth={1.5} />
+                </button>
+              </div>
+            </>
+          ) : (
+            <Link href="/register" className="btn-ghost text-xs">
+              <User size={14} strokeWidth={1.5} />
+              <span className="hidden sm:inline">Sign in</span>
+            </Link>
+          )}
         </div>
       </div>
 

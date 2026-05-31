@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Search, Loader2, Star, MapPin, Phone, BadgeCheck } from 'lucide-react';
+import { Search, Loader2, Star, MapPin, Phone, BadgeCheck, Plus } from 'lucide-react';
 import type { CatalogCigar, CatalogStore } from '@/types';
 import { cn, formatUSD } from '@/lib/utils';
-import { AddToHumidorButton } from '@/components/AddToHumidorButton';
+import { AddToCollection } from '@/components/AddToCollection';
 
 type Tab = 'cigars' | 'lounges';
 
@@ -105,7 +105,7 @@ export function SearchClient() {
         {!showResults ? (
           <Suggestions onPick={setQ} />
         ) : tab === 'cigars' ? (
-          <CigarResults cigars={cigars} total={cigarTotal} loading={loading} />
+          <CigarResults cigars={cigars} total={cigarTotal} loading={loading} query={q.trim()} />
         ) : (
           <LoungeResults stores={stores} total={storeTotal} loading={loading} />
         )}
@@ -142,13 +142,20 @@ function CigarResults({
   cigars,
   total,
   loading,
+  query,
 }: {
   cigars: CatalogCigar[];
   total: number;
   loading: boolean;
+  query: string;
 }) {
   if (cigars.length === 0) {
-    return <Empty loading={loading} label="No cigars match that search." />;
+    return (
+      <div>
+        <Empty loading={loading} label="No cigars match that search." />
+        {!loading && <SubmitCta query={query} />}
+      </div>
+    );
   }
   return (
     <>
@@ -169,7 +176,9 @@ function CigarResults({
                 )}
               </div>
             </Link>
-            <AddToHumidorButton cigarId={c.uuid} size="sm" className="shrink-0" />
+            <AddToCollection
+              seed={{ cigarId: c.uuid, slug: c.slug, brand: c.brand, name: c.name, size: c.size }}
+            />
           </div>
         ))}
       </div>
@@ -178,7 +187,22 @@ function CigarResults({
           Showing {cigars.length} of {fmt(total)} matches — refine your search to narrow it down.
         </p>
       )}
+      <SubmitCta query={query} />
     </>
+  );
+}
+
+function SubmitCta({ query }: { query: string }) {
+  const href = query ? `/submit?name=${encodeURIComponent(query)}` : '/submit';
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border-[0.5px] border-dashed border-ember-400/25 bg-char/40 px-5 py-4">
+      <div className="text-sm text-smoke-200">
+        Don&apos;t see it? Add a cigar that isn&apos;t in the catalog.
+      </div>
+      <Link href={href} className="btn-primary shrink-0 text-sm">
+        <Plus size={14} strokeWidth={2} /> Submit a cigar
+      </Link>
+    </div>
   );
 }
 

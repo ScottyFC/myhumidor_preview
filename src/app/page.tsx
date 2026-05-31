@@ -3,7 +3,7 @@ import { ArrowRight, MapPin, Star, Tv, Flame } from 'lucide-react';
 import { fetchEpisodes, recentEpisodes } from '@/lib/mrss';
 import { getTopCigars, findFeaturedForEpisode, MOCK_LOUNGES } from '@/lib/mock-data';
 import { RecentEpisode } from '@/components/RecentEpisode';
-import { AddToHumidorButton } from '@/components/AddToHumidorButton';
+import { AddToCollection } from '@/components/AddToCollection';
 
 export const revalidate = 3600;
 
@@ -93,7 +93,7 @@ export default async function HomePage() {
                   <span className="tabular">· {cigar.ratingCount.toLocaleString()}</span>
                 </div>
               </Link>
-              <AddToHumidorButton cigarId={cigar.id} size="sm" className="shrink-0" />
+              <AddToCollection seed={{ cigarId: cigar.id, slug: cigar.slug, brand: cigar.brand, name: cigar.line, size: cigar.vitola }} />
             </div>
           ))}
         </div>

@@ -9,14 +9,22 @@ A premium cigar rating, collection, and discovery platform. Built with Next.js
   your MRSS feed, each linking to the cigar featured in it), a Top Cigars preview, and the
   Lounge Program pitch. The VOD library is intentionally not hosted here — episodes are
   *referenced*, not played.
+- **`/register`** — Sign up / sign in, split between **consumers and lounges**, with Google, Apple,
+  and email options. Issues a typed account ID (`USER-…` / `LNGE-…`); the nav reflects the signed-in
+  account and shows lounge owners a Dashboard link.
 - **`/search`** — Front-end search over the full database: 23.5k cigars and 713 shops, with tabs,
-  live results, add-to-humidor on each cigar, and a **typeahead autocomplete** in the top-nav search
-  field (keyboard-navigable, jumps straight to a cigar or lounge profile).
+  live results, typeahead autocomplete in the nav, **add to humidor or wishlist** on each cigar, and
+  a **Submit a cigar** button when something isn't listed.
+- **`/submit`** — Submit-a-cigar form with **photo upload** (preview) and **live duplicate detection**
+  against the catalog. Submissions persist locally for the demo; in production they become rows in
+  `cigar_submissions` (status pending → approved) with the photo in Supabase Storage.
 - **`/lounges/[slug]`** — Every lounge has its own profile (resolves both demo lounges and the 713
   imported stores): address, contact, hours, menu status, and a **Claim this lounge** flow for
   owners — submit verification, then manage your menu from the dashboard.
+- **`/humidor`** — Personal collection backed by the user's saved cigars: **Humidor and Wishlist**
+  filters, move wishlist → humidor, and remove. Persists in the browser for the demo.
 - **`/top`** — Top Cigars in the US: a ranked leaderboard (mock data) with trend indicators and
-  one-tap **Add to humidor** on every row.
+  add-to-humidor/wishlist on every row.
 - **`/humidor`** — Personal collection with status filters and like/comment counts per cigar.
 - **`/cigars/[slug]`** — Cigar profile: community rating averages, three-axis rating form,
   **Add to humidor**, and a **likes + comments** community thread.

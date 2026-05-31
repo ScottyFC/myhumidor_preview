@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Star, TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react';
 import { getTopCigars, type Trend } from '@/lib/mock-data';
-import { AddToHumidorButton } from '@/components/AddToHumidorButton';
+import { AddToCollection } from '@/components/AddToCollection';
 
 export const metadata = {
   title: 'Top Cigars in the US · MyHumidor by CigarTV',
@@ -50,7 +50,7 @@ export default function TopCigarsPage() {
             </Link>
 
             {/* Action */}
-            <AddToHumidorButton cigarId={cigar.id} size="sm" className="shrink-0" />
+            <AddToCollection seed={{ cigarId: cigar.id, slug: cigar.slug, brand: cigar.brand, name: cigar.line, size: cigar.vitola }} />
           </div>
         ))}
       </div>
