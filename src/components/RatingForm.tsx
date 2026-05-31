@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Star, Check } from 'lucide-react';
 import { computeOverall, cn } from '@/lib/utils';
+import { getRating, setRating } from '@/lib/ratings';
 
 const TASTING_NOTES = [
   'Cocoa', 'Coffee', 'Leather', 'Pepper', 'Earth',
@@ -10,17 +11,37 @@ const TASTING_NOTES = [
   'Spice', 'Floral', 'Toast', 'Caramel', 'Vanilla',
 ];
 
-interface Props {
+interface Seed {
   cigarId: string;
+  slug: string;
+  brand: string;
+  name: string;
+  size: string;
 }
 
-export function RatingForm({ cigarId }: Props) {
+interface Props {
+  seed: Seed;
+}
+
+export function RatingForm({ seed }: Props) {
   const [flavor, setFlavor] = useState(0);
   const [burn, setBurn] = useState(0);
   const [appearance, setAppearance] = useState(0);
   const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
   const [notes, setNotes] = useState('');
   const [submitted, setSubmitted] = useState(false);
+
+  // Prefill if the user has already rated this cigar.
+  useEffect(() => {
+    const existing = getRating(seed.cigarId);
+    if (existing) {
+      setFlavor(existing.flavor);
+      setBurn(existing.burn);
+      setAppearance(existing.appearance);
+      setNotes(existing.notes ?? '');
+      setSelectedNotes(new Set(existing.tastingNotes ?? []));
+    }
+  }, [seed.cigarId]);
 
   const allRated = flavor > 0 && burn > 0 && appearance > 0;
   const overall = allRated ? computeOverall(flavor, burn, appearance) : 0;
@@ -32,18 +53,23 @@ export function RatingForm({ cigarId }: Props) {
     setSelectedNotes(next);
   }
 
-  async function submit() {
-    // TODO: wire to Supabase once configured. For now we just log.
-    const payload = {
-      cigarId,
+  function submit() {
+    // TODO: also upsert to the Supabase `ratings` table once wired. Persisted
+    // locally so it shows on the user's profile immediately.
+    setRating({
+      cigarId: seed.cigarId,
+      slug: seed.slug,
+      brand: seed.brand,
+      name: seed.name,
+      size: seed.size,
       flavor,
       burn,
       appearance,
       overall,
+      notes: notes.trim() || undefined,
       tastingNotes: Array.from(selectedNotes),
-      notes,
-    };
-    console.log('Rating submitted', payload);
+      createdAt: new Date().toISOString(),
+    });
     setSubmitted(true);
   }
 

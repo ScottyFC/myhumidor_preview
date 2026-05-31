@@ -211,6 +211,21 @@ export async function signOut() {
   await supabaseBrowser().auth.signOut();
 }
 
+/** Re-send the signup confirmation email. */
+export async function resendConfirmation(email: string): Promise<AuthResult> {
+  if (!isSupabaseConfigured) {
+    // Demo: no real email is sent.
+    return {};
+  }
+  const sb = supabaseBrowser();
+  const { error } = await sb.auth.resend({
+    type: 'signup',
+    email,
+    options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+  });
+  return { error: error?.message };
+}
+
 /** Demo-only synchronous read (used as a fast first paint where needed). */
 export function getSession(): Session | null {
   return isSupabaseConfigured ? null : demoGet();

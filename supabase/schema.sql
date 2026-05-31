@@ -28,6 +28,9 @@ create table if not exists public.profiles (
   handle text unique not null,
   display_name text not null,
   avatar_url text,
+  city text,
+  state text,
+  bio text,
   role text not null default 'consumer' check (role in ('consumer','lounge_owner','admin')),
   created_at timestamptz not null default now()
 );

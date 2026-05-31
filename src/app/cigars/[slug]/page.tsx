@@ -158,7 +158,9 @@ export default async function CigarPage({ params }: PageProps) {
 
       {/* ─── Rating Form ──────────────────────────────────────────────── */}
       <div className="mt-12">
-        <RatingForm cigarId={view.id} />
+        <RatingForm
+          seed={{ cigarId: view.id, slug, brand: view.brand, name: view.headline, size: view.vitola }}
+        />
       </div>
 
       {/* ─── Community: likes + comments ──────────────────────────────── */}

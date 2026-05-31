@@ -6,7 +6,7 @@ const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 const CONFIGURED = /^https:\/\/.+\.supabase\./.test(URL) && !!KEY;
 
 // Routes that require a signed-in account.
-const PROTECTED = ['/dashboard', '/humidor'];
+const PROTECTED = ['/dashboard', '/humidor', '/profile'];
 
 export async function middleware(request: NextRequest) {
   // Demo mode (no Supabase): don't gate anything — the app runs on localStorage.

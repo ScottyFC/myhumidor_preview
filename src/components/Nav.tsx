@@ -78,13 +78,20 @@ export function Nav() {
                   <span className="hidden sm:inline">Dashboard</span>
                 </Link>
               )}
-              <div className="flex items-center gap-2 rounded-md border-[0.5px] border-ember-400/20 bg-char/60 py-1 pl-2.5 pr-1">
-                <span className="hidden text-xs sm:inline">
-                  <span className="text-paper">{session.displayName}</span>
-                  <span className="ml-1.5 rounded bg-ember-400/15 px-1 py-0.5 text-[9px] uppercase tracking-wider text-ember-100">
-                    {session.type === 'lounge' ? 'Lounge' : 'Member'}
+              <div className="flex items-center gap-2 rounded-md border-[0.5px] border-ember-400/20 bg-char/60 py-1 pl-1 pr-1">
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-1.5 rounded px-1.5 py-0.5 hover:bg-ember-400/10"
+                  title="Your profile"
+                >
+                  <User size={14} strokeWidth={1.5} className="text-ember-100 sm:hidden" />
+                  <span className="hidden text-xs sm:inline">
+                    <span className="text-paper">{session.displayName}</span>
+                    <span className="ml-1.5 rounded bg-ember-400/15 px-1 py-0.5 text-[9px] uppercase tracking-wider text-ember-100">
+                      {session.type === 'lounge' ? 'Lounge' : 'Member'}
+                    </span>
                   </span>
-                </span>
+                </Link>
                 <button
                   onClick={signOut}
                   aria-label="Sign out"

@@ -9,6 +9,10 @@ A premium cigar rating, collection, and discovery platform. Built with Next.js
   your MRSS feed, each linking to the cigar featured in it), a Top Cigars preview, and the
   Lounge Program pitch. The VOD library is intentionally not hosted here — episodes are
   *referenced*, not played.
+- **`/profile`** — Your profile: upload an avatar, set your display name, city, and bio, and see your
+  humidor, wishlist, and ratings. Editing and ratings persist locally for the demo.
+- **`/u/[handle]`** — Public read-only profile — how other members see your humidor, wishlist, and
+  ratings. (In production this loads any member by handle from Supabase.)
 - **`/register`** — Sign up / sign in, split between **consumers and lounges**, with Google, Apple,
   and email options. Issues a typed account ID (`USER-…` / `LNGE-…`); the nav reflects the signed-in
   account and shows lounge owners a Dashboard link.

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { User, Store, Loader2, Check } from 'lucide-react';
+import { User, Store, Loader2, Check, MailCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { signUpEmail, signInEmail, signInOAuth, type AuthProvider } from '@/lib/auth';
+import { signUpEmail, signInEmail, signInOAuth, resendConfirmation, type AuthProvider } from '@/lib/auth';
 import type { AccountType } from '@/lib/ids';
 
 type Mode = 'signup' | 'signin';
@@ -26,7 +26,16 @@ export default function RegisterPage() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [error, setError] = useState('');
-  const [confirmMsg, setConfirmMsg] = useState('');
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState(false);
+
+  // Surfaced when a confirmation link is expired/already used (callback redirect).
+  useEffect(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('error')) {
+      setLinkError(true);
+      setMode('signin');
+    }
+  }, []);
 
   function finish() {
     router.push(type === 'lounge' ? '/dashboard' : '/humidor');
@@ -49,7 +58,7 @@ export default function RegisterPage() {
 
   async function manual() {
     setError('');
-    setConfirmMsg('');
+    setLinkError(false);
     if (!email.trim()) return setError('Enter your email.');
     if (mode === 'signup') {
       if (password.length < 8) return setError('Password must be at least 8 characters.');
@@ -76,7 +85,7 @@ export default function RegisterPage() {
         return;
       }
       if (res.needsConfirmation) {
-        setConfirmMsg('Check your email to confirm your account, then sign in.');
+        setVerifyEmail(email.trim());
         setBusy(null);
         return;
       }
@@ -90,6 +99,10 @@ export default function RegisterPage() {
       }
       finish();
     }
+  }
+
+  if (verifyEmail) {
+    return <VerifyEmail email={verifyEmail} onBack={() => setVerifyEmail(null)} />;
   }
 
   return (
@@ -111,6 +124,13 @@ export default function RegisterPage() {
             : 'Sign in to your humidor or lounge dashboard.'}
         </p>
       </div>
+
+      {linkError && (
+        <div className="mb-5 rounded-md border-[0.5px] border-red-400/40 bg-red-400/5 px-3 py-2.5 text-xs text-red-300">
+          That confirmation link expired or was already used. Sign in below, or sign up again to get
+          a fresh link.
+        </div>
+      )}
 
       {/* Account type toggle (sign-up only) */}
       {mode === 'signup' && (
@@ -179,11 +199,6 @@ export default function RegisterPage() {
         )}
 
         {error && <div className="text-xs text-red-400">{error}</div>}
-        {confirmMsg && (
-          <div className="rounded-md border-[0.5px] border-ember-400/30 bg-ember-400/5 px-3 py-2 text-xs text-ember-100">
-            {confirmMsg}
-          </div>
-        )}
 
         <button
           onClick={manual}
@@ -224,6 +239,59 @@ export default function RegisterPage() {
           ← Back to home
         </Link>
       </p>
+    </div>
+  );
+}
+
+function VerifyEmail({ email, onBack }: { email: string; onBack: () => void }) {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  async function resend() {
+    setSending(true);
+    await resendConfirmation(email);
+    setSending(false);
+    setSent(true);
+    setCooldown(30);
+  }
+
+  return (
+    <div className="mx-auto flex max-w-md flex-col px-6 pb-20 pt-16 text-center">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-ember-400/15">
+        <MailCheck size={30} strokeWidth={1.5} className="text-ember-400" />
+      </div>
+      <h1 className="font-display mt-5 text-3xl tracking-tightest">Verify your email</h1>
+      <p className="mx-auto mt-3 max-w-sm text-sm text-smoke-200">
+        We sent a confirmation link to <span className="text-paper">{email}</span>. Click it to
+        activate your account, then you&apos;re in.
+      </p>
+      <p className="mx-auto mt-2 max-w-sm text-xs text-smoke-400">
+        Check your spam folder if it&apos;s not in your inbox within a minute.
+      </p>
+
+      <div className="mt-7 flex flex-col items-center gap-3">
+        <button
+          onClick={resend}
+          disabled={sending || cooldown > 0}
+          className="inline-flex items-center gap-2 rounded-md bg-ember-400 px-5 py-2.5 text-sm font-medium text-paper transition hover:bg-ember-600 disabled:opacity-50"
+        >
+          {sending ? <Loader2 size={15} className="animate-spin" /> : <MailCheck size={15} strokeWidth={1.5} />}
+          {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend confirmation email'}
+        </button>
+        {sent && cooldown > 0 && (
+          <span className="text-xs text-ember-100">Sent — check your inbox.</span>
+        )}
+        <button onClick={onBack} className="text-sm text-smoke-300 hover:text-paper">
+          ← Use a different email
+        </button>
+      </div>
     </div>
   );
 }
