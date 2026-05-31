@@ -28,8 +28,9 @@ A premium cigar rating, collection, and discovery platform. Built with Next.js
 - **`/humidor`** — Personal collection with status filters and like/comment counts per cigar.
 - **`/cigars/[slug]`** — Cigar profile: community rating averages, three-axis rating form,
   **Add to humidor**, and a **likes + comments** community thread.
-- **`/map`** — Cigar Maps, now wired to your Mapbox token (dark theme, ember pins for verified
-  lounges). Falls back to a styled placeholder + list if the token is missing.
+- **`/map`** — Cigar Maps with **geolocation**: tap "Find lounges near me," and it locates you and
+  lists the closest shops by distance (served by `/api/stores/nearby`, haversine over the geocoded
+  catalog). Uses the custom CigarTV Mapbox style; markers fly to the selected lounge.
 - **`/lounges`** — The Lounge Program pitch page, with a link into the owner dashboard.
 - **`/dashboard`** — Private lounge-owner view. Shows the **live CigarTV feed** (Amagi HLS) playing
   on that lounge's stick, plus viewership for **their own location only** (viewers now, watch-hours,

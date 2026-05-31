@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
-import { getSession, onAuthChange, signOut, type Session } from '@/lib/auth';
+import { subscribeAuth, signOut, type Session } from '@/lib/auth';
 
 const TABS = [
   { href: '/humidor', label: 'Humidor', icon: Box },
@@ -22,22 +21,19 @@ export function Nav() {
   const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
-    setSession(getSession());
-    return onAuthChange(() => setSession(getSession()));
+    return subscribeAuth(setSession);
   }, []);
+
+  // Humidor requires an account — send signed-out users to register.
+  const tabHref = (href: string) =>
+    href === '/humidor' && !session ? '/register?next=/humidor' : href;
 
   return (
     <header className="sticky top-0 z-50 border-b border-ember-400/15 bg-char/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-4">
         <Link href="/" className="group flex shrink-0 items-center gap-2.5">
-          <Image
-            src="/myhumidor-wordmark.png"
-            alt="MyHumidor"
-            width={3049}
-            height={850}
-            priority
-            className="h-7 w-auto rounded-[3px]"
-          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="MyHumidor" className="h-8 w-auto" />
           <span className="hidden text-[10px] uppercase tracking-widest text-smoke-400 lg:inline">
             by CigarTV
           </span>
@@ -53,7 +49,7 @@ export function Nav() {
             return (
               <Link
                 key={tab.href}
-                href={tab.href}
+                href={tabHref(tab.href)}
                 className={cn(
                   'flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition',
                   active
@@ -117,7 +113,7 @@ export function Nav() {
             return (
               <Link
                 key={tab.href}
-                href={tab.href}
+                href={tabHref(tab.href)}
                 className={cn(
                   'flex flex-col items-center gap-0.5 rounded px-3 py-1 text-[10px] uppercase tracking-wider',
                   active ? 'text-ember-400' : 'text-smoke-400'

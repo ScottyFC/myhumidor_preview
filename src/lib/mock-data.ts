@@ -644,26 +644,8 @@ export interface CigarSocial {
   comments: CigarComment[];
 }
 
-// Seeded community activity per cigar. In production these come from `likes`
-// and `comments` tables keyed on cigar_id, written by authenticated users.
-const SOCIAL_BY_ID: Record<string, CigarSocial> = {
-  cig_padron_1964_exclusivo: {
-    likes: 312,
-    comments: [
-      { id: 'c1', author: 'Marco D.', handle: 'marco.ybor', body: 'Aged two of these 18 months. The cocoa really comes forward. Worth the wait.', createdAt: '2d ago', likes: 14 },
-      { id: 'c2', author: 'Renee P.', handle: 'reneesmokes', body: 'My benchmark maduro. Burn is flawless every single time.', createdAt: '5d ago', likes: 9 },
-      { id: 'c3', author: 'Sean', handle: 'sean.tampa', body: 'Pairs unreal with a cup of Cuban coffee. Tried it after the Padrón episode dropped.', createdAt: '1w ago', likes: 21 },
-    ],
-  },
-  cig_fuente_opus_x: {
-    likes: 489,
-    comments: [
-      { id: 'c4', author: 'Tomás G.', handle: 'tomasg', body: 'The unicorn. Finally found a box at Corona Cigar. Every bit as good as the hype.', createdAt: '1d ago', likes: 33 },
-      { id: 'c5', author: 'Will H.', handle: 'willhavana', body: 'Spicy on the first third then settles into cedar and pepper. Top 3 all time for me.', createdAt: '4d ago', likes: 12 },
-    ],
-  },
-};
-
-export function getCigarSocial(cigarId: string): CigarSocial {
-  return SOCIAL_BY_ID[cigarId] ?? { likes: 0, comments: [] };
+// Community activity is sourced live from the `likes` and `comments` tables
+// (keyed on cigar_id, written by authenticated users). No seeded/demo content.
+export function getCigarSocial(_cigarId: string): CigarSocial {
+  return { likes: 0, comments: [] };
 }

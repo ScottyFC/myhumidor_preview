@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { User, Store, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { createSession, type AuthProvider } from '@/lib/auth';
+import { signUpEmail, signInEmail, signInOAuth, type AuthProvider } from '@/lib/auth';
 import type { AccountType } from '@/lib/ids';
 
 type Mode = 'signup' | 'signin';
@@ -26,27 +26,30 @@ export default function RegisterPage() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [error, setError] = useState('');
+  const [confirmMsg, setConfirmMsg] = useState('');
 
   function finish() {
     router.push(type === 'lounge' ? '/dashboard' : '/humidor');
   }
 
   async function oauth(provider: AuthProvider) {
+    if (provider === 'password') return;
+    setError('');
     setBusy(provider);
-    // PRODUCTION: supabase.auth.signInWithOAuth({ provider }) with account_type in metadata.
-    await new Promise((r) => setTimeout(r, 600));
-    createSession({
-      type,
-      provider,
-      email: `you@${provider}.com`,
-      displayName: type === 'lounge' ? loungeName || 'Your Lounge' : 'You',
-      loungeName: type === 'lounge' ? loungeName || 'Your Lounge' : undefined,
-    });
+    // REAL: redirects to the provider, then back to /auth/callback.
+    // DEMO: creates a local session immediately.
+    const { error } = await signInOAuth(provider, type);
+    if (error) {
+      setError(error);
+      setBusy(null);
+      return;
+    }
     finish();
   }
 
   async function manual() {
     setError('');
+    setConfirmMsg('');
     if (!email.trim()) return setError('Enter your email.');
     if (mode === 'signup') {
       if (password.length < 8) return setError('Password must be at least 8 characters.');
@@ -55,20 +58,38 @@ export default function RegisterPage() {
       if (type === 'lounge' && !loungeName.trim()) return setError('Enter your lounge name.');
     }
     setBusy('password');
-    // PRODUCTION: supabase.auth.signUp / signInWithPassword. We never store the
-    // password ourselves — Supabase Auth hashes and manages it.
-    await new Promise((r) => setTimeout(r, 600));
-    createSession({
-      type,
-      provider: 'password',
-      email: email.trim(),
-      displayName:
-        type === 'lounge' ? loungeName.trim() || 'Your Lounge' : displayName.trim() || 'You',
-      loungeName: type === 'lounge' ? loungeName.trim() : undefined,
-      city: city.trim() || undefined,
-      state: state.trim() || undefined,
-    });
-    finish();
+
+    if (mode === 'signup') {
+      const res = await signUpEmail({
+        type,
+        email: email.trim(),
+        password,
+        displayName:
+          type === 'lounge' ? loungeName.trim() || 'Your Lounge' : displayName.trim() || 'You',
+        loungeName: type === 'lounge' ? loungeName.trim() : undefined,
+        city: city.trim() || undefined,
+        state: state.trim() || undefined,
+      });
+      if (res.error) {
+        setError(res.error);
+        setBusy(null);
+        return;
+      }
+      if (res.needsConfirmation) {
+        setConfirmMsg('Check your email to confirm your account, then sign in.');
+        setBusy(null);
+        return;
+      }
+      finish();
+    } else {
+      const res = await signInEmail(email.trim(), password);
+      if (res.error) {
+        setError(res.error);
+        setBusy(null);
+        return;
+      }
+      finish();
+    }
   }
 
   return (
@@ -158,6 +179,11 @@ export default function RegisterPage() {
         )}
 
         {error && <div className="text-xs text-red-400">{error}</div>}
+        {confirmMsg && (
+          <div className="rounded-md border-[0.5px] border-ember-400/30 bg-ember-400/5 px-3 py-2 text-xs text-ember-100">
+            {confirmMsg}
+          </div>
+        )}
 
         <button
           onClick={manual}

@@ -1,47 +1,44 @@
 /**
- * Supabase clients. Used in two contexts:
+ * Supabase clients.
  *
- *   1. Browser components — calls supabaseBrowser() to get an anon client
- *      tied to the user's session.
- *   2. Server components / Route handlers — calls supabaseServer() which uses
- *      cookies for SSR auth.
+ *   - supabaseBrowser()  — client components, tied to the user's session.
+ *   - supabaseServer()   — server components / route handlers (cookie-based SSR auth).
  *
- * Wire these up after creating a Supabase project and running supabase/schema.sql.
+ * The key may be either the legacy anon key (eyJ…) or the newer publishable key
+ * (sb_publishable_…). Both are client-safe and enforced by row-level security.
+ *
+ * `isSupabaseConfigured` is true only when BOTH the project URL and a key are
+ * present. Until then the app runs in demo mode (localStorage) and auth/route
+ * protection no-op, so everything still works without a backend.
  */
 
 import { createBrowserClient, createServerClient, type CookieOptions } from '@supabase/ssr';
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+export const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
+
+export const isSupabaseConfigured =
+  /^https:\/\/.+\.supabase\./.test(SUPABASE_URL) && !!SUPABASE_KEY;
 
 export function supabaseBrowser() {
-  return createBrowserClient(URL, ANON_KEY);
+  return createBrowserClient(SUPABASE_URL, SUPABASE_KEY);
 }
 
 export async function supabaseServer() {
   const { cookies } = await import('next/headers');
   const cookieStore = cookies();
-  return createServerClient(URL, ANON_KEY, {
+  return createServerClient(SUPABASE_URL, SUPABASE_KEY, {
     cookies: {
-      get(name: string) {
-        return cookieStore.get(name)?.value;
+      getAll() {
+        return cookieStore.getAll();
       },
-      set(name: string, value: string, options: CookieOptions) {
+      setAll(toSet: { name: string; value: string; options: CookieOptions }[]) {
         try {
-          cookieStore.set({ name, value, ...options });
+          toSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
         } catch {
-          // server component context — read only, ignore
-        }
-      },
-      remove(name: string, options: CookieOptions) {
-        try {
-          cookieStore.set({ name, value: '', ...options });
-        } catch {
-          // ignore
+          // called from a Server Component — safe to ignore; middleware refreshes the session
         }
       },
     },
   });
 }
-
-export const isSupabaseConfigured = !!URL && !!ANON_KEY;

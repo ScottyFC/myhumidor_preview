@@ -35,12 +35,13 @@ interface CigarView {
 export default async function CigarPage({ params }: PageProps) {
   const { slug } = await params;
 
-  // 1. Curated cigar with community ratings?
+  // Curated cigar, otherwise look it up in the full 23.5k catalog.
   const rich = findCigarBySlug(slug);
-  // 2. Otherwise look it up in the full 23.5k catalog.
   const cat = rich ? null : findCatalogCigarBySlug(slug);
   if (!rich && !cat) notFound();
 
+  // Community averages come from the live `ratings` table once users start
+  // rating. Until then every cigar shows the "not yet rated" state.
   const view: CigarView = rich
     ? {
         id: rich.id,
@@ -52,12 +53,12 @@ export default async function CigarPage({ params }: PageProps) {
         ringGauge: rich.ringGauge,
         country: rich.countryOfOrigin,
         msrp: rich.msrp,
-        rated: true,
-        ratingCount: rich.ratingCount,
-        flavorAvg: rich.flavorAvg,
-        burnAvg: rich.burnAvg,
-        appearanceAvg: rich.appearanceAvg,
-        overallAvg: rich.overallAvg,
+        rated: false,
+        ratingCount: 0,
+        flavorAvg: 0,
+        burnAvg: 0,
+        appearanceAvg: 0,
+        overallAvg: 0,
       }
     : {
         id: cat!.uuid,

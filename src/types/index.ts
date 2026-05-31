@@ -18,6 +18,7 @@ export interface CatalogStore {
   state: string;
   lat: number | null;
   lng: number | null;
+  geo?: 'city' | 'state' | null; // coordinate precision (approximate, pending exact geocode)
   verified: boolean;
   phone: string;
   email: string;

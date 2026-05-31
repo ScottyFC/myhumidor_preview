@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, MapPin, Star, Tv, Flame } from 'lucide-react';
+import { ArrowRight, MapPin, Tv, Flame } from 'lucide-react';
 import { fetchEpisodes, recentEpisodes } from '@/lib/mrss';
 import { getTopCigars, findFeaturedForEpisode, MOCK_LOUNGES } from '@/lib/mock-data';
 import { RecentEpisode } from '@/components/RecentEpisode';
@@ -87,11 +87,7 @@ export default async function HomePage() {
                   {cigar.brand} {cigar.line}
                   <span className="text-smoke-400"> · {cigar.vitola}</span>
                 </div>
-                <div className="mt-0.5 flex items-center gap-1.5 text-xs text-smoke-400">
-                  <Star size={11} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
-                  <span className="tabular text-ember-100">{cigar.overallAvg.toFixed(1)}</span>
-                  <span className="tabular">· {cigar.ratingCount.toLocaleString()}</span>
-                </div>
+                <div className="mt-0.5 truncate text-xs text-smoke-400">{cigar.wrapper}</div>
               </Link>
               <AddToCollection seed={{ cigarId: cigar.id, slug: cigar.slug, brand: cigar.brand, name: cigar.line, size: cigar.vitola }} />
             </div>

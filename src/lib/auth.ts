@@ -1,22 +1,18 @@
 'use client';
 
 /**
- * Demo authentication layer. Stores a session in localStorage so the app behaves
- * like a logged-in experience without a backend.
+ * Auth layer with two modes:
+ *   - REAL  (Supabase configured): real signup/login, OAuth, sessions.
+ *   - DEMO  (no Supabase URL): localStorage session so the app still works.
  *
- * PRODUCTION: replace every function here with Supabase Auth:
- *   - manual:  supabase.auth.signUp({ email, password, options:{ data:{ account_type } }})
- *   - google:  supabase.auth.signInWithOAuth({ provider:'google' })
- *   - apple:   supabase.auth.signInWithOAuth({ provider:'apple' })
- *   - session: supabase.auth.getSession() / onAuthStateChange()
- * Supabase assigns auth.users.id (the real UUID); a DB trigger creates the
- * profile row and derives the typed public_id (see supabase/schema.sql).
- *
- * We never store passwords ourselves — Supabase Auth handles hashing, OAuth,
- * sessions, and password resets.
+ * The same functions are used by the UI in both modes — flipping NEXT_PUBLIC_
+ * SUPABASE_URL/KEY in the environment switches everything over with no code
+ * changes. account_type is carried in user metadata at signup; the
+ * handle_new_user trigger reads it to stamp the typed public_id (USER-/LNGE-).
  */
 
-import { type AccountType, generateAccountId } from './ids';
+import { isSupabaseConfigured, supabaseBrowser } from './supabase';
+import { type AccountType, publicIdFromUuid, generateAccountId } from './ids';
 
 export type AuthProvider = 'password' | 'google' | 'apple';
 
@@ -33,10 +29,22 @@ export interface Session {
   createdAt: string;
 }
 
+export interface SignUpInput {
+  type: AccountType;
+  email: string;
+  password: string;
+  displayName: string;
+  loungeName?: string;
+  city?: string;
+  state?: string;
+}
+
 const KEY = 'myhumidor:session';
 const EVENT = 'myhumidor:auth-change';
 
-export function getSession(): Session | null {
+/* ─────────────────────────── DEMO (localStorage) ─────────────────────────── */
+
+function demoGet(): Session | null {
   if (typeof window === 'undefined') return null;
   try {
     const raw = localStorage.getItem(KEY);
@@ -46,7 +54,7 @@ export function getSession(): Session | null {
   }
 }
 
-function persist(session: Session) {
+function demoSet(session: Session) {
   try {
     localStorage.setItem(KEY, JSON.stringify(session));
     window.dispatchEvent(new Event(EVENT));
@@ -55,7 +63,7 @@ function persist(session: Session) {
   }
 }
 
-export function signOut() {
+function demoClear() {
   try {
     localStorage.removeItem(KEY);
     window.dispatchEvent(new Event(EVENT));
@@ -64,17 +72,7 @@ export function signOut() {
   }
 }
 
-export function onAuthChange(cb: () => void): () => void {
-  if (typeof window === 'undefined') return () => {};
-  window.addEventListener(EVENT, cb);
-  window.addEventListener('storage', cb);
-  return () => {
-    window.removeEventListener(EVENT, cb);
-    window.removeEventListener('storage', cb);
-  };
-}
-
-interface RegisterInput {
+function demoSession(input: {
   type: AccountType;
   email: string;
   displayName: string;
@@ -82,12 +80,9 @@ interface RegisterInput {
   loungeName?: string;
   city?: string;
   state?: string;
-}
-
-/** Create a session (sign up or OAuth first-time). Generates the typed ID. */
-export function createSession(input: RegisterInput): Session {
+}): Session {
   const { uuid, publicId } = generateAccountId(input.type);
-  const session: Session = {
+  return {
     uuid,
     publicId,
     type: input.type,
@@ -99,6 +94,124 @@ export function createSession(input: RegisterInput): Session {
     state: input.state,
     createdAt: new Date().toISOString(),
   };
-  persist(session);
-  return session;
+}
+
+/* ─────────────────────────── REAL (Supabase) ─────────────────────────────── */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function sessionFromUser(user: any): Session {
+  const meta = user.user_metadata ?? {};
+  const type: AccountType = meta.account_type === 'lounge' ? 'lounge' : 'consumer';
+  return {
+    uuid: user.id,
+    publicId: publicIdFromUuid(user.id, type),
+    type,
+    email: user.email ?? '',
+    displayName: meta.display_name || meta.name || (user.email?.split('@')[0] ?? 'You'),
+    provider: (user.app_metadata?.provider as AuthProvider) ?? 'password',
+    loungeName: meta.lounge_name,
+    city: meta.city,
+    state: meta.state,
+    createdAt: user.created_at ?? new Date().toISOString(),
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+/* ─────────────────────────────── PUBLIC API ──────────────────────────────── */
+
+/** Subscribe to the current session. Fires immediately, then on every change. */
+export function subscribeAuth(cb: (s: Session | null) => void): () => void {
+  if (!isSupabaseConfigured) {
+    if (typeof window === 'undefined') return () => {};
+    cb(demoGet());
+    const handler = () => cb(demoGet());
+    window.addEventListener(EVENT, handler);
+    window.addEventListener('storage', handler);
+    return () => {
+      window.removeEventListener(EVENT, handler);
+      window.removeEventListener('storage', handler);
+    };
+  }
+  const sb = supabaseBrowser();
+  sb.auth.getSession().then(({ data }) => cb(data.session ? sessionFromUser(data.session.user) : null));
+  const { data } = sb.auth.onAuthStateChange((_e, sess) =>
+    cb(sess ? sessionFromUser(sess.user) : null)
+  );
+  return () => data.subscription.unsubscribe();
+}
+
+export interface AuthResult {
+  error?: string;
+  needsConfirmation?: boolean;
+}
+
+export async function signUpEmail(input: SignUpInput): Promise<AuthResult> {
+  if (!isSupabaseConfigured) {
+    demoSet(demoSession({ ...input, provider: 'password' }));
+    return {};
+  }
+  const sb = supabaseBrowser();
+  const { data, error } = await sb.auth.signUp({
+    email: input.email,
+    password: input.password,
+    options: {
+      emailRedirectTo: `${window.location.origin}/auth/callback?type=${input.type}`,
+      data: {
+        account_type: input.type,
+        display_name: input.displayName,
+        lounge_name: input.loungeName,
+        city: input.city,
+        state: input.state,
+      },
+    },
+  });
+  if (error) return { error: error.message };
+  // If email confirmation is on, there's no session yet.
+  return { needsConfirmation: !data.session };
+}
+
+export async function signInEmail(email: string, password: string): Promise<AuthResult> {
+  if (!isSupabaseConfigured) {
+    const existing = demoGet();
+    demoSet(
+      existing ?? demoSession({ type: 'consumer', email, displayName: email.split('@')[0], provider: 'password' })
+    );
+    return {};
+  }
+  const sb = supabaseBrowser();
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  return { error: error?.message };
+}
+
+export async function signInOAuth(provider: 'google' | 'apple', type: AccountType): Promise<AuthResult> {
+  if (!isSupabaseConfigured) {
+    demoSet(
+      demoSession({
+        type,
+        provider,
+        email: `you@${provider}.com`,
+        displayName: type === 'lounge' ? 'Your Lounge' : 'You',
+      })
+    );
+    return {};
+  }
+  const sb = supabaseBrowser();
+  const { error } = await sb.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: `${window.location.origin}/auth/callback?type=${type}` },
+  });
+  return { error: error?.message };
+}
+
+export async function signOut() {
+  if (!isSupabaseConfigured) {
+    demoClear();
+    return;
+  }
+  await supabaseBrowser().auth.signOut();
+}
+
+/** Demo-only synchronous read (used as a fast first paint where needed). */
+export function getSession(): Session | null {
+  return isSupabaseConfigured ? null : demoGet();
 }

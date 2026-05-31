@@ -30,7 +30,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             className="mx-auto h-20 w-auto rounded-lg"
           />
           <div className="mt-4 text-xs uppercase tracking-widest text-smoke-400">
-            By CigarTV · Tampa
+            By{' '}
+            <a
+              href="https://cigartv.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-ember-100 transition hover:text-ember-400"
+            >
+              CigarTV
+            </a>{' '}
+            · Tampa
           </div>
         </footer>
       </body>

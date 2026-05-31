@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Star, Heart, Box, Trash2, Plus } from 'lucide-react';
+import { Heart, Box, Trash2, Plus, Loader2 } from 'lucide-react';
 import { MOCK_HUMIDOR, MOCK_USER } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
+import { subscribeAuth, type Session } from '@/lib/auth';
 import {
   type CollectionItem,
   getCollection,
@@ -41,8 +43,21 @@ const SEED_ROWS: Row[] = MOCK_HUMIDOR.map((e) => ({
 }));
 
 export default function HumidorPage() {
+  const router = useRouter();
   const [filter, setFilter] = useState<Filter>('all');
   const [userItems, setUserItems] = useState<CollectionItem[]>([]);
+  const [authState, setAuthState] = useState<'checking' | 'in' | 'out'>('checking');
+
+  useEffect(() => {
+    return subscribeAuth((s: Session | null) => {
+      if (s) {
+        setAuthState('in');
+      } else {
+        setAuthState('out');
+        router.replace('/register?next=/humidor');
+      }
+    });
+  }, [router]);
 
   useEffect(() => {
     const sync = () => setUserItems(getCollection());
@@ -74,6 +89,14 @@ export default function HumidorPage() {
     { id: 'humidor', label: 'Humidor', count: humidorRows.length },
     { id: 'wishlist', label: 'Wishlist', count: wishlistRows.length },
   ];
+
+  if (authState !== 'in') {
+    return (
+      <div className="mx-auto max-w-5xl px-6 pt-20 text-center text-smoke-400">
+        <Loader2 className="mx-auto animate-spin text-ember-400" size={24} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-6 pt-10">
@@ -163,14 +186,7 @@ function Row({ row }: { row: Row }) {
       </Link>
 
       <div className="flex shrink-0 flex-col items-end justify-between">
-        {row.yourRating ? (
-          <span className="inline-flex items-center gap-1 text-sm tabular text-ember-100">
-            <Star size={12} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
-            {row.yourRating.toFixed(1)}
-          </span>
-        ) : (
-          <span />
-        )}
+        <span />
         {row.removable && (
           <div className="flex items-center gap-1">
             {row.status === 'wishlist' && (

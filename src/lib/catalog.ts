@@ -86,3 +86,28 @@ export function catalogStats() {
 export function findCatalogStoreBySlug(slug: string): CatalogStore | undefined {
   return allStores().find((s) => s.slug === slug);
 }
+
+export interface NearbyStore extends CatalogStore {
+  distanceMi: number;
+}
+
+function haversineMi(aLat: number, aLng: number, bLat: number, bLng: number): number {
+  const R = 3958.8; // miles
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
+
+/** Stores nearest to a point, closest first. Server-side haversine over the
+ *  geocoded catalog; PostGIS ST_Distance replaces this in production. */
+export function nearestStores(lat: number, lng: number, limit = 20): NearbyStore[] {
+  return allStores()
+    .filter((s) => s.lat != null && s.lng != null)
+    .map((s) => ({ ...s, distanceMi: haversineMi(lat, lng, s.lat as number, s.lng as number) }))
+    .sort((a, b) => a.distanceMi - b.distanceMi)
+    .slice(0, limit);
+}
