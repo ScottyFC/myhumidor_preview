@@ -1,59 +1,33 @@
 # Loading the datasets into Supabase
 
-The app ships with the full datasets as JSON in `src/data/` so it runs locally
-with zero setup. When you move to Supabase, import the cleaned CSVs in this
-folder instead.
+The app ships the full datasets as JSON in `src/data/` so it runs locally with
+zero setup. To move them into Supabase, use the seed script.
 
 ## Files
-
-- `catalog_cigars.csv` — 23,567 cigars: `id, brand, name, country, price, size, slug`
+- `catalog_cigars.csv` — 23,774 cigars: `id, brand, name, country, price, size, slug, image_url`
 - `stores.csv` — 713 stores: `id, slug, name, address, city, state, lat, lng, verified, phone, email, website, hours`
 
-Both are cleaned from your original uploads: prices parsed to numbers, slugs
-generated, columns aligned to the schema.
-
 ## Step 1 — Create the tables
+SQL Editor → paste `supabase/schema.sql` → Run. Creates every table + RLS.
 
-Run `supabase/schema.sql` first (SQL Editor → New query → paste → run). It
-creates `catalog_cigars` and `lounges` (among others).
+## Step 2 — Seed the data (one command)
+1. Project Settings → API → copy the **service_role** key.
+2. Add it to `.env.local`:  `SUPABASE_SERVICE_ROLE_KEY=...`
+3. From the project root:
+   ```bash
+   node scripts/seed.mjs
+   ```
+   Upserts all cigars + lounges in batches. Idempotent — safe to re-run.
+   (676 of 713 lounges load; 37 are skipped until their addresses are geocoded.)
 
-## Step 2 — Import the CSVs
-
-**Option A — Table Editor (easiest)**
-1. Supabase dashboard → Table Editor → `catalog_cigars` → Insert → Import data from CSV.
-2. Upload `catalog_cigars.csv`. Map columns (they already match). Import.
-3. Repeat for `lounges` using `stores.csv`.
-
-**Option B — psql `\copy` (fastest for 23k rows)**
+## Step 3 — Make yourself super admin
+After you've signed up once (so your profile row exists):
 ```bash
-psql "$SUPABASE_DB_URL" \
-  -c "\copy public.catalog_cigars(id,brand,name,country,price,size,slug) \
-      FROM 'supabase/seed/catalog_cigars.csv' WITH (FORMAT csv, HEADER true)"
-
-psql "$SUPABASE_DB_URL" \
-  -c "\copy public.lounges(id,slug,name,address,city,state,lat,lng,verified,phone,email,website,hours) \
-      FROM 'supabase/seed/stores.csv' WITH (FORMAT csv, HEADER true)"
+node scripts/seed.mjs --admin
 ```
+Sets `role = 'super_admin'` for your account.
 
-## Step 3 — Point the app at Supabase
-
-Swap the reads in `src/lib/catalog.ts` (currently reading the JSON files) for
-Supabase queries:
-
-```ts
-// search cigars
-const { data, count } = await supabase
-  .from('catalog_cigars')
-  .select('*', { count: 'exact' })
-  .or(`name.ilike.%${q}%,brand.ilike.%${q}%`)
-  .range(offset, offset + limit - 1);
-```
-
-The `/api/cigars` and `/api/stores` routes and the inventory UI keep working
-unchanged — only the data source behind them moves.
-
-## Note on store coordinates
-
-The store dataset has no lat/lng. Until you geocode them (Mapbox Geocoding API
-or Google), the `/map` page plots only the demo lounges that have coordinates.
-A one-time batch geocode of the 713 addresses backfills `lounges.lat/lng`.
+## Manual alternative (no script)
+Table Editor → `catalog_cigars` → Import data from CSV → upload
+`catalog_cigars.csv` (columns already match). Repeat for `lounges` using
+`stores.csv`.

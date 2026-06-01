@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Check, Loader2, MapPin, Share2, X } from 'lucide-react';
+import { Check, Loader2, MapPin, Share2, X, ShieldCheck, ShieldOff } from 'lucide-react';
 import { subscribeAuth, type Session } from '@/lib/auth';
+import { isAdmin, isBootstrapAdmin, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
 import { getProfile, saveProfile, onProfileChange, handleFromName, type ProfileFields } from '@/lib/profile';
 import { getCollection, onCollectionChange, type CollectionItem } from '@/lib/collection';
 import { getRatings, onRatingsChange, type UserRating } from '@/lib/ratings';
@@ -21,6 +22,13 @@ export default function ProfilePage() {
   const [collection, setCollection] = useState<CollectionItem[]>([]);
   const [ratings, setRatings] = useState<UserRating[]>([]);
   const [editing, setEditing] = useState(false);
+  const [admin, setAdmin] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setAdmin(isAdmin(session?.publicId));
+    sync();
+    return onAdminsChange(sync);
+  }, [session]);
 
   useEffect(() => {
     return subscribeAuth((s) => {
@@ -90,13 +98,30 @@ export default function ProfilePage() {
           {session && <AdminOnlyId id={session.publicId} label="User UUID" />}
         </div>
 
-        <div className="flex shrink-0 gap-2">
+        <div className="flex shrink-0 flex-wrap gap-2">
           <button onClick={() => setEditing((v) => !v)} className="btn-ghost text-xs">
             {editing ? 'Close' : 'Edit profile'}
           </button>
           <Link href={`/u/${profile.handle}`} className="btn-ghost text-xs">
             <Share2 size={13} strokeWidth={1.5} /> Public view
           </Link>
+          {session && !isBootstrapAdmin(session.publicId) && (
+            <button
+              onClick={() => (admin ? revokeAdmin(session.publicId) : promoteAdmin(session.publicId))}
+              className="btn-ghost text-xs"
+              title="Demo control — toggle super-admin access"
+            >
+              {admin ? (
+                <>
+                  <ShieldOff size={13} strokeWidth={1.5} /> Exit admin (demo)
+                </>
+              ) : (
+                <>
+                  <ShieldCheck size={13} strokeWidth={1.5} className="text-ember-400" /> Become super admin (demo)
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
 

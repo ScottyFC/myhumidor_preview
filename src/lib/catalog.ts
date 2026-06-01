@@ -83,13 +83,17 @@ export function catalogStats() {
   return { cigars: allCigars().length, stores: allStores().length };
 }
 
-/** A handful of catalog cigars that have brand imagery, for the home carousel. */
+/** Featured cigars for the home carousel — one per brand so logos don't repeat. */
 export function featuredCigars(limit = 12): CatalogCigar[] {
   const withImg = allCigars().filter((c) => c.image_url);
-  // spread across the alphabet so it isn't all one brand
-  const step = Math.max(1, Math.floor(withImg.length / (limit * 8)));
+  // Keep only the first cigar of each brand (one logo per brand).
+  const byBrand = new Map<string, CatalogCigar>();
+  for (const c of withImg) if (!byBrand.has(c.brand)) byBrand.set(c.brand, c);
+  const brands = [...byBrand.values()];
+  // Spread the picks across the alphabet so it isn't a run of A-names.
+  const step = Math.max(1, Math.floor(brands.length / limit));
   const picks: CatalogCigar[] = [];
-  for (let i = 0; i < withImg.length && picks.length < limit; i += step) picks.push(withImg[i]);
+  for (let i = 0; i < brands.length && picks.length < limit; i += step) picks.push(brands[i]);
   return picks;
 }
 

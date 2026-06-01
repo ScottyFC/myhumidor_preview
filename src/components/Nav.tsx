@@ -7,7 +7,7 @@ import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, Shiel
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import { subscribeAuth, signOut, type Session } from '@/lib/auth';
-import { isAdmin } from '@/lib/admin';
+import { isAdmin, onAdminsChange } from '@/lib/admin';
 
 const TABS = [
   { href: '/humidor', label: 'Humidor', icon: Box },
@@ -20,10 +20,13 @@ const TABS = [
 export function Nav() {
   const pathname = usePathname();
   const [session, setSession] = useState<Session | null>(null);
+  const [, bumpAdmin] = useState(0);
 
   useEffect(() => {
     return subscribeAuth(setSession);
   }, []);
+
+  useEffect(() => onAdminsChange(() => bumpAdmin((n) => n + 1)), []);
 
   // Humidor requires an account — send signed-out users to register.
   const tabHref = (href: string) =>

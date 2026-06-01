@@ -20,7 +20,7 @@ export default async function HomePage() {
     <div className="mx-auto max-w-7xl px-6 pt-8">
       {/* ─── HERO ──────────────────────────────────────────────────────────── */}
       <section className="py-12 lg:py-16 animate-fade-up">
-        <div className="eyebrow mb-3">Premium cigar, tracked</div>
+        <div className="eyebrow mb-3">Premium cigars, tracked.</div>
         <h1 className="font-display text-5xl leading-[0.95] tracking-tightest sm:text-6xl lg:text-7xl">
           <span className="italic text-ember-400">Rate</span> what you smoke.
           <br />
@@ -48,7 +48,7 @@ export default async function HomePage() {
       {/* ─── FEATURED CIGARS CAROUSEL ─────────────────────────────────── */}
       <section className="py-10">
         <SectionHeader
-          title="Featured cigars"
+          title="Featured Cigars"
           subtitle="Handpicked this week"
           href="/top"
           icon={<Flame size={14} strokeWidth={1.5} className="text-ember-400" />}
@@ -82,7 +82,7 @@ export default async function HomePage() {
       {/* ─── FEATURED LOUNGES CAROUSEL ────────────────────────────────── */}
       <section className="py-10">
         <SectionHeader
-          title="Featured lounges"
+          title="Featured Lounges"
           subtitle="Top-rated near the community"
           href="/lounges"
           icon={<MapPin size={14} strokeWidth={1.5} className="text-ember-400" />}
