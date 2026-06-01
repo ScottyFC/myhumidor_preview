@@ -7,6 +7,7 @@ import { Heart, Box, Trash2, Plus, Loader2 } from 'lucide-react';
 import { MOCK_HUMIDOR, MOCK_USER } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import { subscribeAuth, type Session } from '@/lib/auth';
+import { Feed } from '@/components/Feed';
 import {
   type CollectionItem,
   getCollection,
@@ -45,6 +46,7 @@ const SEED_ROWS: Row[] = MOCK_HUMIDOR.map((e) => ({
 export default function HumidorPage() {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>('all');
+  const [view, setView] = useState<'feed' | 'collection'>('feed');
   const [userItems, setUserItems] = useState<CollectionItem[]>([]);
   const [authState, setAuthState] = useState<'checking' | 'in' | 'out'>('checking');
 
@@ -113,43 +115,65 @@ export default function HumidorPage() {
         </div>
       </header>
 
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        {FILTERS.map((f) => (
+      {/* Feed / Collection toggle */}
+      <div className="mb-6 flex gap-2 border-b border-ember-400/15">
+        {(['feed', 'collection'] as const).map((v) => (
           <button
-            key={f.id}
-            onClick={() => setFilter(f.id)}
+            key={v}
+            onClick={() => setView(v)}
             className={cn(
-              'rounded-full px-4 py-1.5 text-sm transition border-[0.5px]',
-              filter === f.id
-                ? 'bg-ember-600 border-ember-400 text-paper'
-                : 'border-ember-400/20 text-smoke-200 hover:border-ember-400/40'
+              '-mb-px border-b-2 px-1 pb-3 text-sm font-medium capitalize transition',
+              view === v
+                ? 'border-ember-400 text-paper'
+                : 'border-transparent text-smoke-400 hover:text-smoke-100'
             )}
           >
-            {f.label} <span className="tabular text-smoke-400">{f.count}</span>
+            {v === 'feed' ? 'Feed' : 'My collection'}
           </button>
         ))}
-        <Link href="/search" className="btn-ghost ml-auto text-xs">
-          <Plus size={13} strokeWidth={2} /> Add cigars
-        </Link>
       </div>
 
-      {visible.length === 0 ? (
-        <div className="rounded-lg border-[0.5px] border-dashed border-ember-400/20 p-12 text-center">
-          <div className="text-smoke-400">
-            {filter === 'wishlist'
-              ? 'Your wishlist is empty.'
-              : 'Nothing here yet.'}
-          </div>
-          <Link href="/search" className="btn-primary mt-4">
-            <Plus size={14} strokeWidth={2} /> Find cigars
-          </Link>
-        </div>
+      {view === 'feed' ? (
+        <Feed />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {visible.map((r) => (
-            <Row key={r.cigarId} row={r} />
-          ))}
-        </div>
+        <>
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            {FILTERS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={cn(
+                  'rounded-full px-4 py-1.5 text-sm transition border-[0.5px]',
+                  filter === f.id
+                    ? 'bg-ember-600 border-ember-400 text-paper'
+                    : 'border-ember-400/20 text-smoke-200 hover:border-ember-400/40'
+                )}
+              >
+                {f.label} <span className="tabular text-smoke-400">{f.count}</span>
+              </button>
+            ))}
+            <Link href="/search" className="btn-ghost ml-auto text-xs">
+              <Plus size={13} strokeWidth={2} /> Add cigars
+            </Link>
+          </div>
+
+          {visible.length === 0 ? (
+            <div className="rounded-lg border-[0.5px] border-dashed border-ember-400/20 p-12 text-center">
+              <div className="text-smoke-400">
+                {filter === 'wishlist' ? 'Your wishlist is empty.' : 'Nothing here yet.'}
+              </div>
+              <Link href="/search" className="btn-primary mt-4">
+                <Plus size={14} strokeWidth={2} /> Find cigars
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {visible.map((r) => (
+                <Row key={r.cigarId} row={r} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -9,11 +9,13 @@ import { getCollection, type CollectionItem } from '@/lib/collection';
 import { getRatings, type UserRating } from '@/lib/ratings';
 import { ProfileBody } from '@/components/ProfileBody';
 import { Avatar } from '@/components/Avatar';
+import { FollowButton } from '@/components/FollowButton';
 
 export default function PublicProfilePage() {
   const params = useParams();
   const handle = String(params.handle ?? '');
   const [loaded, setLoaded] = useState(false);
+  const [isSelf, setIsSelf] = useState(false);
   const [profile, setProfile] = useState<ProfileFields | null>(null);
   const [collection, setCollection] = useState<CollectionItem[]>([]);
   const [ratings, setRatings] = useState<UserRating[]>([]);
@@ -25,6 +27,7 @@ export default function PublicProfilePage() {
     const me = getProfile();
     if (me.handle === handle) {
       setProfile(me);
+      setIsSelf(true);
       setCollection(getCollection());
       setRatings(getRatings());
     }
@@ -76,6 +79,11 @@ export default function PublicProfilePage() {
           </div>
           {profile.bio && <p className="mt-2 max-w-xl text-sm text-smoke-200">{profile.bio}</p>}
         </div>
+        {!isSelf && (
+          <div className="shrink-0">
+            <FollowButton handle={profile.handle} />
+          </div>
+        )}
       </div>
 
       <div className="mt-8">

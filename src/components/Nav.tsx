@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut } from 'lucide-react';
+import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import { subscribeAuth, signOut, type Session } from '@/lib/auth';
+import { isAdmin } from '@/lib/admin';
 
 const TABS = [
   { href: '/humidor', label: 'Humidor', icon: Box },
@@ -72,6 +73,12 @@ export function Nav() {
 
           {session ? (
             <>
+              {isAdmin(session.publicId) && (
+                <Link href="/admin" className="btn-ghost text-xs" title="Moderation">
+                  <ShieldCheck size={14} strokeWidth={1.5} className="text-ember-400" />
+                  <span className="hidden sm:inline">Admin</span>
+                </Link>
+              )}
               {session.type === 'lounge' && (
                 <Link href="/dashboard" className="btn-ghost text-xs">
                   <LayoutDashboard size={14} strokeWidth={1.5} />

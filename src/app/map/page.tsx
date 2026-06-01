@@ -7,7 +7,9 @@ import { MapPin, BadgeCheck, LocateFixed, Loader2, Navigation } from 'lucide-rea
 import type { NearbyStore } from '@/lib/catalog';
 import { cn } from '@/lib/utils';
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const MAPBOX_TOKEN =
+  process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
+  'pk.eyJ1Ijoic2plZmZlcnkiLCJhIjoiY21wcTMybnJkMGl6NDJxb2kwMHdveWc2eCJ9.7-_wuAUyICHe1qg5OOqAvg';
 // Custom CigarTV map style
 const MAP_STYLE = 'mapbox://styles/sjeffery/cmpr16cqv008z01s7e9o11bmt';
 

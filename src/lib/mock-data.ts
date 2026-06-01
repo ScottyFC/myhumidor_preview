@@ -649,3 +649,110 @@ export interface CigarSocial {
 export function getCigarSocial(_cigarId: string): CigarSocial {
   return { likes: 0, comments: [] };
 }
+
+// ─── TOP LOUNGES (consumer directory, mock ratings + stock) ───────────────────
+export interface TopLounge {
+  id: string;
+  slug: string;
+  name: string;
+  city: string;
+  state: string;
+  verified: boolean;
+  rating: number;       // mock community rating
+  reviewCount: number;  // mock
+  stocked: { brand: string; line: string; slug: string }[];
+}
+
+export function getTopLounges(): TopLounge[] {
+  const ratings = [4.9, 4.8, 4.8, 4.7, 4.7, 4.6, 4.6, 4.5];
+  const reviews = [842, 691, 540, 488, 402, 377, 310, 256];
+  return MOCK_LOUNGES.map((l, i) => ({
+    id: l.id,
+    slug: l.slug,
+    name: l.name,
+    city: l.city,
+    state: l.state,
+    verified: l.verified,
+    rating: ratings[i % ratings.length],
+    reviewCount: reviews[i % reviews.length],
+    // a deterministic handful of cigars this lounge "stocks"
+    stocked: MOCK_CIGARS.slice(i * 2, i * 2 + 4).map((c) => ({
+      brand: c.brand,
+      line: c.line,
+      slug: c.slug,
+    })),
+  })).sort((a, b) => b.rating - a.rating);
+}
+
+// ─── SOCIAL FEED (followed users + nearby/promoted lounges) ───────────────────
+export type FeedKind = 'rated' | 'added' | 'wishlisted' | 'deal' | 'new_arrival' | 'event';
+
+export interface FeedPost {
+  id: string;
+  kind: FeedKind;
+  isLounge: boolean;
+  authorName: string;
+  authorHandle: string;
+  authorVerified?: boolean;
+  when: string;
+  promoted?: boolean;
+  // cigar reference (user posts / new arrivals)
+  cigar?: { brand: string; line: string; slug: string };
+  rating?: number;
+  // lounge post content
+  loungeSlug?: string;
+  title?: string;
+  body?: string;
+}
+
+// Example feed content. In production this is assembled from the `posts`,
+// `ratings`, and `humidor_entries` of followed users + `lounge_posts` from
+// nearby or promoted lounges.
+export function getFeed(): FeedPost[] {
+  const c = (i: number) => MOCK_CIGARS[i % MOCK_CIGARS.length];
+  const lounge = (i: number) => MOCK_LOUNGES[i % MOCK_LOUNGES.length];
+  const posts: FeedPost[] = [
+    {
+      id: 'f1', kind: 'rated', isLounge: false,
+      authorName: 'Marcus T.', authorHandle: 'marcust', when: '2h',
+      cigar: { brand: c(1).brand, line: c(1).line, slug: c(1).slug }, rating: 4.5,
+    },
+    {
+      id: 'f2', kind: 'deal', isLounge: true, promoted: true,
+      authorName: lounge(0).name, authorHandle: 'coronacigar', authorVerified: true,
+      loungeSlug: lounge(0).slug, when: '3h',
+      title: 'Padrón Tuesday — 15% off the box',
+      body: 'All Padrón lines on special through the weekend. Lounge seating open until midnight.',
+    },
+    {
+      id: 'f3', kind: 'added', isLounge: false,
+      authorName: 'Renee P.', authorHandle: 'reneesmokes', when: '5h',
+      cigar: { brand: c(3).brand, line: c(3).line, slug: c(3).slug },
+    },
+    {
+      id: 'f4', kind: 'new_arrival', isLounge: true,
+      authorName: lounge(1).name, authorHandle: 'kingcorona', authorVerified: true,
+      loungeSlug: lounge(1).slug, when: '8h',
+      cigar: { brand: c(5).brand, line: c(5).line, slug: c(5).slug },
+      title: 'Just landed', body: 'Fresh box in the humidor today — limited quantity.',
+    },
+    {
+      id: 'f5', kind: 'event', isLounge: true, promoted: true,
+      authorName: lounge(2).name, authorHandle: 'thetampasweet', authorVerified: true,
+      loungeSlug: lounge(2).slug, when: '1d',
+      title: 'Herf Night — Friday 7pm',
+      body: 'Live music, rep on site, and a raffle. RSVP at the bar.',
+    },
+    {
+      id: 'f6', kind: 'wishlisted', isLounge: false,
+      authorName: 'Will H.', authorHandle: 'willhavana', when: '1d',
+      cigar: { brand: c(2).brand, line: c(2).line, slug: c(2).slug },
+    },
+    {
+      id: 'f7', kind: 'rated', isLounge: false,
+      authorName: 'Sofia D.', authorHandle: 'sofiad', when: '2d',
+      cigar: { brand: c(7).brand, line: c(7).line, slug: c(7).slug }, rating: 4.0,
+    },
+  ];
+  return posts;
+}

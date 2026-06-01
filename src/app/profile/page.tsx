@@ -83,7 +83,7 @@ export default function ProfilePage() {
             )}
           </div>
           {profile.bio && <p className="mt-2 max-w-xl text-sm text-smoke-200">{profile.bio}</p>}
-          {session && (
+          {session && session.type === 'lounge' && (
             <div className="mt-2 font-mono text-[11px] text-smoke-500">{session.publicId}</div>
           )}
         </div>

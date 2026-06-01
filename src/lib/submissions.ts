@@ -48,3 +48,25 @@ export function addSubmission(s: Omit<Submission, 'id' | 'status' | 'createdAt'>
   }
   return sub;
 }
+
+const EVENT = 'myhumidor:submissions-change';
+
+export function setSubmissionStatus(id: string, status: 'approved' | 'rejected') {
+  try {
+    const next = read().map((s) => (s.id === id ? { ...s, status } : s));
+    localStorage.setItem(KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event(EVENT));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function onSubmissionsChange(cb: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener(EVENT, cb);
+  window.addEventListener('storage', cb);
+  return () => {
+    window.removeEventListener(EVENT, cb);
+    window.removeEventListener('storage', cb);
+  };
+}

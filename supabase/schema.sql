@@ -31,7 +31,7 @@ create table if not exists public.profiles (
   city text,
   state text,
   bio text,
-  role text not null default 'consumer' check (role in ('consumer','lounge_owner','admin')),
+  role text not null default 'consumer' check (role in ('consumer','lounge_owner','admin','super_admin')),
   created_at timestamptz not null default now()
 );
 create index if not exists profiles_public_id_idx on public.profiles(public_id);
@@ -109,7 +109,8 @@ create table if not exists public.catalog_cigars (
   country text,
   price numeric(8,2),
   size text,
-  slug text not null
+  slug text not null,
+  image_url text
 );
 create index if not exists catalog_cigars_brand_idx on public.catalog_cigars(brand);
 create index if not exists catalog_cigars_name_idx on public.catalog_cigars using gin (to_tsvector('english', name));
@@ -271,6 +272,7 @@ create table if not exists public.lounges (
   phone text,
   website text,
   email text,
+  image_url text,
   hours text,
   created_at timestamptz not null default now()
 );
@@ -441,3 +443,55 @@ insert into public.badges (slug, name, criteria, tier) values
   ('opus-club', 'Opus Club', 'Rate an Arturo Fuente Fuente Fuente OpusX vitola', 'rare'),
   ('vintage-hunter', 'Vintage Hunter', 'Rate a cigar from a production year older than yourself', 'rare')
 on conflict (slug) do nothing;
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- SOCIAL: FOLLOWS + LOUNGE POSTS (home feed)
+-- ════════════════════════════════════════════════════════════════════════════
+create table if not exists public.follows (
+  follower_id uuid not null references public.profiles(id) on delete cascade,
+  followee_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (follower_id, followee_id)
+);
+alter table public.follows enable row level security;
+create policy "follows are public" on public.follows for select using (true);
+create policy "users manage own follows" on public.follows
+  for all using (auth.uid() = follower_id) with check (auth.uid() = follower_id);
+
+-- Lounge posts power the feed (deals, new arrivals, events). `promoted` is set
+-- when a lounge spends credits to boost a post.
+create table if not exists public.lounge_posts (
+  id uuid primary key default uuid_generate_v4(),
+  lounge_id uuid not null references public.lounges(id) on delete cascade,
+  kind text not null check (kind in ('deal','new_arrival','event')),
+  title text not null,
+  body text,
+  cigar_id uuid references public.catalog_cigars(id) on delete set null,
+  promoted boolean not null default false,
+  event_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists lounge_posts_recent_idx on public.lounge_posts(created_at desc);
+alter table public.lounge_posts enable row level security;
+create policy "lounge posts are public" on public.lounge_posts for select using (true);
+
+-- The home feed = recent posts from followed users' activity + lounge_posts from
+-- lounges the user follows or that are nearby/promoted. Assembled in the app
+-- (or a view) from follows + ratings + humidor_entries + lounge_posts.
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- BOOTSTRAP SUPER ADMIN
+-- ════════════════════════════════════════════════════════════════════════════
+-- The founding admin (public_id USER-cd2c8383eb384b379fda954b90e99b49). Run this
+-- AFTER the user has signed up so the profile row exists.
+update public.profiles
+   set role = 'super_admin'
+ where id = 'cd2c8383-eb38-4b37-9fda-954b90e99b49';
+
+-- Only admins may approve submissions / claims (already enforced via the
+-- "admins review submissions" policy; mirror for super_admin):
+create policy "super admins review submissions" on public.cigar_submissions
+  for all using (
+    exists (select 1 from public.profiles p
+            where p.id = auth.uid() and p.role in ('admin','super_admin'))
+  );

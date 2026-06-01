@@ -7,6 +7,7 @@ export interface CatalogCigar {
   price: number | null;
   size: string;
   slug: string;
+  image_url?: string | null;
 }
 
 export interface CatalogStore {
@@ -19,6 +20,7 @@ export interface CatalogStore {
   lat: number | null;
   lng: number | null;
   geo?: 'city' | 'state' | null; // coordinate precision (approximate, pending exact geocode)
+  image_url?: string | null;
   verified: boolean;
   phone: string;
   email: string;

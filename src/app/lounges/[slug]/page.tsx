@@ -5,6 +5,7 @@ import type { CatalogStore } from '@/types';
 import { mockLoungeAsStore } from '@/lib/mock-data';
 import { findCatalogStoreBySlug } from '@/lib/catalog';
 import { ClaimLounge } from '@/components/ClaimLounge';
+import { BrandTile } from '@/components/BrandTile';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -36,8 +37,16 @@ export default async function LoungePage({ params }: PageProps) {
 
       {/* Header */}
       <header className="border-b border-ember-400/15 pb-8">
-        <div className="eyebrow mb-2">{lounge.city}, {lounge.state}</div>
-        <h1 className="flex flex-wrap items-center gap-3 font-display text-5xl tracking-tightest sm:text-6xl">
+        <div className="flex items-center gap-4">
+          <BrandTile
+            name={lounge.name}
+            src={lounge.image_url}
+            className="h-16 w-16 shrink-0 text-2xl"
+            rounded="rounded-xl"
+          />
+          <div className="eyebrow">{lounge.city}, {lounge.state}</div>
+        </div>
+        <h1 className="mt-4 flex flex-wrap items-center gap-3 font-display text-5xl tracking-tightest sm:text-6xl">
           {lounge.name}
           {lounge.verified && (
             <span className="inline-flex items-center gap-1 rounded-full bg-ember-400/15 px-3 py-1 text-xs font-medium uppercase tracking-widest text-ember-100">

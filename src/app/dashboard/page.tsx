@@ -103,8 +103,8 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-          <Link href="/lounges" className="btn-ghost mt-4 w-full justify-center text-xs">
-            Spend credits on a campaign <ArrowRight size={13} strokeWidth={1.5} />
+          <Link href="/dashboard/marketing" className="btn-ghost mt-4 w-full justify-center text-xs">
+            Spend credits on marketing <ArrowRight size={13} strokeWidth={1.5} />
           </Link>
         </section>
       </div>

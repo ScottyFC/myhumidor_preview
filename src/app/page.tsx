@@ -111,7 +111,7 @@ export default async function HomePage() {
             A free TV stick streaming the live CigarTV channel. Measurable foot traffic. The verified
             check on every map your customers use. No upfront cost.
           </p>
-          <Link href="/lounges" className="btn-primary mt-6">
+          <Link href="/lounges/join" className="btn-primary mt-6">
             The Lounge Program <ArrowRight size={14} strokeWidth={1.5} />
           </Link>
         </div>

@@ -9,10 +9,16 @@ A premium cigar rating, collection, and discovery platform. Built with Next.js
   your MRSS feed, each linking to the cigar featured in it), a Top Cigars preview, and the
   Lounge Program pitch. The VOD library is intentionally not hosted here — episodes are
   *referenced*, not played.
-- **`/profile`** — Your profile: upload an avatar, set your display name, city, and bio, and see your
-  humidor, wishlist, and ratings. Editing and ratings persist locally for the demo.
-- **`/u/[handle]`** — Public read-only profile — how other members see your humidor, wishlist, and
-  ratings. (In production this loads any member by handle from Supabase.)
+- **`/lounges`** — Consumer directory of the top-rated lounges in the US and what they stock; a
+  "become a verified lounge" link sits at the bottom (`/lounges/join` holds the partner pitch).
+- **`/admin`** — Super-admin moderation: approve cigar submissions and lounge claims, and promote
+  other accounts to admin. Restricted to super admins.
+- **`/dashboard/marketing`** — Lounges spend viewership credits to boost map placement, promote
+  deals / new arrivals / events (linked from the credit ledger).
+- **`/profile`** — Your profile: avatar, city, bio, and your humidor / wishlist / ratings. Consumer
+  IDs are hidden (handle only). The **Humidor page** now opens to a **feed** of posts from people you
+  follow and nearby/promoted lounges, with your collection on a second tab.
+- **`/u/[handle]`** — Public read-only profile with a Follow button.
 - **`/register`** — Sign up / sign in, split between **consumers and lounges**, with Google, Apple,
   and email options. Issues a typed account ID (`USER-…` / `LNGE-…`); the nav reflects the signed-in
   account and shows lounge owners a Dashboard link.
