@@ -1,10 +1,17 @@
 'use client';
 
 /**
- * The user's personal collection — cigars they've added to their humidor or
- * wishlist. Persisted in localStorage for the demo; in production these are rows
- * in `humidor_entries` (status: aging/ready/smoked/wishlist) keyed to auth.uid().
+ * The user's personal collection — cigars in their humidor or wishlist.
+ *
+ * Dual-mode: when Supabase is configured the source of truth is the
+ * `humidor_entries` table (keyed to auth.uid()); otherwise it falls back to
+ * localStorage for the offline demo. Either way the public API stays synchronous
+ * (reads hit an in-memory cache; writes are optimistic + persisted in the
+ * background) so components don't need to change.
  */
+
+import { isSupabaseConfigured, supabaseBrowser } from './supabase';
+import { subscribeAuth } from './auth';
 
 export type CollectionStatus = 'humidor' | 'wishlist';
 
@@ -18,57 +25,148 @@ export interface CollectionItem {
   addedAt: string;
 }
 
+export type CollectionSeed = Omit<CollectionItem, 'status' | 'addedAt'>;
+
 const KEY = 'myhumidor:collection';
 const EVENT = 'myhumidor:collection-change';
 
-function read(): CollectionItem[] {
-  if (typeof window === 'undefined') return [];
+let cache: CollectionItem[] = [];
+let started = false;
+let userId: string | null = null;
+
+function fire() {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(EVENT));
+}
+
+/* ── localStorage (demo) ─────────────────────────────────────────────────── */
+function loadLocal(): CollectionItem[] {
   try {
     return JSON.parse(localStorage.getItem(KEY) ?? '[]');
   } catch {
     return [];
   }
 }
-
-function write(items: CollectionItem[]) {
+function saveLocal() {
   try {
-    localStorage.setItem(KEY, JSON.stringify(items));
-    window.dispatchEvent(new Event(EVENT));
+    localStorage.setItem(KEY, JSON.stringify(cache));
   } catch {
     /* ignore */
   }
 }
 
+/* ── Supabase ────────────────────────────────────────────────────────────── */
+async function hydrateRemote() {
+  try {
+    const { data, error } = await supabaseBrowser()
+      .from('humidor_entries')
+      .select('cigar_id, status, brand, name, size, slug, created_at')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('[collection] load failed:', error.message);
+      return;
+    }
+    cache = (data ?? []).map((r) => ({
+      cigarId: r.cigar_id,
+      status: r.status as CollectionStatus,
+      brand: r.brand ?? '',
+      name: r.name ?? '',
+      size: r.size ?? '',
+      slug: r.slug ?? '',
+      addedAt: r.created_at ?? new Date().toISOString(),
+    }));
+    fire();
+  } catch (e) {
+    console.error('[collection] load error:', e);
+  }
+}
+
+function persistUpsert(seed: CollectionSeed, status: CollectionStatus) {
+  if (!isSupabaseConfigured) return saveLocal();
+  if (!userId) return;
+  supabaseBrowser()
+    .from('humidor_entries')
+    .upsert(
+      {
+        user_id: userId,
+        cigar_id: seed.cigarId,
+        status,
+        brand: seed.brand,
+        name: seed.name,
+        size: seed.size,
+        slug: seed.slug,
+      },
+      { onConflict: 'user_id,cigar_id' }
+    )
+    .then(({ error }) => error && console.error('[collection] save failed:', error.message));
+}
+
+function persistRemove(cigarId: string) {
+  if (!isSupabaseConfigured) return saveLocal();
+  if (!userId) return;
+  supabaseBrowser()
+    .from('humidor_entries')
+    .delete()
+    .eq('user_id', userId)
+    .eq('cigar_id', cigarId)
+    .then(({ error }) => error && console.error('[collection] delete failed:', error.message));
+}
+
+/* ── init (lazy, once) ───────────────────────────────────────────────────── */
+function start() {
+  if (started || typeof window === 'undefined') return;
+  started = true;
+  if (isSupabaseConfigured) {
+    subscribeAuth((s) => {
+      userId = s?.uuid ?? null;
+      if (userId) hydrateRemote();
+      else {
+        cache = [];
+        fire();
+      }
+    });
+  } else {
+    cache = loadLocal();
+  }
+}
+
+/* ── public API (unchanged signatures) ───────────────────────────────────── */
 export function getCollection(): CollectionItem[] {
-  return read();
+  start();
+  if (!isSupabaseConfigured && cache.length === 0) cache = loadLocal();
+  return [...cache].sort((a, b) => b.addedAt.localeCompare(a.addedAt));
 }
 
 export function getStatus(cigarId: string): CollectionStatus | null {
-  return read().find((i) => i.cigarId === cigarId)?.status ?? null;
+  start();
+  return cache.find((i) => i.cigarId === cigarId)?.status ?? null;
 }
-
-export type CollectionSeed = Omit<CollectionItem, 'status' | 'addedAt'>;
 
 /** Set (or clear) a cigar's status. Passing the current status again removes it. */
 export function toggleStatus(seed: CollectionSeed, status: CollectionStatus): CollectionStatus | null {
-  const items = read();
-  const existing = items.find((i) => i.cigarId === seed.cigarId);
+  start();
+  const existing = cache.find((i) => i.cigarId === seed.cigarId);
   if (existing && existing.status === status) {
-    write(items.filter((i) => i.cigarId !== seed.cigarId));
+    cache = cache.filter((i) => i.cigarId !== seed.cigarId);
+    fire();
+    persistRemove(seed.cigarId);
     return null;
   }
-  const next = items.filter((i) => i.cigarId !== seed.cigarId);
-  next.unshift({ ...seed, status, addedAt: new Date().toISOString() });
-  write(next);
+  cache = [{ ...seed, status, addedAt: new Date().toISOString() }, ...cache.filter((i) => i.cigarId !== seed.cigarId)];
+  fire();
+  persistUpsert(seed, status);
   return status;
 }
 
 export function remove(cigarId: string) {
-  write(read().filter((i) => i.cigarId !== cigarId));
+  start();
+  cache = cache.filter((i) => i.cigarId !== cigarId);
+  fire();
+  persistRemove(cigarId);
 }
 
 export function onCollectionChange(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => {};
+  start();
   window.addEventListener(EVENT, cb);
   window.addEventListener('storage', cb);
   return () => {

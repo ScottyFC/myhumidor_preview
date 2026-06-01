@@ -226,11 +226,16 @@ create trigger ratings_aggregate_trigger
 create table if not exists public.humidor_entries (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  cigar_id uuid not null references public.cigars(id) on delete cascade,
+  cigar_id uuid not null references public.catalog_cigars(id) on delete cascade,
+  status text not null default 'humidor' check (status in ('humidor','wishlist')),
+  -- denormalized for fast list rendering without a join
+  brand text,
+  name text,
+  size text,
+  slug text,
   quantity int not null default 1 check (quantity >= 0),
-  status text not null default 'ready' check (status in ('aging','ready','smoked','wishlist')),
-  acquired_at date,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (user_id, cigar_id)
 );
 create index if not exists humidor_user_idx on public.humidor_entries(user_id);
 
@@ -407,8 +412,8 @@ create policy "users manage own ratings" on public.ratings
 create policy "users manage own humidor" on public.humidor_entries
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create policy "users see own humidor" on public.humidor_entries
-  for select using (auth.uid() = user_id);
+create policy "humidor entries are public" on public.humidor_entries
+  for select using (true);
 
 create policy "users update own profile" on public.profiles
   for update using (auth.uid() = id) with check (auth.uid() = id);
