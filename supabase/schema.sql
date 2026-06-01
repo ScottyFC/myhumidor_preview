@@ -2,8 +2,17 @@
 -- MyHumidor by CigarTV — Postgres schema
 --
 -- Run this against a fresh Supabase project: SQL editor → New query → paste.
--- Idempotent: re-runnable on a fresh database. Drop the schema first if
--- iterating.
+-- Idempotent on a FRESH database. If you've run an earlier version, the tables
+-- already exist and `create table if not exists` won't pick up new columns —
+-- reset the public schema first by running these four lines, then this file:
+--
+--   drop schema public cascade;
+--   create schema public;
+--   grant usage on schema public to anon, authenticated, service_role;
+--   grant all on schema public to postgres, service_role;
+--
+-- (Safe: this only clears your tables in `public`. It does NOT touch auth.users
+--  or the storage schema, so logins and the avatars bucket survive.)
 -- ════════════════════════════════════════════════════════════════════════════
 
 -- Extensions
