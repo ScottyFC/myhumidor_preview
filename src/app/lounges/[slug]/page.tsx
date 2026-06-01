@@ -6,6 +6,9 @@ import { mockLoungeAsStore } from '@/lib/mock-data';
 import { findCatalogStoreBySlug } from '@/lib/catalog';
 import { ClaimLounge } from '@/components/ClaimLounge';
 import { BrandTile } from '@/components/BrandTile';
+import { LoungeMenu } from '@/components/LoungeMenu';
+import { AdminOnlyId } from '@/components/AdminOnlyId';
+import { ChangeRequest } from '@/components/ChangeRequest';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -97,23 +100,20 @@ export default async function LoungePage({ params }: PageProps) {
       {/* Menu / inventory */}
       <section className="border-b border-ember-400/15 py-8">
         <div className="eyebrow mb-3">On the menu</div>
-        {lounge.verified && lounge.inventoryCount ? (
-          <p className="text-smoke-200">
-            <span className="font-display text-2xl text-paper">{lounge.inventoryCount}</span> cigars
-            currently in stock. Live menu surfaces here once the lounge syncs inventory from the
-            dashboard.
-          </p>
-        ) : (
-          <p className="text-smoke-400">
-            No live menu yet. When this lounge joins the program and adds inventory, what they carry
-            shows here — and links into your humidor.
-          </p>
-        )}
+        <LoungeMenu storeId={lounge.id} fallbackCount={lounge.inventoryCount} />
+        <div className="mt-4">
+          <AdminOnlyId id={lounge.id} label="Lounge UUID" />
+        </div>
       </section>
 
       {/* Claim */}
-      <section className="py-8">
+      <section className="border-b border-ember-400/15 py-8">
         <ClaimLounge store={lounge} alreadyVerified={!!lounge.verified} />
+      </section>
+
+      {/* Suggest a correction */}
+      <section className="py-8">
+        <ChangeRequest targetType="lounge" targetId={lounge.id} targetName={lounge.name} />
       </section>
     </div>
   );

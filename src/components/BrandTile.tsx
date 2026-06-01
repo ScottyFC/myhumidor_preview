@@ -32,16 +32,27 @@ export function BrandTile({
   src,
   className,
   rounded = 'rounded-lg',
+  fit = 'cover',
 }: {
   name: string;
   src?: string | null;
   className?: string;
   rounded?: string;
+  fit?: 'cover' | 'contain';
 }) {
   if (src) {
+    if (fit === 'contain') {
+      // Logos: keep the whole mark visible, centered on a dark tile.
+      return (
+        <div className={cn('flex items-center justify-center bg-char/70 p-1.5', rounded, className)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt={name} className="h-full w-full object-contain" loading="lazy" />
+        </div>
+      );
+    }
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={name} className={cn('object-cover', rounded, className)} />
+      <img src={src} alt={name} className={cn('object-cover', rounded, className)} loading="lazy" />
     );
   }
   const tone = TONES[hash(name) % TONES.length];

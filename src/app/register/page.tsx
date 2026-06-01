@@ -28,6 +28,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
   const [linkError, setLinkError] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   // Surfaced when a confirmation link is expired/already used (callback redirect).
   useEffect(() => {
@@ -44,6 +45,9 @@ export default function RegisterPage() {
   async function oauth(provider: AuthProvider) {
     if (provider === 'password') return;
     setError('');
+    if (mode === 'signup' && !agreed) {
+      return setError('Please agree to the terms to create an account.');
+    }
     setBusy(provider);
     // REAL: redirects to the provider, then back to /auth/callback.
     // DEMO: creates a local session immediately.
@@ -65,6 +69,7 @@ export default function RegisterPage() {
       if (password !== confirm) return setError('Passwords don’t match.');
       if (type === 'consumer' && !displayName.trim()) return setError('Choose a display name.');
       if (type === 'lounge' && !loungeName.trim()) return setError('Enter your lounge name.');
+      if (!agreed) return setError('Please agree to the terms to create an account.');
     }
     setBusy('password');
 
@@ -200,9 +205,28 @@ export default function RegisterPage() {
 
         {error && <div className="text-xs text-red-400">{error}</div>}
 
+        {mode === 'signup' && (
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-md border-[0.5px] border-ember-400/20 bg-char/40 p-3">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-ember-400"
+            />
+            <span className="text-xs leading-relaxed text-smoke-300">
+              I agree to the{' '}
+              <Link href="/terms" className="text-ember-100 underline-offset-2 hover:underline">
+                Terms &amp; Conditions
+              </Link>{' '}
+              and consent to MyHumidor storing and tracking my account data (ratings, humidor, and
+              activity) to power the app. I&apos;m 21 or older.
+            </span>
+          </label>
+        )}
+
         <button
           onClick={manual}
-          disabled={!!busy}
+          disabled={!!busy || (mode === 'signup' && !agreed)}
           className="flex w-full items-center justify-center gap-2 rounded-md bg-ember-400 py-2.5 text-sm font-medium text-paper transition hover:bg-ember-600 disabled:opacity-60"
         >
           {busy === 'password' ? <Loader2 size={16} className="animate-spin" /> : <Check size={15} strokeWidth={2} />}

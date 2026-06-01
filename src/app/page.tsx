@@ -1,9 +1,11 @@
 import Link from 'next/link';
-import { ArrowRight, MapPin, Tv, Flame } from 'lucide-react';
+import { ArrowRight, MapPin, Tv, Flame, Star, BadgeCheck } from 'lucide-react';
 import { fetchEpisodes, recentEpisodes } from '@/lib/mrss';
-import { getTopCigars, findFeaturedForEpisode, MOCK_LOUNGES } from '@/lib/mock-data';
+import { getTopCigars, getTopLounges, findFeaturedForEpisode, MOCK_LOUNGES } from '@/lib/mock-data';
+import { featuredCigars } from '@/lib/catalog';
 import { RecentEpisode } from '@/components/RecentEpisode';
 import { AddToCollection } from '@/components/AddToCollection';
+import { BrandTile } from '@/components/BrandTile';
 
 export const revalidate = 3600;
 
@@ -11,12 +13,14 @@ export default async function HomePage() {
   const episodes = await fetchEpisodes();
   const recent = recentEpisodes(episodes, 6);
   const topCigars = getTopCigars(5);
+  const featured = featuredCigars(12);
+  const featuredLounges = getTopLounges().slice(0, 8);
 
   return (
     <div className="mx-auto max-w-7xl px-6 pt-8">
       {/* ─── HERO ──────────────────────────────────────────────────────────── */}
       <section className="py-12 lg:py-16 animate-fade-up">
-        <div className="eyebrow mb-3">Tampa · Premium cigar, tracked</div>
+        <div className="eyebrow mb-3">Premium cigar, tracked</div>
         <h1 className="font-display text-5xl leading-[0.95] tracking-tightest sm:text-6xl lg:text-7xl">
           <span className="italic text-ember-400">Rate</span> what you smoke.
           <br />
@@ -36,6 +40,84 @@ export default async function HomePage() {
           <Link href="/humidor" className="btn-ghost">
             Open your humidor
           </Link>
+        </div>
+      </section>
+
+      <Rule />
+
+      {/* ─── FEATURED CIGARS CAROUSEL ─────────────────────────────────── */}
+      <section className="py-10">
+        <SectionHeader
+          title="Featured cigars"
+          subtitle="Handpicked this week"
+          href="/top"
+          icon={<Flame size={14} strokeWidth={1.5} className="text-ember-400" />}
+        />
+        <div className="-mx-6 flex snap-x gap-4 overflow-x-auto px-6 pb-3 [scrollbar-width:thin]">
+          {featured.map((c) => (
+            <Link
+              key={c.uuid}
+              href={`/cigars/${c.slug}`}
+              className="group w-44 shrink-0 snap-start"
+            >
+              <BrandTile
+                name={c.brand}
+                src={c.image_url}
+                fit="contain"
+                rounded="rounded-xl"
+                className="aspect-[4/5] w-full text-4xl transition group-hover:ring-1 group-hover:ring-ember-400/40"
+              />
+              <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100">{c.name}</div>
+              <div className="truncate text-xs text-smoke-400">
+                {c.brand} · {c.size}
+                {c.price != null && <span className="text-smoke-200"> · {`$${c.price}`}</span>}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <Rule />
+
+      {/* ─── FEATURED LOUNGES CAROUSEL ────────────────────────────────── */}
+      <section className="py-10">
+        <SectionHeader
+          title="Featured lounges"
+          subtitle="Top-rated near the community"
+          href="/lounges"
+          icon={<MapPin size={14} strokeWidth={1.5} className="text-ember-400" />}
+        />
+        <div className="-mx-6 flex snap-x gap-4 overflow-x-auto px-6 pb-3 [scrollbar-width:thin]">
+          {featuredLounges.map((l) => (
+            <Link
+              key={l.id}
+              href={`/lounges/${l.slug}`}
+              className="group w-60 shrink-0 snap-start rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4 transition hover:border-ember-400/40"
+            >
+              <div className="flex items-center gap-3">
+                <BrandTile name={l.name} className="h-12 w-12 shrink-0 text-lg" rounded="rounded-lg" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="truncate font-display text-base font-medium group-hover:text-ember-100">
+                      {l.name}
+                    </span>
+                    {l.verified && <BadgeCheck size={13} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
+                  </div>
+                  <div className="text-xs text-smoke-400">{l.city}, {l.state}</div>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-1 text-xs text-ember-100">
+                <Star size={12} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
+                <span className="tabular">{l.rating.toFixed(1)}</span>
+                <span className="tabular text-smoke-400">({l.reviewCount.toLocaleString()})</span>
+              </div>
+              {l.stocked.length > 0 && (
+                <div className="mt-2 truncate text-xs text-smoke-400">
+                  Stocks {l.stocked.slice(0, 2).map((s) => s.brand).join(', ')}…
+                </div>
+              )}
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -117,17 +199,24 @@ export default async function HomePage() {
         </div>
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
           {MOCK_LOUNGES.filter((l) => l.verified).slice(0, 3).map((l) => (
-            <div key={l.id} className="rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-4">
+            <Link
+              key={l.id}
+              href={`/lounges/${l.slug}`}
+              className="group rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-4 transition hover:border-ember-400/40"
+            >
               <div className="flex items-center gap-1.5">
                 <MapPin size={11} strokeWidth={1.5} className="text-ember-400" />
                 <span className="eyebrow">verified</span>
               </div>
-              <div className="font-display mt-1 text-base font-medium">{l.name}</div>
+              <div className="font-display mt-1 text-base font-medium group-hover:text-ember-100">{l.name}</div>
               <div className="mt-1 text-xs text-smoke-400">{l.city}, {l.state}</div>
               <div className="mt-2 text-xs text-smoke-200 tabular">
                 {l.inventoryCount} cigars in stock
               </div>
-            </div>
+              <div className="mt-2 inline-flex items-center gap-1 text-xs text-ember-100">
+                View profile <ArrowRight size={11} strokeWidth={1.5} />
+              </div>
+            </Link>
           ))}
         </div>
       </section>

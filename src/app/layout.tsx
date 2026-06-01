@@ -38,8 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               className="text-ember-100 transition hover:text-ember-400"
             >
               CigarTV
-            </a>{' '}
-            · Tampa
+            </a>
           </div>
         </footer>
       </body>

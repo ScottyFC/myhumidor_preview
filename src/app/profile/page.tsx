@@ -10,6 +10,7 @@ import { getCollection, onCollectionChange, type CollectionItem } from '@/lib/co
 import { getRatings, onRatingsChange, type UserRating } from '@/lib/ratings';
 import { ProfileBody } from '@/components/ProfileBody';
 import { Avatar } from '@/components/Avatar';
+import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { cn } from '@/lib/utils';
 
 export default function ProfilePage() {
@@ -86,6 +87,7 @@ export default function ProfilePage() {
           {session && session.type === 'lounge' && (
             <div className="mt-2 font-mono text-[11px] text-smoke-500">{session.publicId}</div>
           )}
+          {session && <AdminOnlyId id={session.publicId} label="User UUID" />}
         </div>
 
         <div className="flex shrink-0 gap-2">

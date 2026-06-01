@@ -4,17 +4,27 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, Search, Plus, Trash2, Store, Check, Lock, Package, Loader2,
+  UploadCloud, Download, Rocket,
 } from 'lucide-react';
 import type { CatalogCigar, CatalogStore, InventoryItem } from '@/types';
 import { cn, formatUSD } from '@/lib/utils';
 
 const STORE_KEY = 'myhumidor:active-store';
 const invKey = (storeId: string) => `myhumidor:inventory:${storeId}`;
+const pubKey = (storeId: string) => `myhumidor:published:${storeId}`;
+
+const TEMPLATE_CSV = `brand,name,size,price,quantity
+Padron,1964 Anniversary Series Exclusivo Maduro,Robusto,17.50,12
+Arturo Fuente,Hemingway Short Story,Perfecto,9.25,20
+Oliva,Serie V Melanio,Toro,13.00,8
+`;
 
 export default function InventoryPage() {
   const [store, setStore] = useState<CatalogStore | null>(null);
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [published, setPublished] = useState(false);
+  const [importMsg, setImportMsg] = useState('');
 
   // Load active store + its inventory from localStorage on mount
   useEffect(() => {
@@ -40,6 +50,7 @@ export default function InventoryPage() {
     } catch {
       /* ignore */
     }
+    setPublished(false); // edits make the published menu stale until re-published
   }, [items, store, hydrated]);
 
   function selectStore(s: CatalogStore) {
@@ -59,6 +70,7 @@ export default function InventoryPage() {
       return [
         {
           cigarId: c.uuid,
+          slug: c.slug,
           brand: c.brand,
           name: c.name,
           size: c.size,
@@ -76,6 +88,66 @@ export default function InventoryPage() {
 
   function remove(cigarId: string) {
     setItems((prev) => prev.filter((i) => i.cigarId !== cigarId));
+  }
+
+  function publish() {
+    if (!store) return;
+    try {
+      localStorage.setItem(pubKey(store.id), JSON.stringify(items));
+      setPublished(true);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function downloadTemplate() {
+    const blob = new Blob([TEMPLATE_CSV], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'myhumidor-menu-template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importCsv(e: React.ChangeEvent<HTMLInputElement>) {
+    setImportMsg('');
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result);
+      const lines = text.split(/\r?\n/).filter((l) => l.trim());
+      if (lines.length < 2) {
+        setImportMsg('That file looks empty.');
+        return;
+      }
+      const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
+      const col = (n: string) => header.indexOf(n);
+      const ci = { brand: col('brand'), name: col('name'), size: col('size'), price: col('price'), qty: col('quantity') };
+      if (ci.brand < 0 || ci.name < 0) {
+        setImportMsg('Missing required columns. Use the template (brand, name, size, price, quantity).');
+        return;
+      }
+      const parsed: InventoryItem[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cells = lines[i].split(',');
+        const name = (cells[ci.name] ?? '').trim();
+        if (!name) continue;
+        parsed.push({
+          cigarId: `csv_${i}_${Date.now()}`,
+          brand: (cells[ci.brand] ?? '').trim(),
+          name,
+          size: ci.size >= 0 ? (cells[ci.size] ?? '').trim() : '',
+          price: ci.price >= 0 ? parseFloat((cells[ci.price] ?? '').replace(/[$,]/g, '')) || 0 : 0,
+          quantity: ci.qty >= 0 ? parseInt((cells[ci.qty] ?? '').trim(), 10) || 0 : 0,
+        });
+      }
+      setItems((prev) => [...parsed, ...prev]);
+      setImportMsg(`Imported ${parsed.length} item${parsed.length === 1 ? '' : 's'}. Review prices, then publish.`);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   }
 
   const totals = useMemo(() => {
@@ -133,13 +205,31 @@ export default function InventoryPage() {
             <CatalogSearch existing={new Set(items.map((i) => i.cigarId))} onAdd={addCigar} />
           </div>
 
+          {/* Bulk upload */}
+          <div className="mt-8 rounded-lg border-[0.5px] border-ember-400/15 bg-char/40 p-5">
+            <div className="eyebrow mb-1">Upload a menu (.csv)</div>
+            <p className="mb-3 text-xs text-smoke-400">
+              Got a big menu? Upload it all at once. Download the template, fill it in, and import.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={downloadTemplate} className="btn-ghost text-sm">
+                <Download size={14} strokeWidth={1.5} /> Download template
+              </button>
+              <label className="btn-primary cursor-pointer text-sm">
+                <UploadCloud size={14} strokeWidth={1.5} /> Upload CSV
+                <input type="file" accept=".csv,text/csv" onChange={importCsv} className="hidden" />
+              </label>
+            </div>
+            {importMsg && <div className="mt-2 text-xs text-ember-100">{importMsg}</div>}
+          </div>
+
           {/* Inventory table */}
           <div className="mt-8">
             <div className="eyebrow mb-3">Your inventory</div>
             {items.length === 0 ? (
               <div className="rounded-lg border-[0.5px] border-dashed border-ember-400/20 p-12 text-center text-smoke-400">
                 <Package className="mx-auto mb-3 text-ember-400/60" size={28} strokeWidth={1.5} />
-                Nothing in stock yet. Search above to add your first cigar.
+                Nothing in stock yet. Search or upload a CSV to add your first cigars.
               </div>
             ) : (
               <div className="overflow-hidden rounded-xl border-[0.5px] border-ember-400/15">
@@ -194,6 +284,39 @@ export default function InventoryPage() {
               </div>
             )}
           </div>
+
+          {/* Publish */}
+          {items.length > 0 && (
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border-[0.5px] border-ember-400/30 bg-ember-400/5 p-5">
+              <div>
+                <div className="font-display text-lg">
+                  {published ? 'Your menu is live' : 'Ready to go live?'}
+                </div>
+                <div className="text-sm text-smoke-300">
+                  {published
+                    ? `Published ${totals.skus} cigars to your lounge page.`
+                    : 'Publish this inventory to your public lounge page so members can see what you carry.'}
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {store && published && (
+                  <Link href={`/lounges/${store.slug}`} className="btn-ghost text-sm">
+                    View lounge page
+                  </Link>
+                )}
+                <button
+                  onClick={publish}
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition',
+                    published ? 'bg-ember-600/30 text-ember-100' : 'bg-ember-400 text-paper hover:bg-ember-600'
+                  )}
+                >
+                  {published ? <Check size={15} strokeWidth={2} /> : <Rocket size={15} strokeWidth={1.5} />}
+                  {published ? 'Published' : 'Confirm & publish to lounge page'}
+                </button>
+              </div>
+            </div>
+          )}
 
           <p className="mt-6 text-xs leading-relaxed text-smoke-400">
             Saved to this browser for the demo. In production each change writes to the{' '}

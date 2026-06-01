@@ -7,6 +7,9 @@ import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
 import { CigarCommunity } from '@/components/CigarCommunity';
 import { AddToCollection } from '@/components/AddToCollection';
+import { BrandTile } from '@/components/BrandTile';
+import { AdminOnlyId } from '@/components/AdminOnlyId';
+import { ChangeRequest } from '@/components/ChangeRequest';
 import { formatUSD } from '@/lib/utils';
 
 interface PageProps {
@@ -24,6 +27,7 @@ interface CigarView {
   ringGauge?: number;
   country?: string;
   msrp?: number | null;
+  imageUrl?: string | null;
   rated: boolean;
   ratingCount: number;
   flavorAvg: number;
@@ -67,6 +71,7 @@ export default async function CigarPage({ params }: PageProps) {
         vitola: cat!.size,
         country: cat!.country,
         msrp: cat!.price,
+        imageUrl: cat!.image_url ?? null,
         rated: false,
         ratingCount: 0,
         flavorAvg: 0,
@@ -90,15 +95,13 @@ export default async function CigarPage({ params }: PageProps) {
       <div className="grid gap-10 lg:grid-cols-12">
         {/* ─── Visual ─────────────────────────────────────────────────── */}
         <div className="lg:col-span-5">
-          <div className="aspect-[4/5] overflow-hidden rounded-xl bg-gradient-to-b from-leather to-leather-deep">
-            <div className="flex h-full flex-col justify-center">
-              <div className="mx-auto h-10 w-full bg-ember-600 border-y border-ember-100/20 flex items-center justify-center">
-                <div className="font-display italic text-xs tracking-widest text-ember-50">
-                  {view.brand}
-                </div>
-              </div>
-            </div>
-          </div>
+          <BrandTile
+            name={view.brand}
+            src={view.imageUrl}
+            fit="contain"
+            rounded="rounded-xl"
+            className="aspect-[4/5] w-full text-6xl"
+          />
         </div>
 
         {/* ─── Header + Aggregates ───────────────────────────────────── */}
@@ -110,6 +113,7 @@ export default async function CigarPage({ params }: PageProps) {
           <div className="mt-3 text-lg text-smoke-200 italic">
             {[view.vitola, view.wrapper].filter(Boolean).join(' · ')}
           </div>
+          <AdminOnlyId id={view.id} label="Cigar UUID" />
 
           <dl className="mt-6 grid grid-cols-3 gap-4 border-y border-ember-400/15 py-4 text-sm">
             {view.lengthIn != null && <Stat label="Length" value={`${view.lengthIn}″`} />}
@@ -166,6 +170,11 @@ export default async function CigarPage({ params }: PageProps) {
       {/* ─── Community: likes + comments ──────────────────────────────── */}
       <div className="mt-8">
         <CigarCommunity social={social} />
+      </div>
+
+      {/* ─── Suggest a correction ─────────────────────────────────────── */}
+      <div className="mt-6">
+        <ChangeRequest targetType="cigar" targetId={view.id} targetName={`${view.brand} ${view.headline}`} />
       </div>
 
       {/* ─── Nearby in stock ──────────────────────────────────────────── */}

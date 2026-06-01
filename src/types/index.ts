@@ -31,6 +31,7 @@ export interface CatalogStore {
 // ─── INVENTORY (lounge dashboard) ─────────────────────────────────────────────
 export interface InventoryItem {
   cigarId: string;
+  slug?: string;
   brand: string;
   name: string;
   size: string;

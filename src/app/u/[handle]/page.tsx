@@ -5,17 +5,20 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { MapPin, Loader2, UserX } from 'lucide-react';
 import { getProfile, type ProfileFields } from '@/lib/profile';
+import { getSession } from '@/lib/auth';
 import { getCollection, type CollectionItem } from '@/lib/collection';
 import { getRatings, type UserRating } from '@/lib/ratings';
 import { ProfileBody } from '@/components/ProfileBody';
 import { Avatar } from '@/components/Avatar';
 import { FollowButton } from '@/components/FollowButton';
+import { AdminOnlyId } from '@/components/AdminOnlyId';
 
 export default function PublicProfilePage() {
   const params = useParams();
   const handle = String(params.handle ?? '');
   const [loaded, setLoaded] = useState(false);
   const [isSelf, setIsSelf] = useState(false);
+  const [viewedId, setViewedId] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfileFields | null>(null);
   const [collection, setCollection] = useState<CollectionItem[]>([]);
   const [ratings, setRatings] = useState<UserRating[]>([]);
@@ -28,6 +31,7 @@ export default function PublicProfilePage() {
     if (me.handle === handle) {
       setProfile(me);
       setIsSelf(true);
+      setViewedId(getSession()?.publicId ?? null);
       setCollection(getCollection());
       setRatings(getRatings());
     }
@@ -78,6 +82,7 @@ export default function PublicProfilePage() {
             )}
           </div>
           {profile.bio && <p className="mt-2 max-w-xl text-sm text-smoke-200">{profile.bio}</p>}
+          {viewedId && <AdminOnlyId id={viewedId} label="User UUID" />}
         </div>
         {!isSelf && (
           <div className="shrink-0">
