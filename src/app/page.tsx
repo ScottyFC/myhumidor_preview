@@ -1,8 +1,7 @@
 import Link from 'next/link';
-import { ArrowRight, MapPin, Tv, Flame, Star, BadgeCheck } from 'lucide-react';
+import { ArrowRight, MapPin, Tv, Flame, BadgeCheck } from 'lucide-react';
 import { fetchEpisodes, recentEpisodes } from '@/lib/mrss';
-import { getTopCigars, getTopLounges, findFeaturedForEpisode, MOCK_LOUNGES } from '@/lib/mock-data';
-import { featuredCigars } from '@/lib/catalog';
+import { featuredCigars, featuredLounges } from '@/lib/catalog';
 import { RecentEpisode } from '@/components/RecentEpisode';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
@@ -12,9 +11,10 @@ export const revalidate = 3600;
 export default async function HomePage() {
   const episodes = await fetchEpisodes();
   const recent = recentEpisodes(episodes, 6);
-  const topCigars = getTopCigars(5);
-  const featured = featuredCigars(12);
-  const featuredLounges = getTopLounges().slice(0, 8);
+  const allFeatured = featuredCigars(24);
+  const featured = allFeatured.slice(0, 12);
+  const browse = allFeatured.slice(12, 17);
+  const lounges = featuredLounges(8);
 
   return (
     <div className="mx-auto max-w-7xl px-6 pt-8">
@@ -83,12 +83,12 @@ export default async function HomePage() {
       <section className="py-10">
         <SectionHeader
           title="Featured Lounges"
-          subtitle="Top-rated near the community"
+          subtitle="Lounges and shops across the country"
           href="/lounges"
           icon={<MapPin size={14} strokeWidth={1.5} className="text-ember-400" />}
         />
         <div className="-mx-6 flex snap-x gap-4 overflow-x-auto px-6 pb-3 [scrollbar-width:thin]">
-          {featuredLounges.map((l) => (
+          {lounges.map((l) => (
             <Link
               key={l.id}
               href={`/lounges/${l.slug}`}
@@ -103,19 +103,9 @@ export default async function HomePage() {
                     </span>
                     {l.verified && <BadgeCheck size={13} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
                   </div>
-                  <div className="text-xs text-smoke-400">{l.city}, {l.state}</div>
+                  <div className="text-xs text-smoke-400">{[l.city, l.state].filter(Boolean).join(', ')}</div>
                 </div>
               </div>
-              <div className="mt-3 flex items-center gap-1 text-xs text-ember-100">
-                <Star size={12} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
-                <span className="tabular">{l.rating.toFixed(1)}</span>
-                <span className="tabular text-smoke-400">({l.reviewCount.toLocaleString()})</span>
-              </div>
-              {l.stocked.length > 0 && (
-                <div className="mt-2 truncate text-xs text-smoke-400">
-                  Stocks {l.stocked.slice(0, 2).map((s) => s.brand).join(', ')}…
-                </div>
-              )}
             </Link>
           ))}
         </div>
@@ -127,51 +117,41 @@ export default async function HomePage() {
       <section className="py-12">
         <SectionHeader
           title="This week on CigarTV"
-          subtitle="Recent episodes & their featured cigars"
+          subtitle="Latest episodes from the channel"
           icon={<Tv size={14} strokeWidth={1.5} className="text-ember-400" />}
         />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {recent.map((ep) => (
-            <RecentEpisode
-              key={ep.guid}
-              episode={ep}
-              cigar={findFeaturedForEpisode(ep.guid)?.cigar ?? null}
-            />
+            <RecentEpisode key={ep.guid} episode={ep} cigar={null} />
           ))}
         </div>
-        <p className="mt-4 text-xs text-smoke-400">
-          Episodes air on CigarTV. We surface the cigar featured in each and link you straight to
-          its profile.
-        </p>
       </section>
 
       <Rule />
 
-      {/* ─── TOP CIGARS PREVIEW ──────────────────────────────────────────── */}
+      {/* ─── BROWSE CIGARS PREVIEW ───────────────────────────────────────── */}
       <section className="py-12">
         <SectionHeader
-          title="Top cigars in the US"
-          subtitle="Ranked by the community this week"
+          title="Browse cigars"
+          subtitle="From the 23,000-cigar catalog"
           href="/top"
           icon={<Flame size={14} strokeWidth={1.5} className="text-ember-400" />}
         />
         <div className="overflow-hidden rounded-xl border-[0.5px] border-ember-400/15">
-          {topCigars.map(({ rank, cigar }) => (
+          {browse.map((c) => (
             <div
-              key={cigar.id}
+              key={c.uuid}
               className="flex items-center gap-4 border-b-[0.5px] border-ember-400/10 bg-char/40 px-4 py-3.5 last:border-b-0 sm:px-5"
             >
-              <span className="w-7 shrink-0 text-center font-display text-xl italic tabular text-ember-400/70">
-                {rank}
-              </span>
-              <Link href={`/cigars/${cigar.slug}`} className="group min-w-0 flex-1">
+              <BrandTile name={c.brand} src={c.image_url} fit="contain" className="h-10 w-8 shrink-0 text-[10px]" rounded="rounded" />
+              <Link href={`/cigars/${c.slug}`} className="group min-w-0 flex-1">
                 <div className="truncate font-display text-base font-medium text-paper group-hover:text-ember-100">
-                  {cigar.brand} {cigar.line}
-                  <span className="text-smoke-400"> · {cigar.vitola}</span>
+                  {c.brand} {c.name}
+                  <span className="text-smoke-400"> · {c.size}</span>
                 </div>
-                <div className="mt-0.5 truncate text-xs text-smoke-400">{cigar.wrapper}</div>
+                {c.country && <div className="mt-0.5 truncate text-xs text-smoke-400">{c.country}</div>}
               </Link>
-              <AddToCollection seed={{ cigarId: cigar.id, slug: cigar.slug, brand: cigar.brand, name: cigar.line, size: cigar.vitola }} />
+              <AddToCollection seed={{ cigarId: c.uuid, slug: c.slug, brand: c.brand, name: c.name, size: c.size }} />
             </div>
           ))}
         </div>
@@ -198,7 +178,7 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-          {MOCK_LOUNGES.filter((l) => l.verified).slice(0, 3).map((l) => (
+          {lounges.slice(0, 3).map((l) => (
             <Link
               key={l.id}
               href={`/lounges/${l.slug}`}
@@ -206,12 +186,12 @@ export default async function HomePage() {
             >
               <div className="flex items-center gap-1.5">
                 <MapPin size={11} strokeWidth={1.5} className="text-ember-400" />
-                <span className="eyebrow">verified</span>
+                <span className="eyebrow">lounge</span>
               </div>
               <div className="font-display mt-1 text-base font-medium group-hover:text-ember-100">{l.name}</div>
-              <div className="mt-1 text-xs text-smoke-400">{l.city}, {l.state}</div>
-              <div className="mt-2 text-xs text-smoke-200 tabular">
-                {l.inventoryCount} cigars in stock
+              <div className="mt-1 text-xs text-smoke-400">{[l.city, l.state].filter(Boolean).join(', ')}</div>
+              <div className="mt-2 inline-flex items-center gap-1 text-xs text-ember-100">
+                View profile <ArrowRight size={11} strokeWidth={1.5} />
               </div>
               <div className="mt-2 inline-flex items-center gap-1 text-xs text-ember-100">
                 View profile <ArrowRight size={11} strokeWidth={1.5} />

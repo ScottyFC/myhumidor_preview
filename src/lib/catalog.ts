@@ -101,6 +101,22 @@ export function findCatalogStoreBySlug(slug: string): CatalogStore | undefined {
   return allStores().find((s) => s.slug === slug);
 }
 
+/** Real lounges for the directory / featured carousel (from the seeded data). */
+export function featuredLounges(limit = 8): CatalogStore[] {
+  const stores = allStores();
+  // Prefer ones with coordinates so map/links behave; spread across the list.
+  const usable = stores.filter((s) => s.lat && s.lng);
+  const pool = usable.length >= limit ? usable : stores;
+  const step = Math.max(1, Math.floor(pool.length / limit));
+  const picks: CatalogStore[] = [];
+  for (let i = 0; i < pool.length && picks.length < limit; i += step) picks.push(pool[i]);
+  return picks;
+}
+
+export function browseLounges(limit = 50): CatalogStore[] {
+  return allStores().slice(0, limit);
+}
+
 export interface NearbyStore extends CatalogStore {
   distanceMi: number;
 }

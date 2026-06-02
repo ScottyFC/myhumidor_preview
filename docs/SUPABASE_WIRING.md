@@ -86,10 +86,61 @@ instead of only resolving your own.
 
 ---
 
+## ✅ Phase 3 — Follows + Feed, and demo-data removal  (this update)
+
+Wired: `src/lib/follows.ts` → `follows` table, and a real home feed
+(`src/lib/feed.ts`, rendered by `src/components/Feed.tsx`) built from people you
+follow + lounge posts. No schema change needed — `follows` and `lounge_posts`
+already exist from `schema.sql`.
+
+**Demo data removed.** Every consumer surface now uses the real catalog: cigar
+profiles, `/top` (now "Browse cigars"), `/lounges` (real seeded lounges), the
+home carousels/previews, and cigar links in the feed. The fabricated cigars,
+lounges, ratings, and feed posts are gone — so everything shown can be rated and
+persisted. (Remaining placeholders, for later phases: the cigar "community"
+likes/comments block returns empty, and the lounge-owner dashboard analytics
+still use sample numbers until the viewership pipeline exists.)
+
+### Verify
+1. Follow someone: open a member's `/u/their-handle` (or the Follow button on a
+   feed post) → a row appears in **Table Editor → follows**.
+2. If that person has rated cigars, their ratings show in your **Humidor → Feed**.
+3. With no follows yet, the feed shows a clean "your feed is quiet" empty state
+   (not fake posts).
+
+---
+
+## ✅ Phase 4 — Submissions + User search  (this update)
+
+Wired: `src/lib/submissions.ts` → `cigar_submissions` table, and **user search**
+(`src/lib/users.ts`) added as a **People** tab in search (with a Follow button on
+each result). The Follow button is also on every member profile (`/u/[handle]`).
+No schema change needed — `cigar_submissions` already exists.
+
+### Where you need to look
+- **(Optional) photos:** if you want submission photos stored, create a public
+  Storage bucket named `submissions` (Storage → New bucket → Public) and add the
+  same kind of policies as `avatars`. Submissions work without it — the photo is
+  just skipped (`photo_url` stays null).
+- **Seeing the review queue:** the admin page lists all submissions only for an
+  account whose `profiles.role` is `admin`/`super_admin` (RLS). Make sure you ran
+  the `update ... set role = 'super_admin'` for your account.
+
+### Verify
+1. Signed in, go to `/submit`, add a cigar → a row appears in
+   **Table Editor → cigar_submissions** with your `submitted_by`.
+2. As an admin, the `/admin` "Cigar submissions" queue lists it; Approve/Reject
+   updates `status` (+ `reviewed_by`/`reviewed_at`).
+3. Search a member's name/handle in the search bar → **People** tab → Follow them
+   → a row appears in `follows`.
+
+> Note: submitting requires being signed in (RLS ties the row to your account).
+
+---
+
 ## ⏳ Next phases (not wired yet — still localStorage)
 - **Phase 3 — Follows + Feed** (`follows`, `lounge_posts`).
-- **Phase 4 — Submissions + Change requests** (`cigar_submissions`,
-  `change_requests`) into the admin queues.
+- **Change requests** (`change_requests`) into the admin queue.
 - **Phase 5 — Lounge inventory + published menus** (`inventory_items`).
 - **Phase 6 — Admin roles** read live from `profiles.role` instead of the
   bootstrap allowlist.

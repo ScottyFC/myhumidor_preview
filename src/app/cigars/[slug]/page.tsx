@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, MapPin } from 'lucide-react';
-import { findCigarBySlug, MOCK_LOUNGES, getCigarSocial } from '@/lib/mock-data';
-import { findCatalogCigarBySlug } from '@/lib/catalog';
+import { getCigarSocial } from '@/lib/mock-data';
+import { findCatalogCigarBySlug, featuredLounges } from '@/lib/catalog';
 import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
 import { CigarCommunity } from '@/components/CigarCommunity';
@@ -39,48 +39,29 @@ interface CigarView {
 export default async function CigarPage({ params }: PageProps) {
   const { slug } = await params;
 
-  // Curated cigar, otherwise look it up in the full 23.5k catalog.
-  const rich = findCigarBySlug(slug);
-  const cat = rich ? null : findCatalogCigarBySlug(slug);
-  if (!rich && !cat) notFound();
+  // Every cigar resolves from the real 23.7k-row catalog.
+  const cat = findCatalogCigarBySlug(slug);
+  if (!cat) notFound();
 
   // Community averages come from the live `ratings` table once users start
   // rating. Until then every cigar shows the "not yet rated" state.
-  const view: CigarView = rich
-    ? {
-        id: rich.id,
-        brand: rich.brand,
-        headline: rich.line,
-        vitola: rich.vitola,
-        wrapper: rich.wrapper,
-        lengthIn: rich.lengthIn,
-        ringGauge: rich.ringGauge,
-        country: rich.countryOfOrigin,
-        msrp: rich.msrp,
-        rated: false,
-        ratingCount: 0,
-        flavorAvg: 0,
-        burnAvg: 0,
-        appearanceAvg: 0,
-        overallAvg: 0,
-      }
-    : {
-        id: cat!.uuid,
-        brand: cat!.brand,
-        headline: cat!.name,
-        vitola: cat!.size,
-        country: cat!.country,
-        msrp: cat!.price,
-        imageUrl: cat!.image_url ?? null,
-        rated: false,
-        ratingCount: 0,
-        flavorAvg: 0,
-        burnAvg: 0,
-        appearanceAvg: 0,
-        overallAvg: 0,
-      };
+  const view: CigarView = {
+    id: cat.uuid,
+    brand: cat.brand,
+    headline: cat.name,
+    vitola: cat.size,
+    country: cat.country,
+    msrp: cat.price,
+    imageUrl: cat.image_url ?? null,
+    rated: false,
+    ratingCount: 0,
+    flavorAvg: 0,
+    burnAvg: 0,
+    appearanceAvg: 0,
+    overallAvg: 0,
+  };
 
-  const nearby = MOCK_LOUNGES.filter((l) => l.verified).slice(0, 3);
+  const nearby = featuredLounges(3);
   const social = getCigarSocial(view.id);
 
   return (
@@ -181,13 +162,17 @@ export default async function CigarPage({ params }: PageProps) {
       <div className="mt-12">
         <h2 className="eyebrow mb-3 flex items-center gap-1.5">
           <MapPin size={11} strokeWidth={1.5} className="text-ember-400" />
-          Nearby lounges with this in stock
+          Lounges to explore
         </h2>
         <div className="grid gap-3 sm:grid-cols-3">
           {nearby.map((l) => (
-            <div key={l.id} className="rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-4">
+            <Link
+              key={l.id}
+              href={`/lounges/${l.slug}`}
+              className="group rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-4 transition hover:border-ember-400/40"
+            >
               <div className="flex items-center justify-between">
-                <div className="font-display text-base font-medium">{l.name}</div>
+                <div className="font-display text-base font-medium group-hover:text-ember-100">{l.name}</div>
                 {l.verified && (
                   <span className="rounded bg-ember-400/15 px-1.5 py-0.5 text-[9px] uppercase tracking-widest text-ember-100">
                     Verified
@@ -195,10 +180,7 @@ export default async function CigarPage({ params }: PageProps) {
                 )}
               </div>
               <div className="mt-1 text-xs text-smoke-400">{l.city}, {l.state}</div>
-              <div className="mt-2 text-xs tabular text-ember-100">
-                {l.distanceMi?.toFixed(1)} mi away
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

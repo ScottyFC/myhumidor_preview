@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck } from 'lucide-react';
 import type { CatalogStore } from '@/types';
-import { mockLoungeAsStore } from '@/lib/mock-data';
 import { findCatalogStoreBySlug } from '@/lib/catalog';
 import { ClaimLounge } from '@/components/ClaimLounge';
 import { BrandTile } from '@/components/BrandTile';
@@ -21,12 +20,11 @@ interface LoungeView extends CatalogStore {
 export default async function LoungePage({ params }: PageProps) {
   const { slug } = await params;
 
-  // Resolve from the demo lounges first (rich), then the 713 imported stores.
-  const demo = mockLoungeAsStore(slug);
-  const cat = demo ? null : findCatalogStoreBySlug(slug);
-  if (!demo && !cat) notFound();
+  // Resolve from the seeded lounge directory (713 real stores).
+  const cat = findCatalogStoreBySlug(slug);
+  if (!cat) notFound();
 
-  const lounge: LoungeView = (demo ?? (cat as CatalogStore)) as LoungeView;
+  const lounge: LoungeView = cat as LoungeView;
   const fullAddress = [lounge.address, lounge.city, lounge.state].filter(Boolean).join(', ');
 
   return (

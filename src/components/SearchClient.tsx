@@ -7,8 +7,11 @@ import { Search, Loader2, Star, MapPin, Phone, BadgeCheck, Plus } from 'lucide-r
 import type { CatalogCigar, CatalogStore } from '@/types';
 import { cn, formatUSD } from '@/lib/utils';
 import { AddToCollection } from '@/components/AddToCollection';
+import { BrandTile } from '@/components/BrandTile';
+import { FollowButton } from '@/components/FollowButton';
+import { searchUsers, type UserHit } from '@/lib/users';
 
-type Tab = 'cigars' | 'lounges';
+type Tab = 'cigars' | 'lounges' | 'people';
 
 export function SearchClient() {
   const params = useSearchParams();
@@ -20,6 +23,7 @@ export function SearchClient() {
   const [cigarTotal, setCigarTotal] = useState(0);
   const [stores, setStores] = useState<CatalogStore[]>([]);
   const [storeTotal, setStoreTotal] = useState(0);
+  const [users, setUsers] = useState<UserHit[]>([]);
   const [loading, setLoading] = useState(false);
   const reqId = useRef(0);
 
@@ -33,6 +37,7 @@ export function SearchClient() {
     if (query.length < 2) {
       setCigars([]);
       setStores([]);
+      setUsers([]);
       setCigarTotal(0);
       setStoreTotal(0);
       return;
@@ -42,15 +47,17 @@ export function SearchClient() {
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const [cRes, sRes] = await Promise.all([
+        const [cRes, sRes, uRes] = await Promise.all([
           fetch(`/api/cigars?q=${encodeURIComponent(query)}&limit=24`).then((r) => r.json()),
           fetch(`/api/stores?q=${encodeURIComponent(query)}&limit=12`).then((r) => r.json()),
+          searchUsers(query, 16),
         ]);
         if (id === reqId.current) {
           setCigars(cRes.items ?? []);
           setCigarTotal(cRes.total ?? 0);
           setStores(sRes.items ?? []);
           setStoreTotal(sRes.total ?? 0);
+          setUsers(uRes);
         }
       } finally {
         if (id === reqId.current) setLoading(false);
@@ -97,6 +104,9 @@ export function SearchClient() {
           <TabButton active={tab === 'lounges'} onClick={() => setTab('lounges')}>
             Lounges{storeTotal > 0 && <span className="ml-1.5 tabular text-smoke-400">{fmt(storeTotal)}</span>}
           </TabButton>
+          <TabButton active={tab === 'people'} onClick={() => setTab('people')}>
+            People{users.length > 0 && <span className="ml-1.5 tabular text-smoke-400">{fmt(users.length)}</span>}
+          </TabButton>
         </div>
       )}
 
@@ -106,8 +116,10 @@ export function SearchClient() {
           <Suggestions onPick={setQ} />
         ) : tab === 'cigars' ? (
           <CigarResults cigars={cigars} total={cigarTotal} loading={loading} query={q.trim()} />
-        ) : (
+        ) : tab === 'lounges' ? (
           <LoungeResults stores={stores} total={storeTotal} loading={loading} />
+        ) : (
+          <PeopleResults users={users} loading={loading} />
         )}
       </div>
     </div>
@@ -292,6 +304,41 @@ function Suggestions({ onPick }: { onPick: (q: string) => void }) {
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+function PeopleResults({ users, loading }: { users: UserHit[]; loading: boolean }) {
+  if (users.length === 0) {
+    return <Empty loading={loading} label="No members match that search." />;
+  }
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {users.map((u) => (
+        <div
+          key={u.handle}
+          className="flex items-center gap-3 rounded-lg border-[0.5px] border-ember-400/15 bg-char/40 p-3"
+        >
+          <Link href={`/u/${u.handle}`} className="flex min-w-0 flex-1 items-center gap-3">
+            {u.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={u.avatarUrl} alt={u.displayName} className="h-10 w-10 shrink-0 rounded-full object-cover" />
+            ) : (
+              <BrandTile name={u.displayName} className="h-10 w-10 shrink-0 text-base" rounded="rounded-full" />
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-1 truncate font-medium hover:text-ember-100">
+                {u.displayName}
+                {u.accountType === 'lounge' && (
+                  <BadgeCheck size={13} strokeWidth={1.5} className="shrink-0 text-ember-400" />
+                )}
+              </div>
+              <div className="truncate text-xs text-smoke-400">@{u.handle}</div>
+            </div>
+          </Link>
+          <FollowButton handle={u.handle} size="sm" />
+        </div>
+      ))}
     </div>
   );
 }

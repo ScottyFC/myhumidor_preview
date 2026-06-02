@@ -1,17 +1,49 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Star, BadgeCheck, Megaphone, Box, Heart, Sparkles, CalendarDays } from 'lucide-react';
-import { getFeed, type FeedPost } from '@/lib/mock-data';
+import { Star, BadgeCheck, Megaphone, Sparkles, CalendarDays, Loader2, Users } from 'lucide-react';
+import { fetchFeed, type FeedPost } from '@/lib/feed';
 import { BrandTile } from '@/components/BrandTile';
 import { FollowButton } from '@/components/FollowButton';
 
 export function Feed() {
-  const posts = getFeed();
+  const [posts, setPosts] = useState<FeedPost[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchFeed().then((p) => !cancelled && setPosts(p));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (posts === null) {
+    return (
+      <div className="py-16 text-center">
+        <Loader2 className="mx-auto animate-spin text-ember-400" size={22} />
+      </div>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <div className="rounded-xl border-[0.5px] border-dashed border-ember-400/20 p-10 text-center">
+        <Users className="mx-auto text-ember-400/60" size={26} strokeWidth={1.5} />
+        <div className="mt-3 font-display text-lg">Your feed is quiet</div>
+        <p className="mx-auto mt-1 max-w-md text-sm text-smoke-400">
+          Follow other members to see what they&apos;re rating and adding, and follow lounges for
+          their deals, new arrivals, and events.
+        </p>
+        <Link href="/search" className="btn-primary mt-4">Find people &amp; cigars</Link>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
       <p className="text-xs text-smoke-400">
-        Activity from people you follow and lounges near you. Promoted lounge posts are labeled.
+        Activity from people you follow and lounges. Promoted lounge posts are labeled.
       </p>
       {posts.map((p) => (p.isLounge ? <LoungePost key={p.id} p={p} /> : <UserPost key={p.id} p={p} />))}
     </div>
@@ -19,9 +51,6 @@ export function Feed() {
 }
 
 function UserPost({ p }: { p: FeedPost }) {
-  const verb =
-    p.kind === 'rated' ? 'rated' : p.kind === 'wishlisted' ? 'added to wishlist' : 'added to humidor';
-  const Icon = p.kind === 'rated' ? Star : p.kind === 'wishlisted' ? Heart : Box;
   return (
     <div className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">
       <div className="flex items-start gap-3">
@@ -37,9 +66,9 @@ function UserPost({ p }: { p: FeedPost }) {
             <FollowButton handle={p.authorHandle} size="sm" />
           </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-xs text-smoke-300">
-            <Icon size={12} strokeWidth={1.5} className="text-ember-400" />
-            {verb}
-            {p.kind === 'rated' && p.rating != null && (
+            <Star size={12} strokeWidth={1.5} className="text-ember-400" />
+            rated
+            {p.rating != null && (
               <span className="inline-flex items-center gap-0.5 text-ember-100">
                 · <Star size={11} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
                 {p.rating.toFixed(1)}
@@ -90,14 +119,6 @@ function LoungePost({ p }: { p: FeedPost }) {
             <span className="font-display text-base">{p.title}</span>
           </div>
           {p.body && <p className="mt-1 text-sm text-smoke-200">{p.body}</p>}
-          {p.cigar && (
-            <Link
-              href={`/cigars/${p.cigar.slug}`}
-              className="mt-2 inline-flex items-center gap-2 rounded-full border-[0.5px] border-ember-400/20 px-3 py-1 text-xs text-smoke-200 hover:border-ember-400/40"
-            >
-              {p.cigar.brand} {p.cigar.line} →
-            </Link>
-          )}
         </div>
       </div>
     </div>

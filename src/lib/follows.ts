@@ -1,51 +1,131 @@
 'use client';
 
 /**
- * Who the signed-in user follows. Persisted locally for the demo; in production
- * a `follows` table (follower_id, followee_id) drives this and the home feed.
+ * Who the signed-in user follows.
+ *
+ * Dual-mode: Supabase `follows` (follower_id/followee_id) when configured,
+ * localStorage otherwise. The UI works in handles; on write we resolve the
+ * handle to a user id. Public API stays synchronous via an in-memory cache.
  */
+
+import { isSupabaseConfigured, supabaseBrowser } from './supabase';
+import { subscribeAuth } from './auth';
 
 const KEY = 'myhumidor:following';
 const EVENT = 'myhumidor:following-change';
 
-function read(): string[] {
-  if (typeof window === 'undefined') return [];
+let cache: string[] = []; // handles
+let started = false;
+let userId: string | null = null;
+
+function fire() {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(EVENT));
+}
+function loadLocal(): string[] {
   try {
     return JSON.parse(localStorage.getItem(KEY) ?? '[]');
   } catch {
     return [];
   }
 }
-
-function write(handles: string[]) {
+function saveLocal() {
   try {
-    localStorage.setItem(KEY, JSON.stringify(handles));
-    window.dispatchEvent(new Event(EVENT));
+    localStorage.setItem(KEY, JSON.stringify(cache));
   } catch {
     /* ignore */
   }
 }
 
+async function hydrateRemote() {
+  if (!userId) return;
+  try {
+    const sb = supabaseBrowser();
+    const { data: rows, error } = await sb.from('follows').select('followee_id').eq('follower_id', userId);
+    if (error) {
+      console.error('[follows] load failed:', error.message);
+      return;
+    }
+    const ids = (rows ?? []).map((r) => r.followee_id);
+    if (ids.length === 0) {
+      cache = [];
+      fire();
+      return;
+    }
+    const { data: profs } = await sb.from('profiles').select('handle').in('id', ids);
+    cache = (profs ?? []).map((p) => p.handle).filter(Boolean);
+    fire();
+  } catch (e) {
+    console.error('[follows] load error:', e);
+  }
+}
+
+async function resolveId(handle: string): Promise<string | null> {
+  try {
+    const { data } = await supabaseBrowser().from('profiles').select('id').eq('handle', handle).single();
+    return data?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function persistFollow(handle: string, following: boolean) {
+  if (!isSupabaseConfigured) return saveLocal();
+  if (!userId) return;
+  const followeeId = await resolveId(handle);
+  if (!followeeId) return;
+  const sb = supabaseBrowser();
+  if (following) {
+    const { error } = await sb.from('follows').upsert(
+      { follower_id: userId, followee_id: followeeId },
+      { onConflict: 'follower_id,followee_id' }
+    );
+    if (error) console.error('[follows] follow failed:', error.message);
+  } else {
+    const { error } = await sb.from('follows').delete().eq('follower_id', userId).eq('followee_id', followeeId);
+    if (error) console.error('[follows] unfollow failed:', error.message);
+  }
+}
+
+function start() {
+  if (started || typeof window === 'undefined') return;
+  started = true;
+  if (isSupabaseConfigured) {
+    subscribeAuth((s) => {
+      userId = s?.uuid ?? null;
+      if (userId) hydrateRemote();
+      else {
+        cache = [];
+        fire();
+      }
+    });
+  } else {
+    cache = loadLocal();
+  }
+}
+
 export function getFollowing(): string[] {
-  return read();
+  start();
+  if (!isSupabaseConfigured && cache.length === 0) cache = loadLocal();
+  return [...cache];
 }
 
 export function isFollowing(handle: string): boolean {
-  return read().includes(handle);
+  start();
+  return cache.includes(handle);
 }
 
 export function toggleFollow(handle: string): boolean {
-  const list = read();
-  if (list.includes(handle)) {
-    write(list.filter((h) => h !== handle));
-    return false;
-  }
-  write([handle, ...list]);
-  return true;
+  start();
+  const now = !cache.includes(handle);
+  cache = now ? [handle, ...cache] : cache.filter((h) => h !== handle);
+  fire();
+  void persistFollow(handle, now);
+  return now;
 }
 
 export function onFollowingChange(cb: () => void): () => void {
   if (typeof window === 'undefined') return () => {};
+  start();
   window.addEventListener(EVENT, cb);
   window.addEventListener('storage', cb);
   return () => {

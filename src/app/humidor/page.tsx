@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Heart, Box, Trash2, Plus, Loader2 } from 'lucide-react';
-import { MOCK_HUMIDOR, MOCK_USER } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { Feed } from '@/components/Feed';
@@ -18,7 +17,7 @@ import {
 
 type Filter = 'all' | 'humidor' | 'wishlist';
 
-// Display model unifying the demo seed and the user's saved collection.
+// Display model for the user's saved collection.
 interface Row {
   cigarId: string;
   slug: string;
@@ -31,29 +30,19 @@ interface Row {
   removable: boolean;
 }
 
-const SEED_ROWS: Row[] = MOCK_HUMIDOR.map((e) => ({
-  cigarId: e.cigar.id,
-  slug: e.cigar.slug,
-  brand: e.cigar.brand,
-  name: e.cigar.line,
-  size: e.cigar.vitola,
-  status: 'humidor',
-  quantity: e.quantity,
-  yourRating: e.yourRating,
-  removable: false,
-}));
-
 export default function HumidorPage() {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>('all');
   const [view, setView] = useState<'feed' | 'collection'>('feed');
   const [userItems, setUserItems] = useState<CollectionItem[]>([]);
   const [authState, setAuthState] = useState<'checking' | 'in' | 'out'>('checking');
+  const [displayName, setDisplayName] = useState('Your');
 
   useEffect(() => {
     return subscribeAuth((s: Session | null) => {
       if (s) {
         setAuthState('in');
+        setDisplayName(s.displayName || 'Your');
       } else {
         setAuthState('out');
         router.replace('/register?next=/humidor');
@@ -67,7 +56,7 @@ export default function HumidorPage() {
     return onCollectionChange(sync);
   }, []);
 
-  const userRows: Row[] = userItems.map((i) => ({
+  const rows: Row[] = userItems.map((i) => ({
     cigarId: i.cigarId,
     slug: i.slug,
     brand: i.brand,
@@ -76,10 +65,6 @@ export default function HumidorPage() {
     status: i.status,
     removable: true,
   }));
-
-  // user items override any seed duplicate
-  const userIds = new Set(userRows.map((r) => r.cigarId));
-  const rows = [...userRows, ...SEED_ROWS.filter((r) => !userIds.has(r.cigarId))];
 
   const humidorRows = rows.filter((r) => r.status === 'humidor');
   const wishlistRows = rows.filter((r) => r.status === 'wishlist');
@@ -103,7 +88,7 @@ export default function HumidorPage() {
   return (
     <div className="mx-auto max-w-5xl px-6 pt-10">
       <header className="mb-8">
-        <div className="eyebrow mb-2">{MOCK_USER.displayName}&apos;s collection</div>
+        <div className="eyebrow mb-2">{displayName}&apos;s collection</div>
         <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">My Humidor</h1>
         <div className="mt-3 flex gap-6 text-sm text-smoke-200 tabular">
           <span>
