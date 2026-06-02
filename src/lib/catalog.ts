@@ -121,7 +121,7 @@ export interface NearbyStore extends CatalogStore {
   distanceMi: number;
 }
 
-function haversineMi(aLat: number, aLng: number, bLat: number, bLng: number): number {
+export function haversineMi(aLat: number, aLng: number, bLat: number, bLng: number): number {
   const R = 3958.8; // miles
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(bLat - aLat);

@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { BadgeCheck, MapPin, ArrowRight } from 'lucide-react';
 import { browseLounges, catalogStats } from '@/lib/catalog';
 import { BrandTile } from '@/components/BrandTile';
+import { RecentlyAdded } from '@/components/RecentlyAdded';
+import { SubmitLounge } from '@/components/SubmitLounge';
 
 export const metadata = {
   title: 'Lounges · MyHumidor by CigarTV',
@@ -22,6 +24,10 @@ export default function LoungesPage() {
           <Link href="/map" className="text-ember-100 underline-offset-2 hover:underline">map</Link>.
         </p>
       </header>
+
+      <div className="mb-10">
+        <RecentlyAdded lounges members />
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         {lounges.map((l) => (
@@ -44,6 +50,11 @@ export default function LoungesPage() {
             </div>
           </Link>
         ))}
+      </div>
+
+      {/* Submit your lounge */}
+      <div className="mt-8">
+        <SubmitLounge />
       </div>
 
       {/* Lounge-owner CTA — secondary, at the bottom */}

@@ -1,0 +1,191 @@
+'use client';
+
+import { isSupabaseConfigured, supabaseBrowser } from './supabase';
+import { geocodeAddress } from './geocode';
+import type { CatalogCigar } from '@/types';
+
+/* ── DB-backed cigar search (so newly-approved cigars are instantly findable) ── */
+export async function searchCatalogCigarsRemote(query: string, limit = 24): Promise<CatalogCigar[]> {
+  const q = query.trim();
+  if (!isSupabaseConfigured || q.length < 2) return [];
+  try {
+    const term = `%${q}%`;
+    const { data, error } = await supabaseBrowser()
+      .from('catalog_cigars')
+      .select('id, brand, name, country, price, size, slug, image_url')
+      .or(`name.ilike.${term},brand.ilike.${term}`)
+      .limit(limit);
+    if (error) {
+      console.error('[db] cigar search failed:', error.message);
+      return [];
+    }
+    return (data ?? []).map((c) => ({
+      uuid: c.id,
+      brand: c.brand,
+      name: c.name,
+      country: c.country ?? '',
+      price: c.price,
+      size: c.size ?? '',
+      slug: c.slug,
+      image_url: c.image_url ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/** Resolve a cigar by slug from the DB (covers approvals not in the static JSON). */
+export async function findCatalogCigarRemoteBySlug(slug: string): Promise<CatalogCigar | null> {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const { data } = await supabaseBrowser()
+      .from('catalog_cigars')
+      .select('id, brand, name, country, price, size, slug, image_url')
+      .eq('slug', slug)
+      .single();
+    if (!data) return null;
+    return {
+      uuid: data.id,
+      brand: data.brand,
+      name: data.name,
+      country: data.country ?? '',
+      price: data.price,
+      size: data.size ?? '',
+      slug: data.slug,
+      image_url: data.image_url ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/* ── Recently added ──────────────────────────────────────────────────────── */
+export interface RecentCigar {
+  uuid: string;
+  brand: string;
+  name: string;
+  size: string;
+  slug: string;
+  image_url?: string | null;
+}
+export interface RecentMember {
+  handle: string;
+  displayName: string;
+  avatarUrl?: string;
+  accountType: 'consumer' | 'lounge';
+}
+export interface RecentLounge {
+  slug: string;
+  name: string;
+  city: string;
+  state: string;
+  certified?: boolean;
+}
+
+export async function recentCigars(limit = 8): Promise<RecentCigar[]> {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data } = await supabaseBrowser()
+      .from('catalog_cigars')
+      .select('id, brand, name, size, slug, image_url, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    return (data ?? []).map((c) => ({
+      uuid: c.id, brand: c.brand, name: c.name, size: c.size ?? '', slug: c.slug, image_url: c.image_url ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function recentMembers(limit = 8): Promise<RecentMember[]> {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data } = await supabaseBrowser()
+      .from('profiles')
+      .select('handle, display_name, avatar_url, account_type, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    return (data ?? []).map((p) => ({
+      handle: p.handle,
+      displayName: p.display_name ?? p.handle,
+      avatarUrl: p.avatar_url ?? undefined,
+      accountType: (p.account_type as 'consumer' | 'lounge') ?? 'consumer',
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function recentLounges(limit = 8): Promise<RecentLounge[]> {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data } = await supabaseBrowser()
+      .from('lounges')
+      .select('slug, name, city, state, certified, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    return (data ?? []).map((l) => ({
+      slug: l.slug, name: l.name, city: l.city ?? '', state: l.state ?? '', certified: l.certified ?? false,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function certifyLounge(slug: string, certified: boolean): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  try {
+    const { error } = await supabaseBrowser()
+      .from('lounges')
+      .update({ certified, verified: certified })
+      .eq('slug', slug);
+    if (error) {
+      console.error('[db] certify failed:', error.message);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ── Backfill: geocode lounges that are missing coordinates ─────────────── */
+export async function geocodeMissingLounges(
+  max = 25
+): Promise<{ fixed: number; failed: number; remaining: number }> {
+  if (!isSupabaseConfigured) return { fixed: 0, failed: 0, remaining: 0 };
+  const sb = supabaseBrowser();
+  let fixed = 0;
+  let failed = 0;
+  try {
+    const { data } = await sb
+      .from('lounges')
+      .select('slug, name, address, city, state')
+      .is('lat', null)
+      .limit(max);
+    for (const l of data ?? []) {
+      const c = await geocodeAddress({
+        name: l.name,
+        address: l.address ?? '',
+        city: l.city ?? '',
+        state: l.state ?? '',
+      });
+      if (c) {
+        const { error } = await sb.from('lounges').update({ lat: c.lat, lng: c.lng }).eq('slug', l.slug);
+        if (error) failed++;
+        else fixed++;
+      } else {
+        failed++;
+      }
+    }
+    const { count } = await sb
+      .from('lounges')
+      .select('slug', { count: 'exact', head: true })
+      .is('lat', null);
+    return { fixed, failed, remaining: count ?? 0 };
+  } catch (e) {
+    console.error('[db] geocode backfill failed:', e);
+    return { fixed, failed, remaining: -1 };
+  }
+}

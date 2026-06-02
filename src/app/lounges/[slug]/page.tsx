@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck } from 'lucide-react';
 import type { CatalogStore } from '@/types';
 import { findCatalogStoreBySlug } from '@/lib/catalog';
+import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 import { ClaimLounge } from '@/components/ClaimLounge';
 import { BrandTile } from '@/components/BrandTile';
 import { LoungeMenu } from '@/components/LoungeMenu';
@@ -15,16 +16,34 @@ interface PageProps {
 
 interface LoungeView extends CatalogStore {
   inventoryCount?: number;
+  certified?: boolean;
 }
 
 export default async function LoungePage({ params }: PageProps) {
   const { slug } = await params;
 
-  // Resolve from the seeded lounge directory (713 real stores).
-  const cat = findCatalogStoreBySlug(slug);
-  if (!cat) notFound();
+  // Resolve from the seeded directory (713 stores), then the DB (approved
+  // member-submitted lounges that aren't in the static snapshot yet).
+  let lounge: LoungeView | undefined = findCatalogStoreBySlug(slug) as LoungeView | undefined;
+  if (!lounge && isSupabaseConfigured) {
+    const sb = await supabaseServer();
+    const { data } = await sb
+      .from('lounges')
+      .select('id, slug, name, address, city, state, phone, email, website, image_url, verified, certified, lat, lng')
+      .eq('slug', slug)
+      .single();
+    if (data) {
+      lounge = {
+        id: data.id, slug: data.slug, name: data.name, address: data.address ?? '',
+        city: data.city ?? '', state: data.state ?? '', phone: data.phone ?? undefined,
+        website: data.website ?? undefined, email: data.email ?? undefined,
+        image_url: data.image_url ?? null, verified: data.verified ?? false,
+        certified: data.certified ?? false, lat: data.lat ?? 0, lng: data.lng ?? 0,
+      } as LoungeView;
+    }
+  }
+  if (!lounge) notFound();
 
-  const lounge: LoungeView = cat as LoungeView;
   const fullAddress = [lounge.address, lounge.city, lounge.state].filter(Boolean).join(', ');
 
   return (
@@ -49,12 +68,17 @@ export default async function LoungePage({ params }: PageProps) {
         </div>
         <h1 className="mt-4 flex flex-wrap items-center gap-3 font-display text-5xl tracking-tightest sm:text-6xl">
           {lounge.name}
-          {lounge.verified && (
+          {lounge.certified ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-ember-400/15 px-3 py-1 text-xs font-medium uppercase tracking-widest text-ember-100">
+              <BadgeCheck size={14} strokeWidth={1.5} className="text-ember-400" />
+              Certified
+            </span>
+          ) : lounge.verified ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-ember-400/15 px-3 py-1 text-xs font-medium uppercase tracking-widest text-ember-100">
               <BadgeCheck size={14} strokeWidth={1.5} className="text-ember-400" />
               Verified
             </span>
-          )}
+          ) : null}
         </h1>
 
         <div className="mt-5 grid gap-2 text-sm text-smoke-200 sm:grid-cols-2">

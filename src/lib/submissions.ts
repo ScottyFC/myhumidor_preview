@@ -181,8 +181,34 @@ export function addSubmission(s: Omit<Submission, 'id' | 'status' | 'createdAt'>
   return sub;
 }
 
+function slugify(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'cigar';
+}
+
+/** Promote an approved submission into the live catalog so it's searchable. */
+async function pushToCatalog(sub: Submission) {
+  try {
+    const id = crypto.randomUUID();
+    const slug = `${slugify(`${sub.brand} ${sub.name}`)}-${id.slice(0, 6)}`;
+    const { error } = await supabaseBrowser().from('catalog_cigars').insert({
+      id,
+      brand: sub.brand,
+      name: sub.name,
+      country: sub.country || null,
+      size: sub.size || null,
+      price: sub.price,
+      slug,
+      image_url: sub.photoDataUrl ?? null,
+    });
+    if (error) console.error('[submissions] catalog push failed:', error.message);
+  } catch (e) {
+    console.error('[submissions] catalog push error:', e);
+  }
+}
+
 export function setSubmissionStatus(id: string, status: 'approved' | 'rejected') {
   start();
+  const sub = cache.find((s) => s.id === id);
   cache = cache.map((s) => (s.id === id ? { ...s, status } : s));
   fire();
   if (isSupabaseConfigured) {
@@ -191,6 +217,7 @@ export function setSubmissionStatus(id: string, status: 'approved' | 'rejected')
       .update({ status, reviewed_by: userId, reviewed_at: new Date().toISOString() })
       .eq('id', id)
       .then(({ error }) => error && console.error('[submissions] review failed:', error.message));
+    if (status === 'approved' && sub) void pushToCatalog(sub);
   } else {
     saveLocal();
   }

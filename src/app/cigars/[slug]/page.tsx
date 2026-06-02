@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowLeft, MapPin } from 'lucide-react';
 import { getCigarSocial } from '@/lib/mock-data';
 import { findCatalogCigarBySlug, featuredLounges } from '@/lib/catalog';
+import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
 import { CigarCommunity } from '@/components/CigarCommunity';
@@ -40,7 +41,22 @@ export default async function CigarPage({ params }: PageProps) {
   const { slug } = await params;
 
   // Every cigar resolves from the real 23.7k-row catalog.
-  const cat = findCatalogCigarBySlug(slug);
+  let cat = findCatalogCigarBySlug(slug);
+  // Approved submissions live only in the DB until the next static rebuild.
+  if (!cat && isSupabaseConfigured) {
+    const sb = await supabaseServer();
+    const { data } = await sb
+      .from('catalog_cigars')
+      .select('id, brand, name, country, price, size, slug, image_url')
+      .eq('slug', slug)
+      .single();
+    if (data) {
+      cat = {
+        uuid: data.id, brand: data.brand, name: data.name, country: data.country ?? '',
+        price: data.price, size: data.size ?? '', slug: data.slug, image_url: data.image_url ?? null,
+      };
+    }
+  }
   if (!cat) notFound();
 
   // Community averages come from the live `ratings` table once users start

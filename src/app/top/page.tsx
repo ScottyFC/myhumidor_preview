@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { featuredCigars } from '@/lib/catalog';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
+import { RecentlyAdded } from '@/components/RecentlyAdded';
 
 export const metadata = {
   title: 'Browse Cigars · MyHumidor by CigarTV',
@@ -23,6 +24,10 @@ export default function TopCigarsPage() {
           full catalog. Once the community starts rating, this page ranks by score.
         </p>
       </header>
+
+      <div className="mb-10">
+        <RecentlyAdded cigars members />
+      </div>
 
       <div className="overflow-hidden rounded-xl border-[0.5px] border-ember-400/15">
         {cigars.map((c) => (

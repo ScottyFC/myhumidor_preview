@@ -138,9 +138,34 @@ No schema change needed — `cigar_submissions` already exists.
 
 ---
 
-## ⏳ Next phases (not wired yet — still localStorage)
-- **Phase 3 — Follows + Feed** (`follows`, `lounge_posts`).
+## ✅ Phase 5/6 — Catalog write-back, recents, lounge submissions, certified, admin roles
+
+**Run `supabase/migrations/phase56.sql` once.** Then:
+- Approved cigar submissions insert into `catalog_cigars` and are immediately
+  searchable (search merges live DB results) with a working profile page.
+- "Recently added" sections (cigars, members, lounges) on home / lounges / cigars.
+- Submit-your-lounge on `/lounges` → `lounge_submissions`; `/admin` reviews them;
+  approval inserts into `lounges`.
+- Super admins certify lounges in `/admin` → a Certified badge shows on the profile.
+- `isAdmin` reads live `profiles.role` — your Admin link appears automatically.
+- Google/Apple sign-in removed (email only).
+
+Optional buckets: `avatars` (profile pics), `submissions` (cigar photos).
+
+## ✅ Geocoding — submitted lounges flow onto the map
+
+- On approval, the lounge address is geocoded via Mapbox and stored as `lat`/`lng`,
+  so the lounge appears in **nearby/map** results (the `/api/stores/nearby` route
+  now merges geocoded DB lounges with the static directory, deduped by slug).
+- **Backfill:** `/admin` → "Certify lounges" → **Geocode missing locations** finds
+  any approved lounges with no coordinates and geocodes them (25 at a time).
+- Geocoding runs in the browser/route against your `NEXT_PUBLIC_MAPBOX_TOKEN`.
+- Note: the main `/lounges` directory grid + map base list are still the static
+  snapshot; new lounges surface via "recently added" + nearby/map + their profile
+  until the next static rebuild.
+
+## ⏳ Remaining
 - **Change requests** (`change_requests`) into the admin queue.
-- **Phase 5 — Lounge inventory + published menus** (`inventory_items`).
-- **Phase 6 — Admin roles** read live from `profiles.role` instead of the
-  bootstrap allowlist.
+- **Lounge inventory / published menus** (`inventory_items`) to Supabase.
+- Geocoding submitted lounges so they show on the map + main directory (they
+  currently surface via "recently added" + their profile until then).

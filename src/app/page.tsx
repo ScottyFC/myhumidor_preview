@@ -5,6 +5,7 @@ import { featuredCigars, featuredLounges } from '@/lib/catalog';
 import { RecentEpisode } from '@/components/RecentEpisode';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
+import { RecentlyAdded } from '@/components/RecentlyAdded';
 
 export const revalidate = 3600;
 
@@ -155,6 +156,13 @@ export default async function HomePage() {
             </div>
           ))}
         </div>
+      </section>
+
+      <Rule />
+
+      {/* ─── RECENTLY ADDED ──────────────────────────────────────────────── */}
+      <section className="py-12">
+        <RecentlyAdded cigars members />
       </section>
 
       <Rule />

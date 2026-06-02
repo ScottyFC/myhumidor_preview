@@ -10,6 +10,7 @@ import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
 import { FollowButton } from '@/components/FollowButton';
 import { searchUsers, type UserHit } from '@/lib/users';
+import { searchCatalogCigarsRemote } from '@/lib/db';
 
 type Tab = 'cigars' | 'lounges' | 'people';
 
@@ -47,14 +48,20 @@ export function SearchClient() {
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const [cRes, sRes, uRes] = await Promise.all([
+        const [cRes, sRes, uRes, dbCigars] = await Promise.all([
           fetch(`/api/cigars?q=${encodeURIComponent(query)}&limit=24`).then((r) => r.json()),
           fetch(`/api/stores?q=${encodeURIComponent(query)}&limit=12`).then((r) => r.json()),
           searchUsers(query, 16),
+          searchCatalogCigarsRemote(query, 24),
         ]);
         if (id === reqId.current) {
-          setCigars(cRes.items ?? []);
-          setCigarTotal(cRes.total ?? 0);
+          // Merge static catalog (ranked) with live DB results so newly
+          // approved cigars show up immediately. Dedup by slug.
+          const staticItems: CatalogCigar[] = cRes.items ?? [];
+          const seen = new Set(staticItems.map((c) => c.slug));
+          const extras = dbCigars.filter((c) => !seen.has(c.slug));
+          setCigars([...extras, ...staticItems]);
+          setCigarTotal((cRes.total ?? 0) + extras.length);
           setStores(sRes.items ?? []);
           setStoreTotal(sRes.total ?? 0);
           setUsers(uRes);

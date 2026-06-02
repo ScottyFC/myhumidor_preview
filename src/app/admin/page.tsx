@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2 } from 'lucide-react';
+import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin } from 'lucide-react';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { isAdmin, isBootstrapAdmin, listAdmins, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
+import {
+  getLoungeSubmissions, setLoungeSubmissionStatus, onLoungeSubmissionsChange,
+  type LoungeSubmission,
+} from '@/lib/lounge-submissions';
+import { recentLounges, certifyLounge, geocodeMissingLounges, type RecentLounge } from '@/lib/db';
 import {
   getSubmissions,
   setSubmissionStatus,
@@ -13,14 +18,7 @@ import {
 } from '@/lib/submissions';
 import { cn } from '@/lib/utils';
 
-// Demo pending lounge claims. In production this reads the `lounge_claims` queue.
-const INITIAL_CLAIMS = [
-  { id: 'lc1', lounge: 'Ybor City Cigar Co.', city: 'Tampa, FL', by: 'Anthony R.', role: 'Owner' },
-  { id: 'lc2', lounge: 'Smoke Inn', city: 'West Palm Beach, FL', by: 'Dana L.', role: 'Manager' },
-  { id: 'lc3', lounge: 'Cigar Hut', city: 'Austin, TX', by: 'Priya N.', role: 'Owner' },
-];
-
-type Tab = 'cigars' | 'lounges' | 'admins';
+type Tab = 'cigars' | 'lounges' | 'certify' | 'admins';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -62,7 +60,8 @@ export default function AdminPage() {
 
   const tabs: { id: Tab; label: string; icon: typeof Cigarette }[] = [
     { id: 'cigars', label: 'Cigar submissions', icon: Cigarette },
-    { id: 'lounges', label: 'Lounge claims', icon: Store },
+    { id: 'lounges', label: 'Lounge submissions', icon: Store },
+    { id: 'certify', label: 'Certify lounges', icon: BadgeCheck },
     { id: 'admins', label: 'Admins', icon: ShieldCheck },
   ];
 
@@ -101,6 +100,7 @@ export default function AdminPage() {
 
       {tab === 'cigars' && <CigarQueue />}
       {tab === 'lounges' && <LoungeQueue />}
+      {tab === 'certify' && <CertifyQueue />}
       {tab === 'admins' && <AdminManager myId={session?.publicId ?? ''} />}
     </div>
   );
@@ -149,38 +149,114 @@ function CigarQueue() {
 }
 
 function LoungeQueue() {
-  const [claims, setClaims] = useState(INITIAL_CLAIMS);
-  const [decided, setDecided] = useState<{ id: string; lounge: string; status: 'approved' | 'rejected' }[]>([]);
+  const [subs, setSubs] = useState<LoungeSubmission[]>([]);
+  useEffect(() => {
+    const sync = () => setSubs(getLoungeSubmissions());
+    sync();
+    return onLoungeSubmissionsChange(sync);
+  }, []);
 
-  function decide(id: string, status: 'approved' | 'rejected') {
-    const claim = claims.find((c) => c.id === id);
-    if (claim) setDecided((d) => [{ id, lounge: claim.lounge, status }, ...d]);
-    setClaims((c) => c.filter((x) => x.id !== id));
-  }
+  const pending = subs.filter((s) => s.status === 'pending');
+  const decided = subs.filter((s) => s.status !== 'pending');
 
   return (
     <div className="space-y-6">
-      <Section title={`Pending claims (${claims.length})`}>
-        {claims.length === 0 ? (
-          <div className="text-sm text-smoke-400">No pending lounge claims.</div>
+      <Section title={`Pending (${pending.length})`}>
+        {pending.length === 0 ? (
+          <div className="text-sm text-smoke-400">No lounge submissions waiting. They appear here when members submit a lounge.</div>
         ) : (
-          claims.map((c) => (
-            <Row key={c.id} title={c.lounge} sub={`${c.city} · ${c.by} (${c.role})`}>
-              <Approve onClick={() => decide(c.id, 'approved')} />
-              <Reject onClick={() => decide(c.id, 'rejected')} />
+          pending.map((s) => (
+            <Row key={s.id} title={s.name} sub={[s.address, s.city, s.state].filter(Boolean).join(', ')}>
+              <Approve onClick={() => setLoungeSubmissionStatus(s.id, 'approved')} />
+              <Reject onClick={() => setLoungeSubmissionStatus(s.id, 'rejected')} />
             </Row>
           ))
         )}
       </Section>
       {decided.length > 0 && (
         <Section title="Recently decided">
-          {decided.map((d) => (
-            <Row key={d.id} title={d.lounge} sub="">
-              <StatusPill status={d.status} />
+          {decided.slice(0, 8).map((s) => (
+            <Row key={s.id} title={s.name} sub={[s.city, s.state].filter(Boolean).join(', ')}>
+              <StatusPill status={s.status as 'approved' | 'rejected'} />
             </Row>
           ))}
         </Section>
       )}
+    </div>
+  );
+}
+
+function CertifyQueue() {
+  const [lounges, setLounges] = useState<RecentLounge[] | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
+  const [geo, setGeo] = useState<'idle' | 'running' | string>('idle');
+
+  useEffect(() => {
+    recentLounges(24).then(setLounges);
+  }, []);
+
+  async function runGeocode() {
+    setGeo('running');
+    const r = await geocodeMissingLounges(25);
+    setGeo(`Located ${r.fixed}, ${r.failed} couldn't be matched, ${r.remaining} still missing.`);
+    setLounges(await recentLounges(24));
+  }
+
+  async function toggle(l: RecentLounge) {
+    setPending(l.slug);
+    const ok = await certifyLounge(l.slug, !l.certified);
+    setPending(null);
+    if (ok) {
+      const fresh = await recentLounges(24);
+      setLounges(fresh);
+    }
+  }
+
+  if (lounges === null) {
+    return <div className="py-10 text-center"><Loader2 className="mx-auto animate-spin text-ember-400" size={20} /></div>;
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border-[0.5px] border-ember-400/15 bg-char/40 px-4 py-3">
+        <div className="text-sm text-smoke-300">
+          Geocode approved lounges that are missing a location so they appear on the map.
+        </div>
+        <button
+          onClick={runGeocode}
+          disabled={geo === 'running'}
+          className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/30 px-3 text-xs font-medium text-ember-100 hover:bg-ember-400/10 disabled:opacity-60"
+        >
+          {geo === 'running' ? <Loader2 size={13} className="animate-spin" /> : <MapPin size={13} strokeWidth={1.5} />}
+          Geocode missing locations
+        </button>
+      </div>
+      {geo !== 'idle' && geo !== 'running' && <div className="text-xs text-smoke-400">{geo}</div>}
+
+      <Section title="Recently added lounges">
+      {lounges.length === 0 ? (
+        <div className="text-sm text-smoke-400">No lounges in the database yet. Approve a lounge submission and it shows here to certify.</div>
+      ) : (
+        lounges.map((l) => (
+          <Row key={l.slug} title={l.name} sub={[l.city, l.state].filter(Boolean).join(', ')}>
+            {l.certified ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-ember-400/15 px-2.5 py-0.5 text-[11px] uppercase tracking-wider text-ember-100">
+                <BadgeCheck size={12} strokeWidth={1.5} /> Certified
+              </span>
+            ) : (
+              <button
+                onClick={() => toggle(l)}
+                disabled={pending === l.slug}
+                className="inline-flex h-8 items-center gap-1 rounded-md bg-ember-400 px-3 text-xs font-medium text-paper hover:bg-ember-600 disabled:opacity-60"
+              >
+                {pending === l.slug ? <Loader2 size={13} className="animate-spin" /> : <BadgeCheck size={13} strokeWidth={1.5} />}
+                Certify
+              </button>
+            )}
+          </Row>
+        ))
+      )}
+      </Section>
     </div>
   );
 }
