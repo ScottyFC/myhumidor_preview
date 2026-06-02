@@ -204,3 +204,33 @@ export function onProfileChange(cb: () => void): () => void {
     window.removeEventListener('storage', cb);
   };
 }
+
+/** Look up any member's public profile by handle (for /u/[handle]). Supabase only. */
+export async function fetchProfileByHandle(
+  handle: string
+): Promise<{ userId: string; publicId: string; type: 'consumer' | 'lounge'; profile: ProfileFields } | null> {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const { data, error } = await supabaseBrowser()
+      .from('profiles')
+      .select('id, public_id, account_type, handle, display_name, city, state, bio, avatar_url')
+      .eq('handle', handle)
+      .single();
+    if (error || !data) return null;
+    return {
+      userId: data.id,
+      publicId: data.public_id,
+      type: (data.account_type as 'consumer' | 'lounge') ?? 'consumer',
+      profile: {
+        handle: data.handle ?? handle,
+        displayName: data.display_name ?? 'Member',
+        city: data.city ?? '',
+        state: data.state ?? '',
+        bio: data.bio ?? '',
+        avatarDataUrl: data.avatar_url ?? undefined,
+      },
+    };
+  } catch {
+    return null;
+  }
+}

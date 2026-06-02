@@ -174,3 +174,30 @@ export function onCollectionChange(cb: () => void): () => void {
     window.removeEventListener('storage', cb);
   };
 }
+
+/** Fetch another member's collection (for /u/[handle]). Supabase only. */
+export async function fetchCollectionFor(otherUserId: string): Promise<CollectionItem[]> {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data, error } = await supabaseBrowser()
+      .from('humidor_entries')
+      .select('cigar_id, status, brand, name, size, slug, created_at')
+      .eq('user_id', otherUserId)
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('[collection] fetchFor failed:', error.message);
+      return [];
+    }
+    return (data ?? []).map((r) => ({
+      cigarId: r.cigar_id,
+      status: r.status as CollectionStatus,
+      brand: r.brand ?? '',
+      name: r.name ?? '',
+      size: r.size ?? '',
+      slug: r.slug ?? '',
+      addedAt: r.created_at ?? new Date().toISOString(),
+    }));
+  } catch {
+    return [];
+  }
+}

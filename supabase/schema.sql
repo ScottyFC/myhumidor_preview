@@ -189,45 +189,24 @@ $$;
 create table if not exists public.ratings (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  cigar_id uuid not null references public.cigars(id) on delete cascade,
+  cigar_id uuid not null references public.catalog_cigars(id) on delete cascade,
   flavor_score int not null check (flavor_score between 1 and 5),
   burn_score int not null check (burn_score between 1 and 5),
   appearance_score int not null check (appearance_score between 1 and 5),
   overall numeric(3,2) not null,
   notes text,
+  tasting_notes text[] not null default '{}',
+  -- denormalized for fast rendering on profiles
+  brand text,
+  name text,
+  size text,
+  slug text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (user_id, cigar_id)
 );
 create index if not exists ratings_cigar_idx on public.ratings(cigar_id);
 create index if not exists ratings_user_idx on public.ratings(user_id);
-
-create table if not exists public.tasting_notes (
-  id uuid primary key default uuid_generate_v4(),
-  rating_id uuid not null references public.ratings(id) on delete cascade,
-  descriptor text not null
-);
-create index if not exists tasting_notes_rating_idx on public.tasting_notes(rating_id);
-create index if not exists tasting_notes_descriptor_idx on public.tasting_notes(descriptor);
-
--- Trigger: recompute cigar aggregates whenever a rating changes
-create or replace function public.update_cigar_aggregates() returns trigger
-  language plpgsql as $$
-begin
-  update public.cigars c set
-    rating_count = (select count(*) from public.ratings where cigar_id = c.id),
-    flavor_avg   = coalesce((select avg(flavor_score) from public.ratings where cigar_id = c.id), 0),
-    burn_avg     = coalesce((select avg(burn_score) from public.ratings where cigar_id = c.id), 0),
-    appearance_avg = coalesce((select avg(appearance_score) from public.ratings where cigar_id = c.id), 0),
-    overall_avg  = coalesce((select avg(overall) from public.ratings where cigar_id = c.id), 0)
-  where c.id = coalesce(new.cigar_id, old.cigar_id);
-  return null;
-end $$;
-
-drop trigger if exists ratings_aggregate_trigger on public.ratings;
-create trigger ratings_aggregate_trigger
-  after insert or update or delete on public.ratings
-  for each row execute function public.update_cigar_aggregates();
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- HUMIDOR
@@ -395,7 +374,6 @@ alter table public.profiles enable row level security;
 alter table public.cigars enable row level security;
 alter table public.brands enable row level security;
 alter table public.ratings enable row level security;
-alter table public.tasting_notes enable row level security;
 alter table public.humidor_entries enable row level security;
 alter table public.badge_awards enable row level security;
 alter table public.lounges enable row level security;
@@ -412,7 +390,6 @@ create policy "lounges are public" on public.lounges for select using (true);
 create policy "inventory is public" on public.inventory_items for select using (true);
 create policy "profiles are public" on public.profiles for select using (true);
 create policy "ratings are public" on public.ratings for select using (true);
-create policy "tasting_notes are public" on public.tasting_notes for select using (true);
 
 -- Self-only writes for consumer data
 create policy "users manage own ratings" on public.ratings
@@ -509,3 +486,20 @@ create policy "super admins review submissions" on public.cigar_submissions
     exists (select 1 from public.profiles p
             where p.id = auth.uid() and p.role in ('admin','super_admin'))
   );
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- ROLE PRIVILEGES (Supabase defaults)
+-- Restores the grants Supabase normally has on `public`. Required after a
+-- `drop schema public cascade` reset, otherwise service_role / anon get
+-- "permission denied for table". RLS still gates anon/authenticated;
+-- service_role bypasses RLS (used by the seed script).
+-- ════════════════════════════════════════════════════════════════════════════
+grant usage on schema public to anon, authenticated, service_role;
+
+grant all on all tables    in schema public to anon, authenticated, service_role;
+grant all on all sequences in schema public to anon, authenticated, service_role;
+grant all on all functions in schema public to anon, authenticated, service_role;
+
+alter default privileges in schema public grant all on tables    to anon, authenticated, service_role;
+alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema public grant all on functions to anon, authenticated, service_role;

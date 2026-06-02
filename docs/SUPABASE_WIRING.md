@@ -65,9 +65,28 @@ If something doesn't save, open the browser console: the stores log
 
 ---
 
+## ✅ Phase 2 — Ratings  (this update)
+
+Wired: `src/lib/ratings.ts` → `ratings` table. Public profiles (`/u/[handle]`)
+now fetch any member's profile + humidor + ratings by handle (Supabase mode),
+instead of only resolving your own.
+
+### Where you need to look
+- **Run `supabase/migrations/phase2_ratings.sql`** in the SQL Editor. It rebuilds
+  the `ratings` table to match the app (points at `catalog_cigars`, stores
+  tasting notes as an array, adds display fields). One-time; a fresh `schema.sql`
+  already has this shape.
+
+### Verify
+1. Rate a cigar (Flavor/Burn/Appearance + tasting notes) on any cigar page.
+   → a row appears in **Table Editor → ratings** with your `user_id`.
+2. Your `/profile` Ratings tab shows it; reload to confirm it loads from the DB.
+3. Visit another member's `/u/their-handle` → their humidor, wishlist, and
+   ratings load (public read). Yours stays editable at `/profile`.
+
+---
+
 ## ⏳ Next phases (not wired yet — still localStorage)
-- **Phase 2 — Ratings** (`src/lib/ratings.ts` → `ratings` table). Will also make
-  public profiles (`/u/[handle]`) fetch any member's humidor + ratings by handle.
 - **Phase 3 — Follows + Feed** (`follows`, `lounge_posts`).
 - **Phase 4 — Submissions + Change requests** (`cigar_submissions`,
   `change_requests`) into the admin queues.

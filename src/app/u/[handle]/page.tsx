@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { MapPin, Loader2, UserX } from 'lucide-react';
-import { getProfile, type ProfileFields } from '@/lib/profile';
+import { getProfile, fetchProfileByHandle, type ProfileFields } from '@/lib/profile';
 import { getSession } from '@/lib/auth';
-import { getCollection, type CollectionItem } from '@/lib/collection';
-import { getRatings, type UserRating } from '@/lib/ratings';
+import { isSupabaseConfigured } from '@/lib/supabase';
+import { getCollection, fetchCollectionFor, type CollectionItem } from '@/lib/collection';
+import { getRatings, fetchRatingsFor, type UserRating } from '@/lib/ratings';
 import { ProfileBody } from '@/components/ProfileBody';
 import { Avatar } from '@/components/Avatar';
 import { FollowButton } from '@/components/FollowButton';
@@ -24,18 +25,50 @@ export default function PublicProfilePage() {
   const [ratings, setRatings] = useState<UserRating[]>([]);
 
   useEffect(() => {
-    // DEMO: profile data lives in this browser, so we can only resolve the
-    // current user's own handle. PRODUCTION: fetch the profile, humidor,
-    // wishlist, and ratings for `handle` from Supabase (public, RLS-allowed).
-    const me = getProfile();
-    if (me.handle === handle) {
-      setProfile(me);
-      setIsSelf(true);
-      setViewedId(getSession()?.publicId ?? null);
-      setCollection(getCollection());
-      setRatings(getRatings());
+    let cancelled = false;
+
+    async function load() {
+      const me = getProfile();
+      const meIsTarget = me.handle === handle;
+      setIsSelf(meIsTarget);
+
+      if (isSupabaseConfigured) {
+        // Supabase: resolve any member by handle. For yourself, use the live
+        // local cache so edits reflect immediately; for others, fetch theirs.
+        if (meIsTarget) {
+          setProfile(me);
+          setViewedId(getSession()?.publicId ?? null);
+          setCollection(getCollection());
+          setRatings(getRatings());
+        } else {
+          const found = await fetchProfileByHandle(handle);
+          if (cancelled) return;
+          if (found) {
+            setProfile(found.profile);
+            setViewedId(found.publicId);
+            const [coll, rts] = await Promise.all([
+              fetchCollectionFor(found.userId),
+              fetchRatingsFor(found.userId),
+            ]);
+            if (cancelled) return;
+            setCollection(coll);
+            setRatings(rts);
+          }
+        }
+      } else if (meIsTarget) {
+        // Demo: only your own handle resolves locally.
+        setProfile(me);
+        setViewedId(getSession()?.publicId ?? null);
+        setCollection(getCollection());
+        setRatings(getRatings());
+      }
+      if (!cancelled) setLoaded(true);
     }
-    setLoaded(true);
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [handle]);
 
   if (!loaded) {
