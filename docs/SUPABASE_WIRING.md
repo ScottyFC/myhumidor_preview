@@ -203,6 +203,26 @@ Optional buckets: `avatars` (profile pics), `submissions` (cigar photos).
 
 > The `avatars` bucket is created — profile and lounge photo uploads work.
 
+## ✅ Phase 9 — Lounge posts, near-me, submit-fix, unified verify
+
+**Run `supabase/migrations/phase9.sql` once** (adds `claims_ownership` to
+lounge submissions).
+
+- **Submission bug fixed**: the submit-your-lounge form now requires sign-in
+  (RLS ties the row to your account; an unsigned submit was silently inserting
+  nothing). It also surfaces errors instead of failing quietly.
+- **Submit + verify unified**: the form has an "I own/manage this lounge" option.
+  Approving such a submission verifies the lounge and assigns the submitter as
+  owner (membership) in one step.
+- **Lounge posts**: owners create deals / new arrivals / events from the
+  dashboard; they show on the lounge profile and flow into the home feed.
+- **Search autofill** (the nav bar) now merges live DB results, so approved
+  cigars are findable immediately.
+- **Near me**: the lounges page has a "Lounges near you" finder; each lounge
+  profile links to its location on the map (`/map?lat&lng`).
+- **Logos**: a lounge's photo shows everywhere it's set (even before it's
+  claimed); confirmed owners/members (and super admins) can replace it.
+
 ## ⏳ Remaining / future hardening
 - **Change requests** (`change_requests`) into the admin queue.
 - **Lounge inventory / published menus** (`inventory_items`) to Supabase.

@@ -81,6 +81,7 @@ export interface RecentLounge {
   city: string;
   state: string;
   certified?: boolean;
+  image_url?: string | null;
 }
 
 export async function recentCigars(limit = 8): Promise<RecentCigar[]> {
@@ -123,11 +124,11 @@ export async function recentLounges(limit = 8): Promise<RecentLounge[]> {
   try {
     const { data } = await supabaseBrowser()
       .from('lounges')
-      .select('slug, name, city, state, certified, created_at')
+      .select('slug, name, city, state, certified, image_url, created_at')
       .order('created_at', { ascending: false })
       .limit(limit);
     return (data ?? []).map((l) => ({
-      slug: l.slug, name: l.name, city: l.city ?? '', state: l.state ?? '', certified: l.certified ?? false,
+      slug: l.slug, name: l.name, city: l.city ?? '', state: l.state ?? '', certified: l.certified ?? false, image_url: l.image_url ?? null,
     }));
   } catch {
     return [];

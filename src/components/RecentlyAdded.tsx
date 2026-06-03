@@ -71,7 +71,7 @@ export function RecentlyAdded({
               className="group w-56 shrink-0 snap-start rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4 transition hover:border-ember-400/40"
             >
               <div className="flex items-center gap-3">
-                <BrandTile name={x.name} className="h-11 w-11 shrink-0 text-base" rounded="rounded-lg" />
+                <BrandTile name={x.name} src={x.image_url} className="h-11 w-11 shrink-0 text-base" rounded="rounded-lg" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-1">
                     <span className="truncate font-display text-sm font-medium group-hover:text-ember-100">{x.name}</span>

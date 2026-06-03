@@ -12,6 +12,8 @@ export function SubmitLounge() {
   const [signedIn, setSignedIn] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [err, setErr] = useState('');
+  const [owns, setOwns] = useState(false);
   const [f, setF] = useState({ name: '', address: '', city: '', state: '', phone: '', website: '', notes: '' });
 
   useEffect(() => subscribeAuth((s) => setSignedIn(!!s)), []);
@@ -22,9 +24,13 @@ export function SubmitLounge() {
 
   async function submit() {
     if (!f.name.trim()) return;
+    if (!signedIn) {
+      setErr('Please sign in first — submissions are tied to your account.');
+      return;
+    }
     setBusy(true);
-    await new Promise((r) => setTimeout(r, 300));
-    submitLounge({
+    setErr('');
+    const ok = await submitLounge({
       name: f.name.trim(),
       address: f.address.trim(),
       city: f.city.trim(),
@@ -32,9 +38,11 @@ export function SubmitLounge() {
       phone: f.phone.trim() || undefined,
       website: f.website.trim() || undefined,
       notes: f.notes.trim() || undefined,
+      claimsOwnership: owns,
     });
     setBusy(false);
-    setDone(true);
+    if (ok) setDone(true);
+    else setErr("Couldn't submit — please try again, or check you're signed in.");
   }
 
   if (done) {
@@ -42,7 +50,11 @@ export function SubmitLounge() {
       <div className="rounded-xl border-[0.5px] border-ember-400/30 bg-ember-400/5 p-6 text-center">
         <Check className="mx-auto text-ember-400" size={26} strokeWidth={2} />
         <div className="mt-2 font-display text-lg">Thanks — your lounge is in the queue</div>
-        <p className="mt-1 text-sm text-smoke-300">Our team will review it and add it to the directory.</p>
+        <p className="mt-1 text-sm text-smoke-300">
+          {owns
+            ? 'Our team will review it, add it, verify it, and assign it to you as owner.'
+            : 'Our team will review it and add it to the directory.'}
+        </p>
       </div>
     );
   }
@@ -64,11 +76,12 @@ export function SubmitLounge() {
   return (
     <div className="rounded-xl border-[0.5px] border-ember-400/20 bg-char/50 p-6">
       <div className="eyebrow mb-3">Submit your lounge</div>
-      {!signedIn && (
-        <p className="mb-3 text-xs text-smoke-400">
-          You can submit now, but <Link href="/register" className="text-ember-100 underline-offset-2 hover:underline">signing in</Link> lets us track it to your account.
+      {!signedIn ? (
+        <p className="mb-3 rounded-md border-[0.5px] border-ember-400/20 bg-char/60 p-3 text-sm text-smoke-200">
+          Please <Link href="/register?next=/lounges" className="text-ember-100 underline-offset-2 hover:underline">sign in</Link> to
+          submit a lounge — submissions are tied to your account so we can verify and (if you own it) hand it to you.
         </p>
-      )}
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Lounge name" v={f.name} onChange={(v) => set('name', v)} placeholder="Corona Cigar Co." full />
         <Field label="Address" v={f.address} onChange={(v) => set('address', v)} placeholder="123 Main St" full />
@@ -77,10 +90,15 @@ export function SubmitLounge() {
         <Field label="Phone" v={f.phone} onChange={(v) => set('phone', v)} placeholder="(813) 555-0100" />
         <Field label="Website" v={f.website} onChange={(v) => set('website', v)} placeholder="https://" />
       </div>
+      <label className="mt-3 flex items-start gap-2 text-sm text-smoke-200">
+        <input type="checkbox" checked={owns} onChange={(e) => setOwns(e.target.checked)} className="mt-0.5" />
+        I own or manage this lounge — verify it and assign it to me once approved.
+      </label>
+      {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
       <div className="mt-4 flex items-center gap-2">
         <button
           onClick={submit}
-          disabled={!f.name.trim() || busy}
+          disabled={!f.name.trim() || busy || !signedIn}
           className="inline-flex items-center gap-2 rounded-md bg-ember-400 px-5 py-2 text-sm font-medium text-paper transition hover:bg-ember-600 disabled:opacity-60"
         >
           {busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} strokeWidth={1.5} />}

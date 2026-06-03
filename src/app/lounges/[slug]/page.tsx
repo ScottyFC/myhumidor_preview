@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation } from 'lucide-react';
 import type { CatalogStore } from '@/types';
 import { findCatalogStoreBySlug } from '@/lib/catalog';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
@@ -9,6 +9,7 @@ import { BrandTile } from '@/components/BrandTile';
 import { LoungeMenu } from '@/components/LoungeMenu';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
+import { LoungePosts } from '@/components/LoungePosts';
 import { ChangeRequest } from '@/components/ChangeRequest';
 
 interface PageProps {
@@ -88,6 +89,17 @@ export default async function LoungePage({ params }: PageProps) {
               <MapPin size={14} strokeWidth={1.5} className="text-ember-400" /> {fullAddress}
             </div>
           )}
+          {lounge.lat != null && lounge.lng != null && (lounge.lat !== 0 || lounge.lng !== 0) && (
+            <div className="flex items-center gap-2">
+              <Navigation size={14} strokeWidth={1.5} className="text-ember-400" />
+              <Link
+                href={`/map?lat=${lounge.lat}&lng=${lounge.lng}&name=${encodeURIComponent(lounge.name)}`}
+                className="text-ember-100 underline-offset-2 hover:underline"
+              >
+                View on the map
+              </Link>
+            </div>
+          )}
           {lounge.phone && (
             <div className="flex items-center gap-2">
               <Phone size={14} strokeWidth={1.5} className="text-ember-400" /> {lounge.phone}
@@ -138,6 +150,7 @@ export default async function LoungePage({ params }: PageProps) {
       {/* Suggest a correction */}
       <section className="py-8">
         <ChangeRequest targetType="lounge" targetId={lounge.slug} targetName={lounge.name} />
+        <LoungePosts slug={lounge.slug} />
       </section>
     </div>
   );

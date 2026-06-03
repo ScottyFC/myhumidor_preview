@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search, Loader2, Store, Cigarette, ArrowRight } from 'lucide-react';
 import type { CatalogCigar, CatalogStore } from '@/types';
 import { cn, formatUSD } from '@/lib/utils';
+import { searchCatalogCigarsRemote } from '@/lib/db';
 
 interface Suggestion {
   type: 'cigar' | 'store' | 'all';
@@ -35,12 +36,16 @@ export function SearchAutocomplete({ className }: { className?: string }) {
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const [c, s] = await Promise.all([
+        const [c, s, dbCigars] = await Promise.all([
           fetch(`/api/cigars?q=${encodeURIComponent(query)}&limit=6`).then((r) => r.json()),
           fetch(`/api/stores?q=${encodeURIComponent(query)}&limit=4`).then((r) => r.json()),
+          searchCatalogCigarsRemote(query, 6),
         ]);
         if (id !== reqId.current) return;
-        const cigars: Suggestion[] = (c.items ?? []).map((x: CatalogCigar) => ({
+        const staticItems: CatalogCigar[] = c.items ?? [];
+        const seen = new Set(staticItems.map((x) => x.slug));
+        const merged = [...dbCigars.filter((x) => !seen.has(x.slug)), ...staticItems].slice(0, 6);
+        const cigars: Suggestion[] = merged.map((x: CatalogCigar) => ({
           type: 'cigar' as const,
           href: `/cigars/${x.slug}`,
           label: x.name,

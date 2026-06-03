@@ -5,6 +5,7 @@ import { Camera, Loader2 } from 'lucide-react';
 import { subscribeAuth } from '@/lib/auth';
 import { isAdmin } from '@/lib/admin';
 import { uploadLoungeLogo } from '@/lib/db';
+import { amMemberOf } from '@/lib/lounges-owner';
 
 /**
  * Replace a lounge's profile picture. By default it only renders for super
@@ -26,8 +27,12 @@ export function LoungeLogoEditor({
 
   useEffect(() => {
     if (force) return;
-    return subscribeAuth((s) => setShow(isAdmin(s?.publicId)));
-  }, [force]);
+    const unsub = subscribeAuth((s) => {
+      if (isAdmin(s?.publicId)) setShow(true);
+      else amMemberOf(slug).then((ok) => ok && setShow(true));
+    });
+    return unsub;
+  }, [force, slug]);
 
   if (!show) return null;
 

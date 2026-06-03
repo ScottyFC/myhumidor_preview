@@ -139,6 +139,25 @@ export function subscribeClaims(cb: () => void): () => void {
   return subscribeTable('lounge_claims', cb);
 }
 
+export async function amMemberOf(slug: string): Promise<boolean> {
+  bind();
+  if (!isSupabaseConfigured || !userId) return false;
+  try {
+    const sb = supabaseBrowser();
+    const { data: l } = await sb.from('lounges').select('id').eq('slug', slug).single();
+    if (!l) return false;
+    const { data: m } = await sb
+      .from('lounge_members')
+      .select('user_id')
+      .eq('lounge_id', l.id)
+      .eq('user_id', userId)
+      .maybeSingle();
+    return !!m;
+  } catch {
+    return false;
+  }
+}
+
 /* ── Membership (the lounges a user manages) ────────────────────────────── */
 export async function getMyLounges(): Promise<MyLounge[]> {
   bind();

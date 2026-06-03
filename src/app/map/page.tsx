@@ -129,6 +129,30 @@ export default function MapPage() {
     );
   }, [plot]);
 
+  // If arriving from a lounge profile (?lat=&lng=), center there and load nearby.
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const lat = parseFloat(sp.get('lat') ?? '');
+    const lng = parseFloat(sp.get('lng') ?? '');
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+    const target = { lat, lng };
+    setCoords(target);
+    setGeo('ready');
+    setLoadingList(true);
+    (async () => {
+      try {
+        const res = await fetch(`/api/stores/nearby?lat=${lat}&lng=${lng}&limit=24`);
+        const data = await res.json();
+        const items: NearbyStore[] = data.items ?? [];
+        setLounges(items);
+        plot(target, items);
+        mapRef.current?.flyTo({ center: [lng, lat], zoom: 13, duration: 800 });
+      } finally {
+        setLoadingList(false);
+      }
+    })();
+  }, [plot]);
+
   return (
     <div className="mx-auto max-w-7xl px-6 pt-10">
       <header className="mb-6">

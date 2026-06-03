@@ -21,6 +21,8 @@ export interface LoungeSubmission {
   reviewedBy?: string | null;
   reviewerName?: string;
   loungeId?: string | null;
+  claimsOwnership?: boolean;
+  submittedBy?: string | null;
 }
 
 const KEY = 'myhumidor:lounge-submissions';
@@ -55,17 +57,19 @@ type Row = {
   id: string; name: string; address: string | null; city: string | null; state: string | null;
   phone: string | null; email: string | null; website: string | null; notes: string | null;
   status: 'pending' | 'approved' | 'rejected'; created_at: string | null;
-  reviewed_by: string | null; lounge_id: string | null;
+  reviewed_by: string | null; lounge_id: string | null; claims_ownership: boolean | null;
+  submitted_by: string | null;
 };
 function rowTo(r: Row): LoungeSubmission {
   return {
     id: r.id, name: r.name, address: r.address ?? '', city: r.city ?? '', state: r.state ?? '',
     phone: r.phone ?? undefined, email: r.email ?? undefined, website: r.website ?? undefined,
     notes: r.notes ?? undefined, status: r.status, createdAt: r.created_at ?? new Date().toISOString(),
-    reviewedBy: r.reviewed_by, loungeId: r.lounge_id,
+    reviewedBy: r.reviewed_by, loungeId: r.lounge_id, claimsOwnership: r.claims_ownership ?? false,
+    submittedBy: r.submitted_by,
   };
 }
-const SELECT = 'id, name, address, city, state, phone, email, website, notes, status, created_at, reviewed_by, lounge_id';
+const SELECT = 'id, name, address, city, state, phone, email, website, notes, status, created_at, reviewed_by, lounge_id, claims_ownership, submitted_by';
 
 async function hydrateRemote() {
   try {
@@ -120,38 +124,46 @@ export function getLoungeSubmissions(): LoungeSubmission[] {
   return [...cache].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export function submitLounge(f: Omit<LoungeSubmission, 'id' | 'status' | 'createdAt'>): LoungeSubmission {
+export async function submitLounge(
+  f: Omit<LoungeSubmission, 'id' | 'status' | 'createdAt'>
+): Promise<boolean> {
   start();
   const sub: LoungeSubmission = { ...f, id: `lsub_${Date.now()}`, status: 'pending', createdAt: new Date().toISOString() };
   cache = [sub, ...cache];
   fire();
-  if (isSupabaseConfigured && userId) {
-    (async () => {
-      const { data, error } = await supabaseBrowser()
-        .from('lounge_submissions')
-        .insert({
-          submitted_by: userId,
-          name: f.name,
-          address: f.address || null,
-          city: f.city || null,
-          state: f.state || null,
-          phone: f.phone || null,
-          email: f.email || null,
-          website: f.website || null,
-          notes: f.notes || null,
-        })
-        .select(SELECT)
-        .single();
-      if (error) console.error('[lounge-sub] insert failed:', error.message);
-      else if (data) {
-        cache = [rowTo(data as Row), ...cache.filter((x) => x.id !== sub.id)];
-        fire();
-      }
-    })();
-  } else {
-    saveLocal();
+  if (isSupabaseConfigured) {
+    if (!userId) {
+      console.error('[lounge-sub] not signed in — cannot submit');
+      return false;
+    }
+    const { data, error } = await supabaseBrowser()
+      .from('lounge_submissions')
+      .insert({
+        submitted_by: userId,
+        name: f.name,
+        address: f.address || null,
+        city: f.city || null,
+        state: f.state || null,
+        phone: f.phone || null,
+        email: f.email || null,
+        website: f.website || null,
+        notes: f.notes || null,
+        claims_ownership: f.claimsOwnership ?? false,
+      })
+      .select(SELECT)
+      .single();
+    if (error) {
+      console.error('[lounge-sub] insert failed:', error.message);
+      return false;
+    }
+    if (data) {
+      cache = [rowTo(data as Row), ...cache.filter((x) => x.id !== sub.id)];
+      fire();
+    }
+    return true;
   }
-  return sub;
+  saveLocal();
+  return true;
 }
 
 async function pushToLounges(sub: LoungeSubmission): Promise<string | null> {
@@ -163,7 +175,9 @@ async function pushToLounges(sub: LoungeSubmission): Promise<string | null> {
       city: sub.city,
       state: sub.state,
     });
-    const { data, error } = await supabaseBrowser()
+    const owns = sub.claimsOwnership === true;
+    const sb = supabaseBrowser();
+    const { data, error } = await sb
       .from('lounges')
       .insert({
         slug,
@@ -176,8 +190,10 @@ async function pushToLounges(sub: LoungeSubmission): Promise<string | null> {
         website: sub.website || null,
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
-        verified: false,
+        // submitter-owned lounges are verified + assigned on approval
+        verified: owns,
         certified: false,
+        owner_id: owns ? sub.submittedBy ?? null : null,
       })
       .select('id')
       .single();
@@ -185,7 +201,15 @@ async function pushToLounges(sub: LoungeSubmission): Promise<string | null> {
       console.error('[lounge-sub] push to lounges failed:', error.message);
       return null;
     }
-    return data?.id ?? null;
+    const newId = data?.id ?? null;
+    // If the submitter claimed ownership, make them an owner-level member.
+    if (owns && newId && sub.submittedBy) {
+      await sb.from('lounge_members').upsert(
+        { lounge_id: newId, user_id: sub.submittedBy, role: 'owner' },
+        { onConflict: 'lounge_id,user_id' }
+      );
+    }
+    return newId;
   } catch (e) {
     console.error('[lounge-sub] push error:', e);
     return null;
