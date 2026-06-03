@@ -7,6 +7,7 @@
  */
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
+import { logEvent } from './audit';
 
 export interface InventoryItem {
   cigarId: string;
@@ -124,6 +125,14 @@ export async function publishMenu(slug: string, items: InventoryItem[], localId?
       console.error('[inventory] publish failed:', error.message);
       return false;
     }
+    logEvent({
+      action: 'inventory.published',
+      entityType: 'lounge',
+      entityId: slug,
+      entityName: slug,
+      loungeId: lid,
+      meta: { items: items.length },
+    });
     return true;
   }
   try {

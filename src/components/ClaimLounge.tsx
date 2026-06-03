@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { BadgeCheck, ShieldCheck, Upload, Check, Loader2, Package } from 'lucide-react';
 import type { CatalogStore } from '@/types';
 import { cn } from '@/lib/utils';
+import { isSupabaseConfigured } from '@/lib/supabase';
+import { submitClaim } from '@/lib/lounges-owner';
 
 const STORE_KEY = 'myhumidor:active-store';
 const claimKey = (id: string) => `myhumidor:claim:${id}`;
@@ -108,9 +110,18 @@ function ClaimForm({ store, onClaimed }: { store: CatalogStore; onClaimed: () =>
   async function submit() {
     if (!valid) return;
     setSubmitting(true);
-    // TODO: POST to a claims endpoint; in production this creates a verification
-    // record and notifies the team. Here we simulate a short delay.
-    await new Promise((r) => setTimeout(r, 700));
+    if (isSupabaseConfigured) {
+      await submitClaim({
+        loungeSlug: store.slug,
+        loungeName: store.name,
+        claimantName: name.trim(),
+        roleRequested: role,
+        email: email.trim(),
+        phone: phone.trim() || undefined,
+      });
+    } else {
+      await new Promise((r) => setTimeout(r, 700));
+    }
     setSubmitting(false);
     onClaimed();
   }

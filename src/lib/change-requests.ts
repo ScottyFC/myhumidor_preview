@@ -9,6 +9,7 @@
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
 import { subscribeTable } from './realtime';
+import { logEvent } from './audit';
 
 export interface ChangeRequest {
   id: string;
@@ -129,6 +130,7 @@ export function getChangeRequests(): ChangeRequest[] {
 
 export function setChangeRequestStatus(id: string, status: 'resolved' | 'dismissed' | 'open') {
   start();
+  const cr = cache.find((c) => c.id === id);
   cache = cache.map((c) => (c.id === id ? { ...c, status } : c));
   fire();
   if (isSupabaseConfigured) {
@@ -138,7 +140,17 @@ export function setChangeRequestStatus(id: string, status: 'resolved' | 'dismiss
       .eq('id', id)
       .then(({ error }) => {
         if (error) console.error('[change-req] update failed:', error.message);
-        else hydrateRemote();
+        else {
+          if (cr && status !== 'open') {
+            logEvent({
+              action: status === 'resolved' ? 'change_request.resolved' : 'change_request.dismissed',
+              entityType: cr.targetType,
+              entityId: cr.targetId,
+              entityName: cr.targetName,
+            });
+          }
+          hydrateRemote();
+        }
       });
   } else {
     saveLocal();

@@ -2,6 +2,7 @@
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { geocodeAddress } from './geocode';
+import { logEvent } from './audit';
 import type { CatalogCigar } from '@/types';
 
 /* ── DB-backed cigar search (so newly-approved cigars are instantly findable) ── */
@@ -136,14 +137,20 @@ export async function recentLounges(limit = 8): Promise<RecentLounge[]> {
 export async function certifyLounge(slug: string, certified: boolean): Promise<boolean> {
   if (!isSupabaseConfigured) return false;
   try {
-    const { error } = await supabaseBrowser()
-      .from('lounges')
-      .update({ certified, verified: certified })
-      .eq('slug', slug);
+    const sb = supabaseBrowser();
+    const { data: l } = await sb.from('lounges').select('id, name').eq('slug', slug).single();
+    const { error } = await sb.from('lounges').update({ certified, verified: certified }).eq('slug', slug);
     if (error) {
       console.error('[db] certify failed:', error.message);
       return false;
     }
+    logEvent({
+      action: certified ? 'lounge.certified' : 'lounge.uncertified',
+      entityType: 'lounge',
+      entityId: l?.id ?? slug,
+      entityName: l?.name ?? slug,
+      loungeId: l?.id ?? null,
+    });
     return true;
   } catch {
     return false;
@@ -199,6 +206,7 @@ export async function deleteCatalogCigar(slug: string): Promise<boolean> {
       console.error('[db] delete cigar failed:', error.message);
       return false;
     }
+    logEvent({ action: 'cigar.deleted', entityType: 'cigar', entityId: slug, entityName: slug });
     return true;
   } catch {
     return false;
@@ -272,11 +280,19 @@ export async function uploadLoungeLogo(slug: string, dataUrl: string): Promise<s
       return null;
     }
     const url = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+    const { data: l } = await sb.from('lounges').select('id, name').eq('slug', slug).single();
     const { error } = await sb.from('lounges').update({ image_url: url }).eq('slug', slug);
     if (error) {
       console.error('[db] lounge logo save failed:', error.message);
       return null;
     }
+    logEvent({
+      action: 'lounge.logo_changed',
+      entityType: 'lounge',
+      entityId: l?.id ?? slug,
+      entityName: l?.name ?? slug,
+      loungeId: l?.id ?? null,
+    });
     return url;
   } catch (e) {
     console.error('[db] lounge logo error:', e);

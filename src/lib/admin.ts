@@ -11,6 +11,7 @@
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
+import { logEvent } from './audit';
 
 const BOOTSTRAP_ADMINS = ['USER-cd2c8383eb384b379fda954b90e99b49'];
 
@@ -96,6 +97,7 @@ export function promoteAdmin(publicId: string) {
       .update({ role: 'super_admin' })
       .eq('public_id', id)
       .then(({ error }) => error && console.error('[admin] promote failed:', error.message));
+    logEvent({ action: 'admin.promoted', entityType: 'profile', entityId: id });
   }
   fire();
 }
@@ -114,6 +116,7 @@ export function revokeAdmin(publicId: string) {
       .update({ role: 'consumer' })
       .eq('public_id', publicId)
       .then(({ error }) => error && console.error('[admin] revoke failed:', error.message));
+    logEvent({ action: 'admin.revoked', entityType: 'profile', entityId: publicId });
   }
   fire();
 }

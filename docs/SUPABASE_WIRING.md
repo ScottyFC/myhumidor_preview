@@ -185,7 +185,25 @@ Optional buckets: `avatars` (profile pics), `submissions` (cigar photos).
 > Image uploads use **Supabase Storage** (`avatars` bucket), not the CloudFront
 > path — CloudFront is read-only delivery for the pre-existing brand logos.
 
-## ⏳ Remaining
+## ✅ Phase 8 — Lounge ownership, audit log, review window
+
+**Run `supabase/migrations/phase8.sql` once.** Then:
+- **Lounge profile levels**: `lounge_members` (owner / manager / staff). Claiming a
+  lounge (its profile → "Claim this lounge") files a `lounge_claims` row; a super
+  admin approves it in `/admin` → **Lounge claims**, which sets `lounges.owner_id`
+  and adds an `owner` membership. The dashboard lists "Lounges you manage."
+- **Tightened RLS**: inventory, posts, and lounge edits now require membership of
+  that lounge (or admin). Claim + approval is the path to managing a lounge.
+- **Review window**: cigar submissions and lounge claims expand to show every
+  detail (photo, notes, MSRP, submitter) before deciding.
+- **Activity log**: `/admin` → **Activity log** shows full change history; lounge
+  owners see their lounge's history in the dashboard ("Recent activity").
+  Recorded via `audit_events` on approvals, certifications, deletes, claims,
+  change requests, admin role changes, menu publishes, and logo changes.
+
+> The `avatars` bucket is created — profile and lounge photo uploads work.
+
+## ⏳ Remaining / future hardening
 - **Change requests** (`change_requests`) into the admin queue.
 - **Lounge inventory / published menus** (`inventory_items`) to Supabase.
 - Geocoding submitted lounges so they show on the map + main directory (they

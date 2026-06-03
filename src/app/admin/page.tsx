@@ -3,9 +3,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin, MessageSquare } from 'lucide-react';
+import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin, MessageSquare, History, KeyRound, ChevronDown } from 'lucide-react';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { isAdmin, isBootstrapAdmin, listAdmins, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
+import {
+  getClaims, setClaimStatus, subscribeClaims, type LoungeClaim,
+} from '@/lib/lounges-owner';
+import { ActivityLog } from '@/components/ActivityLog';
 import {
   getLoungeSubmissions, setLoungeSubmissionStatus, onLoungeSubmissionsChange,
   type LoungeSubmission,
@@ -22,7 +26,7 @@ import {
 } from '@/lib/submissions';
 import { cn } from '@/lib/utils';
 
-type Tab = 'cigars' | 'lounges' | 'certify' | 'requests' | 'admins';
+type Tab = 'cigars' | 'lounges' | 'claims' | 'certify' | 'requests' | 'log' | 'admins';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -65,8 +69,10 @@ export default function AdminPage() {
   const tabs: { id: Tab; label: string; icon: typeof Cigarette }[] = [
     { id: 'cigars', label: 'Cigar submissions', icon: Cigarette },
     { id: 'lounges', label: 'Lounge submissions', icon: Store },
+    { id: 'claims', label: 'Lounge claims', icon: KeyRound },
     { id: 'certify', label: 'Certify lounges', icon: BadgeCheck },
     { id: 'requests', label: 'Change requests', icon: MessageSquare },
+    { id: 'log', label: 'Activity log', icon: History },
     { id: 'admins', label: 'Admins', icon: ShieldCheck },
   ];
 
@@ -105,8 +111,10 @@ export default function AdminPage() {
 
       {tab === 'cigars' && <CigarQueue />}
       {tab === 'lounges' && <LoungeQueue />}
+      {tab === 'claims' && <ClaimsQueue />}
       {tab === 'certify' && <CertifyQueue />}
       {tab === 'requests' && <ChangeRequestQueue />}
+      {tab === 'log' && <ActivityLog />}
       {tab === 'admins' && <AdminManager myId={session?.publicId ?? ''} />}
     </div>
   );
@@ -114,6 +122,7 @@ export default function AdminPage() {
 
 function CigarQueue() {
   const [subs, setSubs] = useState<Submission[]>([]);
+  const [openId, setOpenId] = useState<string | null>(null);
   useEffect(() => {
     const sync = () => setSubs(getSubmissions());
     sync();
@@ -134,10 +143,24 @@ function CigarQueue() {
           <div className="text-sm text-smoke-400">Nothing waiting. Nice and clean.</div>
         ) : (
           pending.map((s) => (
-            <Row key={s.id} title={`${s.brand} ${s.name}`} sub={`${s.size}${s.country ? ` · ${s.country}` : ''}${s.price != null ? ` · $${s.price}` : ''}`}>
-              <Approve onClick={() => setSubmissionStatus(s.id, 'approved')} />
-              <Reject onClick={() => setSubmissionStatus(s.id, 'rejected')} />
-            </Row>
+            <div key={s.id} className="rounded-lg border-[0.5px] border-ember-400/15 bg-char/40">
+              <div className="flex items-center justify-between gap-3 p-4">
+                <button onClick={() => setOpenId(openId === s.id ? null : s.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                  <ChevronDown size={15} strokeWidth={1.5} className={cn('shrink-0 text-smoke-400 transition', openId === s.id && 'rotate-180')} />
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">{s.brand} {s.name}</div>
+                    <div className="truncate text-xs text-smoke-400">
+                      {s.size}{s.country ? ` · ${s.country}` : ''}{s.price != null ? ` · $${s.price}` : ''}
+                    </div>
+                  </div>
+                </button>
+                <div className="flex shrink-0 gap-2">
+                  <Approve onClick={() => setSubmissionStatus(s.id, 'approved')} />
+                  <Reject onClick={() => setSubmissionStatus(s.id, 'rejected')} />
+                </div>
+              </div>
+              {openId === s.id && <SubmissionDetail s={s} />}
+            </div>
           ))
         )}
       </Section>
@@ -158,6 +181,114 @@ function CigarQueue() {
                   <Check size={13} strokeWidth={2} /> Approve instead
                 </button>
               )}
+            </Row>
+          ))}
+        </Section>
+      )}
+    </div>
+  );
+}
+
+function SubmissionDetail({ s }: { s: Submission }) {
+  return (
+    <div className="border-t-[0.5px] border-ember-400/10 px-4 py-4">
+      <div className="flex flex-col gap-4 sm:flex-row">
+        {s.photoDataUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={s.photoDataUrl} alt={s.name} className="h-32 w-28 shrink-0 rounded-lg object-cover" />
+        )}
+        <dl className="grid flex-1 grid-cols-2 gap-x-6 gap-y-2 text-sm">
+          <Detail label="Brand" value={s.brand} />
+          <Detail label="Name" value={s.name} />
+          <Detail label="Size" value={s.size || '—'} />
+          <Detail label="Country" value={s.country || '—'} />
+          <Detail label="MSRP" value={s.price != null ? `$${s.price}` : '—'} />
+          <Detail label="Submitted" value={new Date(s.createdAt).toLocaleDateString()} />
+          {s.notes && <div className="col-span-2"><Detail label="Notes" value={s.notes} /></div>}
+        </dl>
+      </div>
+    </div>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="eyebrow">{label}</dt>
+      <dd className="mt-0.5 text-paper">{value}</dd>
+    </div>
+  );
+}
+
+function ClaimsQueue() {
+  const [claims, setClaims] = useState<LoungeClaim[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const load = () => getClaims().then(setClaims);
+  useEffect(() => {
+    load();
+    return subscribeClaims(load);
+  }, []);
+
+  async function decide(c: LoungeClaim, status: 'approved' | 'rejected') {
+    setBusy(c.id);
+    await setClaimStatus(c, status);
+    setBusy(null);
+    load();
+  }
+
+  if (claims === null) {
+    return <div className="py-10 text-center"><Loader2 className="mx-auto animate-spin text-ember-400" size={20} /></div>;
+  }
+
+  const pending = claims.filter((c) => c.status === 'pending');
+  const decided = claims.filter((c) => c.status !== 'pending');
+
+  return (
+    <div className="space-y-6">
+      <Section title={`Pending claims (${pending.length})`}>
+        {pending.length === 0 ? (
+          <div className="text-sm text-smoke-400">No lounge claims waiting. Owners claim their lounge from its profile page.</div>
+        ) : (
+          pending.map((c) => (
+            <div key={c.id} className="rounded-lg border-[0.5px] border-ember-400/15 bg-char/40">
+              <div className="flex items-center justify-between gap-3 p-4">
+                <button onClick={() => setOpenId(openId === c.id ? null : c.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+                  <ChevronDown size={15} strokeWidth={1.5} className={cn('shrink-0 text-smoke-400 transition', openId === c.id && 'rotate-180')} />
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium">{c.loungeName}</div>
+                    <div className="truncate text-xs text-smoke-400">{c.claimantName}{c.roleRequested ? ` · ${c.roleRequested}` : ''}</div>
+                  </div>
+                </button>
+                <div className="flex shrink-0 gap-2">
+                  <button onClick={() => decide(c, 'approved')} disabled={busy === c.id} className="inline-flex h-8 items-center gap-1 rounded-md bg-ember-400 px-2.5 text-xs font-medium text-paper hover:bg-ember-600 disabled:opacity-60">
+                    {busy === c.id ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} strokeWidth={2} />} Approve
+                  </button>
+                  <Reject onClick={() => decide(c, 'rejected')} />
+                </div>
+              </div>
+              {openId === c.id && (
+                <div className="border-t-[0.5px] border-ember-400/10 px-4 py-4">
+                  <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <Detail label="Lounge" value={c.loungeName} />
+                    <Detail label="Claimant" value={c.claimantName} />
+                    <Detail label="Role" value={c.roleRequested || '—'} />
+                    <Detail label="Email" value={c.email || '—'} />
+                    <Detail label="Phone" value={c.phone || '—'} />
+                    <Detail label="Submitted" value={new Date(c.createdAt).toLocaleDateString()} />
+                  </dl>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </Section>
+      {decided.length > 0 && (
+        <Section title="Recently decided">
+          {decided.slice(0, 12).map((c) => (
+            <Row key={c.id} title={c.loungeName} sub={c.claimantName}>
+              <StatusPill status={c.status as 'approved' | 'rejected'} />
             </Row>
           ))}
         </Section>

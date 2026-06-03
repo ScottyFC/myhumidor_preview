@@ -4,6 +4,7 @@ import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
 import { geocodeAddress } from './geocode';
 import { subscribeTable } from './realtime';
+import { logEvent } from './audit';
 
 export interface LoungeSubmission {
   id: string;
@@ -213,6 +214,15 @@ export function setLoungeSubmissionStatus(id: string, status: 'approved' | 'reje
         })
         .eq('id', id);
       if (error) console.error('[lounge-sub] review failed:', error.message);
+      else if (sub) {
+        logEvent({
+          action: status === 'approved' ? 'lounge.approved' : 'lounge.rejected',
+          entityType: 'lounge',
+          entityId: loungeId ?? sub.id,
+          entityName: sub.name,
+          loungeId: loungeId,
+        });
+      }
       hydrateRemote();
     })();
   } else {

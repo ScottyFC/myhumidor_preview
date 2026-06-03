@@ -12,6 +12,7 @@
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
 import { subscribeTable } from './realtime';
+import { logEvent } from './audit';
 
 export interface Submission {
   id: string;
@@ -260,6 +261,14 @@ export function setSubmissionStatus(id: string, status: 'approved' | 'rejected')
         })
         .eq('id', id);
       if (error) console.error('[submissions] review failed:', error.message);
+      else if (sub) {
+        logEvent({
+          action: status === 'approved' ? 'cigar.approved' : 'cigar.rejected',
+          entityType: 'cigar',
+          entityId: catalogId ?? sub.id,
+          entityName: `${sub.brand} ${sub.name}`,
+        });
+      }
       hydrateRemote();
     })();
   } else {

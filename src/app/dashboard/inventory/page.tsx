@@ -10,6 +10,8 @@ import type { CatalogCigar, CatalogStore, InventoryItem } from '@/types';
 import { cn, formatUSD } from '@/lib/utils';
 import { getInventory, saveInventory, publishMenu } from '@/lib/inventory';
 import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
+import { ActivityLog } from '@/components/ActivityLog';
+import { getMyLounges, type MyLounge } from '@/lib/lounges-owner';
 
 const STORE_KEY = 'myhumidor:active-store';
 
@@ -308,8 +310,15 @@ export default function InventoryPage() {
             </div>
           )}
 
+          {store && (
+            <div className="mt-8">
+              <div className="eyebrow mb-3">Recent activity</div>
+              <ActivityLog slug={store.slug} />
+            </div>
+          )}
+
           <p className="mt-6 text-xs leading-relaxed text-smoke-400">
-            Saved to this browser for the demo. In production each change writes to the{' '}
+            Inventory and the published menu are saved to the{' '}
             <code className="text-ember-100">inventory_items</code> table, scoped to your lounge by
             row-level security.
           </p>
@@ -331,6 +340,35 @@ function Summary({ label, value, accent }: { label: string; value: string; accen
 }
 
 /* ── Store picker ──────────────────────────────────────────────────────────── */
+function MyLoungesPicker({ onSelect }: { onSelect: (s: CatalogStore) => void }) {
+  const [mine, setMine] = useState<MyLounge[]>([]);
+  useEffect(() => {
+    getMyLounges().then(setMine);
+  }, []);
+  if (mine.length === 0) return null;
+  return (
+    <div className="mb-4">
+      <div className="eyebrow mb-2">Lounges you manage</div>
+      <div className="space-y-1.5">
+        {mine.map((l) => (
+          <button
+            key={l.loungeId}
+            onClick={() => onSelect({ id: l.loungeId, slug: l.slug, name: l.name, city: l.city, state: l.state } as CatalogStore)}
+            className="flex w-full items-center justify-between rounded-md border-[0.5px] border-ember-400/15 px-3 py-2 text-left transition hover:bg-ember-400/10"
+          >
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium">{l.name}</div>
+              <div className="truncate text-xs text-smoke-400">{[l.city, l.state].filter(Boolean).join(', ')}</div>
+            </div>
+            <span className="shrink-0 rounded-full bg-ember-400/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-ember-100">{l.role}</span>
+          </button>
+        ))}
+      </div>
+      <div className="my-4 h-px bg-ember-400/10" />
+    </div>
+  );
+}
+
 function StorePicker({
   store,
   onSelect,
@@ -380,6 +418,7 @@ function StorePicker({
 
   return (
     <div className="rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 p-4">
+      <MyLoungesPicker onSelect={(s) => { onSelect(s); setOpen(false); }} />
       <div className="eyebrow mb-2">Select your lounge</div>
       <div className="relative">
         <Search size={15} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-smoke-400" />
