@@ -35,6 +35,6 @@ export async function GET(request: Request) {
       .eq('id', data.user.id);
   }
 
-  const dest = (type ?? data.user.user_metadata?.account_type) === 'lounge' ? '/dashboard' : '/humidor';
-  return NextResponse.redirect(`${origin}${dest}`);
+  // After confirming their email, land the user on the home page.
+  return NextResponse.redirect(`${origin}/`);
 }
