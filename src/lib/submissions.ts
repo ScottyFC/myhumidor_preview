@@ -11,6 +11,7 @@
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
+import { subscribeTable } from './realtime';
 
 export interface Submission {
   id: string;
@@ -23,6 +24,9 @@ export interface Submission {
   notes?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+  reviewedBy?: string | null;
+  reviewerName?: string;
+  catalogId?: string | null;
 }
 
 const KEY = 'myhumidor:submissions';
@@ -61,6 +65,8 @@ type Row = {
   notes: string | null;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string | null;
+  reviewed_by: string | null;
+  catalog_id: string | null;
 };
 function rowTo(r: Row): Submission {
   return {
@@ -74,13 +80,16 @@ function rowTo(r: Row): Submission {
     notes: r.notes ?? undefined,
     status: r.status,
     createdAt: r.created_at ?? new Date().toISOString(),
+    reviewedBy: r.reviewed_by,
+    catalogId: r.catalog_id,
   };
 }
-const SELECT = 'id, brand, name, country, size, price, photo_url, notes, status, created_at';
+const SELECT = 'id, brand, name, country, size, price, photo_url, notes, status, created_at, reviewed_by, catalog_id';
 
 async function hydrateRemote() {
   try {
-    const { data, error } = await supabaseBrowser()
+    const sb = supabaseBrowser();
+    const { data, error } = await sb
       .from('cigar_submissions')
       .select(SELECT)
       .order('created_at', { ascending: false });
@@ -88,7 +97,17 @@ async function hydrateRemote() {
       console.error('[submissions] load failed:', error.message);
       return;
     }
-    cache = (data ?? []).map((r) => rowTo(r as Row));
+    const rows = (data ?? []).map((r) => rowTo(r as Row));
+    // resolve reviewer names for the "decided by" note
+    const ids = Array.from(new Set(rows.map((r) => r.reviewedBy).filter(Boolean))) as string[];
+    if (ids.length) {
+      const { data: profs } = await sb.from('profiles').select('id, handle, display_name').in('id', ids);
+      const who = new Map((profs ?? []).map((p) => [p.id, p.display_name || p.handle]));
+      rows.forEach((r) => {
+        if (r.reviewedBy) r.reviewerName = who.get(r.reviewedBy) ?? undefined;
+      });
+    }
+    cache = rows;
     fire();
   } catch (e) {
     console.error('[submissions] load error:', e);
@@ -125,6 +144,10 @@ function start() {
         cache = [];
         fire();
       }
+    });
+    // keep every reviewer's queue current → no duplicate approvals
+    subscribeTable('cigar_submissions', () => {
+      if (userId) hydrateRemote();
     });
   } else {
     cache = loadLocal();
@@ -185,8 +208,10 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'cigar';
 }
 
-/** Promote an approved submission into the live catalog so it's searchable. */
-async function pushToCatalog(sub: Submission) {
+/** Promote an approved submission into the live catalog so it's searchable.
+ *  Idempotent: only inserts once (guarded by catalog_id), so two admins
+ *  approving the same item can't create duplicates. */
+async function pushToCatalog(sub: Submission): Promise<string | null> {
   try {
     const id = crypto.randomUUID();
     const slug = `${slugify(`${sub.brand} ${sub.name}`)}-${id.slice(0, 6)}`;
@@ -200,9 +225,14 @@ async function pushToCatalog(sub: Submission) {
       slug,
       image_url: sub.photoDataUrl ?? null,
     });
-    if (error) console.error('[submissions] catalog push failed:', error.message);
+    if (error) {
+      console.error('[submissions] catalog push failed:', error.message);
+      return null;
+    }
+    return id;
   } catch (e) {
     console.error('[submissions] catalog push error:', e);
+    return null;
   }
 }
 
@@ -212,12 +242,26 @@ export function setSubmissionStatus(id: string, status: 'approved' | 'rejected')
   cache = cache.map((s) => (s.id === id ? { ...s, status } : s));
   fire();
   if (isSupabaseConfigured) {
-    supabaseBrowser()
-      .from('cigar_submissions')
-      .update({ status, reviewed_by: userId, reviewed_at: new Date().toISOString() })
-      .eq('id', id)
-      .then(({ error }) => error && console.error('[submissions] review failed:', error.message));
-    if (status === 'approved' && sub) void pushToCatalog(sub);
+    (async () => {
+      const sb = supabaseBrowser();
+      // Push to catalog only if it hasn't been pushed before (idempotent across
+      // admins, and works when amending a rejected item to approved).
+      let catalogId = sub?.catalogId ?? null;
+      if (status === 'approved' && sub && !catalogId) {
+        catalogId = await pushToCatalog(sub);
+      }
+      const { error } = await sb
+        .from('cigar_submissions')
+        .update({
+          status,
+          reviewed_by: userId,
+          reviewed_at: new Date().toISOString(),
+          ...(catalogId ? { catalog_id: catalogId } : {}),
+        })
+        .eq('id', id);
+      if (error) console.error('[submissions] review failed:', error.message);
+      hydrateRemote();
+    })();
   } else {
     saveLocal();
   }

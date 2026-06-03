@@ -10,6 +10,7 @@ import { CigarCommunity } from '@/components/CigarCommunity';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
+import { AdminCigarActions } from '@/components/AdminCigarActions';
 import { ChangeRequest } from '@/components/ChangeRequest';
 import { formatUSD } from '@/lib/utils';
 
@@ -111,6 +112,7 @@ export default async function CigarPage({ params }: PageProps) {
             {[view.vitola, view.wrapper].filter(Boolean).join(' · ')}
           </div>
           <AdminOnlyId id={view.id} label="Cigar UUID" />
+          <div><AdminCigarActions slug={slug} name={`${view.brand} ${view.headline}`} /></div>
 
           <dl className="mt-6 grid grid-cols-3 gap-4 border-y border-ember-400/15 py-4 text-sm">
             {view.lengthIn != null && <Stat label="Length" value={`${view.lengthIn}″`} />}
@@ -171,7 +173,7 @@ export default async function CigarPage({ params }: PageProps) {
 
       {/* ─── Suggest a correction ─────────────────────────────────────── */}
       <div className="mt-6">
-        <ChangeRequest targetType="cigar" targetId={view.id} targetName={`${view.brand} ${view.headline}`} />
+        <ChangeRequest targetType="cigar" targetId={slug} targetName={`${view.brand} ${view.headline}`} />
       </div>
 
       {/* ─── Nearby in stock ──────────────────────────────────────────── */}

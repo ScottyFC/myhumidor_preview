@@ -8,6 +8,7 @@ import { ClaimLounge } from '@/components/ClaimLounge';
 import { BrandTile } from '@/components/BrandTile';
 import { LoungeMenu } from '@/components/LoungeMenu';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
+import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
 import { ChangeRequest } from '@/components/ChangeRequest';
 
 interface PageProps {
@@ -122,9 +123,10 @@ export default async function LoungePage({ params }: PageProps) {
       {/* Menu / inventory */}
       <section className="border-b border-ember-400/15 py-8">
         <div className="eyebrow mb-3">On the menu</div>
-        <LoungeMenu storeId={lounge.id} fallbackCount={lounge.inventoryCount} />
+        <LoungeMenu slug={lounge.slug} storeId={lounge.id} fallbackCount={lounge.inventoryCount} />
         <div className="mt-4">
           <AdminOnlyId id={lounge.id} label="Lounge UUID" />
+          <div><LoungeLogoEditor slug={lounge.slug} /></div>
         </div>
       </section>
 
@@ -135,7 +137,7 @@ export default async function LoungePage({ params }: PageProps) {
 
       {/* Suggest a correction */}
       <section className="py-8">
-        <ChangeRequest targetType="lounge" targetId={lounge.id} targetName={lounge.name} />
+        <ChangeRequest targetType="lounge" targetId={lounge.slug} targetName={lounge.name} />
       </section>
     </div>
   );

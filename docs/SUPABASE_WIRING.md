@@ -164,6 +164,27 @@ Optional buckets: `avatars` (profile pics), `submissions` (cigar photos).
   snapshot; new lounges surface via "recently added" + nearby/map + their profile
   until the next static rebuild.
 
+## ✅ Phase 7 — Change requests, inventory, moderation upgrades
+
+**Run `supabase/migrations/phase7.sql` once.** Then:
+- **Change requests** → `change_requests`, reviewed in `/admin` → Change requests.
+- **Lounge inventory + published menus** → `inventory_items` (now keyed to
+  `catalog_cigars` + a `published` flag). Dashboard publishes; the lounge profile
+  shows the live menu.
+- **Super admins can delete cigars** (button on the cigar profile) and **amend a
+  rejected submission to approved** (cigar + lounge queues).
+- **Reviews are universal**: submission/change-request queues sync across admins
+  via Realtime, catalog/lounge pushes are idempotent (no duplicates), and each
+  decided item shows **who** actioned it.
+- **Lounge profile picture**: replace control for super admins (lounge profile)
+  and for the lounge itself (dashboard). Uploads to the `avatars` bucket.
+- "Top Cigars" → **Cigars**, with **Top This Week** + **Highest Rated** sections
+  (from the `cigar_rating_week` / `cigar_rating_stats` views).
+- Footer logo links home.
+
+> Image uploads use **Supabase Storage** (`avatars` bucket), not the CloudFront
+> path — CloudFront is read-only delivery for the pre-existing brand logos.
+
 ## ⏳ Remaining
 - **Change requests** (`change_requests`) into the admin queue.
 - **Lounge inventory / published menus** (`inventory_items`) to Supabase.

@@ -3,9 +3,10 @@ import { featuredCigars } from '@/lib/catalog';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
+import { TopCigarsSections } from '@/components/TopCigarsSections';
 
 export const metadata = {
-  title: 'Browse Cigars · MyHumidor by CigarTV',
+  title: 'Cigars · MyHumidor by CigarTV',
 };
 
 export default function TopCigarsPage() {
@@ -14,21 +15,24 @@ export default function TopCigarsPage() {
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
       <header className="mb-8">
-        <div className="eyebrow mb-2">From the catalog</div>
+        <div className="eyebrow mb-2">The catalog</div>
         <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">
-          Browse cigars
+          Cigars
         </h1>
         <p className="mt-3 max-w-2xl text-smoke-200">
-          A lineup of cigars to explore. Tap any to read the profile, rate it, or add it to your
+          Browse, rate, and track. Tap any cigar to read its profile, rate it, or add it to your
           humidor — or <Link href="/search" className="text-ember-100 underline-offset-2 hover:underline">search</Link> the
-          full catalog. Once the community starts rating, this page ranks by score.
+          full catalog.
         </p>
       </header>
+
+      <TopCigarsSections />
 
       <div className="mb-10">
         <RecentlyAdded cigars members />
       </div>
 
+      <div className="eyebrow mb-3">Browse the catalog</div>
       <div className="overflow-hidden rounded-xl border-[0.5px] border-ember-400/15">
         {cigars.map((c) => (
           <div

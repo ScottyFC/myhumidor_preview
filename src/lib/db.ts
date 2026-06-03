@@ -189,3 +189,97 @@ export async function geocodeMissingLounges(
     return { fixed, failed, remaining: -1 };
   }
 }
+
+/* ── Super-admin: remove a cigar from the catalog ───────────────────────── */
+export async function deleteCatalogCigar(slug: string): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  try {
+    const { error } = await supabaseBrowser().from('catalog_cigars').delete().eq('slug', slug);
+    if (error) {
+      console.error('[db] delete cigar failed:', error.message);
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ── Rating leaderboards (from views) ───────────────────────────────────── */
+export interface RatedCigar {
+  slug: string;
+  brand: string;
+  name: string;
+  size: string;
+  image_url?: string | null;
+  avgOverall: number;
+  ratingsCount: number;
+}
+
+function mapRated(rows: Record<string, unknown>[]): RatedCigar[] {
+  return rows.map((r) => ({
+    slug: String(r.slug),
+    brand: String(r.brand ?? ''),
+    name: String(r.name ?? ''),
+    size: String(r.size ?? ''),
+    image_url: (r.image_url as string) ?? null,
+    avgOverall: Number(r.avg_overall ?? 0),
+    ratingsCount: Number(r.ratings_count ?? 0),
+  }));
+}
+
+export async function topCigarsThisWeek(limit = 8): Promise<RatedCigar[]> {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data } = await supabaseBrowser()
+      .from('cigar_rating_week')
+      .select('slug, brand, name, size, image_url, avg_overall, ratings_count')
+      .order('ratings_count', { ascending: false })
+      .order('avg_overall', { ascending: false })
+      .limit(limit);
+    return mapRated(data ?? []);
+  } catch {
+    return [];
+  }
+}
+
+export async function highestRatedCigars(limit = 8): Promise<RatedCigar[]> {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data } = await supabaseBrowser()
+      .from('cigar_rating_stats')
+      .select('slug, brand, name, size, image_url, avg_overall, ratings_count')
+      .order('avg_overall', { ascending: false })
+      .order('ratings_count', { ascending: false })
+      .limit(limit);
+    return mapRated(data ?? []);
+  } catch {
+    return [];
+  }
+}
+
+/* ── Lounge profile picture (lounge owner + super admin) ────────────────── */
+export async function uploadLoungeLogo(slug: string, dataUrl: string): Promise<string | null> {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const sb = supabaseBrowser();
+    const blob = await (await fetch(dataUrl)).blob();
+    const ext = blob.type.split('/')[1] || 'jpg';
+    const path = `lounge/${slug}/${Date.now()}.${ext}`;
+    const { error: upErr } = await sb.storage.from('avatars').upload(path, blob, { contentType: blob.type, upsert: true });
+    if (upErr) {
+      console.error('[db] lounge logo upload failed:', upErr.message);
+      return null;
+    }
+    const url = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+    const { error } = await sb.from('lounges').update({ image_url: url }).eq('slug', slug);
+    if (error) {
+      console.error('[db] lounge logo save failed:', error.message);
+      return null;
+    }
+    return url;
+  } catch (e) {
+    console.error('[db] lounge logo error:', e);
+    return null;
+  }
+}

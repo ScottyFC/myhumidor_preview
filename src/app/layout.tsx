@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import '@fontsource-variable/fraunces';
 import './globals.css';
+import Link from 'next/link';
 import { Nav } from '@/components/Nav';
 
 export const metadata: Metadata = {
@@ -24,11 +25,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Nav />
         <main className="pb-32">{children}</main>
         <footer className="border-t border-ember-400/15 px-6 py-12 text-center">
-          <img
-            src="/myhumidor-logo.png"
-            alt="MyHumidor by CigarTV"
-            className="mx-auto h-20 w-auto rounded-lg"
-          />
+          <Link href="/" aria-label="MyHumidor home" className="inline-block transition hover:opacity-80">
+            <img
+              src="/myhumidor-logo.png"
+              alt="MyHumidor by CigarTV"
+              className="mx-auto h-20 w-auto rounded-lg"
+            />
+          </Link>
           <div className="mt-4 text-xs uppercase tracking-widest text-smoke-400">
             By{' '}
             <a

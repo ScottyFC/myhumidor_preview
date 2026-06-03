@@ -3,6 +3,7 @@
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
 import { geocodeAddress } from './geocode';
+import { subscribeTable } from './realtime';
 
 export interface LoungeSubmission {
   id: string;
@@ -16,6 +17,9 @@ export interface LoungeSubmission {
   notes?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+  reviewedBy?: string | null;
+  reviewerName?: string;
+  loungeId?: string | null;
 }
 
 const KEY = 'myhumidor:lounge-submissions';
@@ -50,19 +54,22 @@ type Row = {
   id: string; name: string; address: string | null; city: string | null; state: string | null;
   phone: string | null; email: string | null; website: string | null; notes: string | null;
   status: 'pending' | 'approved' | 'rejected'; created_at: string | null;
+  reviewed_by: string | null; lounge_id: string | null;
 };
 function rowTo(r: Row): LoungeSubmission {
   return {
     id: r.id, name: r.name, address: r.address ?? '', city: r.city ?? '', state: r.state ?? '',
     phone: r.phone ?? undefined, email: r.email ?? undefined, website: r.website ?? undefined,
     notes: r.notes ?? undefined, status: r.status, createdAt: r.created_at ?? new Date().toISOString(),
+    reviewedBy: r.reviewed_by, loungeId: r.lounge_id,
   };
 }
-const SELECT = 'id, name, address, city, state, phone, email, website, notes, status, created_at';
+const SELECT = 'id, name, address, city, state, phone, email, website, notes, status, created_at, reviewed_by, lounge_id';
 
 async function hydrateRemote() {
   try {
-    const { data, error } = await supabaseBrowser()
+    const sb = supabaseBrowser();
+    const { data, error } = await sb
       .from('lounge_submissions')
       .select(SELECT)
       .order('created_at', { ascending: false });
@@ -70,7 +77,16 @@ async function hydrateRemote() {
       console.error('[lounge-sub] load failed:', error.message);
       return;
     }
-    cache = (data ?? []).map((r) => rowTo(r as Row));
+    const rows = (data ?? []).map((r) => rowTo(r as Row));
+    const ids = Array.from(new Set(rows.map((r) => r.reviewedBy).filter(Boolean))) as string[];
+    if (ids.length) {
+      const { data: profs } = await sb.from('profiles').select('id, handle, display_name').in('id', ids);
+      const who = new Map((profs ?? []).map((p) => [p.id, p.display_name || p.handle]));
+      rows.forEach((r) => {
+        if (r.reviewedBy) r.reviewerName = who.get(r.reviewedBy) ?? undefined;
+      });
+    }
+    cache = rows;
     fire();
   } catch (e) {
     console.error('[lounge-sub] load error:', e);
@@ -88,6 +104,9 @@ function start() {
         cache = [];
         fire();
       }
+    });
+    subscribeTable('lounge_submissions', () => {
+      if (userId) hydrateRemote();
     });
   } else {
     cache = loadLocal();
@@ -134,33 +153,41 @@ export function submitLounge(f: Omit<LoungeSubmission, 'id' | 'status' | 'create
   return sub;
 }
 
-async function pushToLounges(sub: LoungeSubmission) {
+async function pushToLounges(sub: LoungeSubmission): Promise<string | null> {
   try {
     const slug = `${slugify(sub.name)}-${Math.random().toString(36).slice(2, 7)}`;
-    // Geocode so the lounge shows on the map + in nearby results.
     const coords = await geocodeAddress({
       name: sub.name,
       address: sub.address,
       city: sub.city,
       state: sub.state,
     });
-    const { error } = await supabaseBrowser().from('lounges').insert({
-      slug,
-      name: sub.name,
-      address: sub.address || null,
-      city: sub.city || '',
-      state: sub.state || '',
-      phone: sub.phone || null,
-      email: sub.email || null,
-      website: sub.website || null,
-      lat: coords?.lat ?? null,
-      lng: coords?.lng ?? null,
-      verified: false,
-      certified: false,
-    });
-    if (error) console.error('[lounge-sub] push to lounges failed:', error.message);
+    const { data, error } = await supabaseBrowser()
+      .from('lounges')
+      .insert({
+        slug,
+        name: sub.name,
+        address: sub.address || null,
+        city: sub.city || '',
+        state: sub.state || '',
+        phone: sub.phone || null,
+        email: sub.email || null,
+        website: sub.website || null,
+        lat: coords?.lat ?? null,
+        lng: coords?.lng ?? null,
+        verified: false,
+        certified: false,
+      })
+      .select('id')
+      .single();
+    if (error) {
+      console.error('[lounge-sub] push to lounges failed:', error.message);
+      return null;
+    }
+    return data?.id ?? null;
   } catch (e) {
     console.error('[lounge-sub] push error:', e);
+    return null;
   }
 }
 
@@ -170,12 +197,24 @@ export function setLoungeSubmissionStatus(id: string, status: 'approved' | 'reje
   cache = cache.map((s) => (s.id === id ? { ...s, status } : s));
   fire();
   if (isSupabaseConfigured) {
-    supabaseBrowser()
-      .from('lounge_submissions')
-      .update({ status, reviewed_by: userId, reviewed_at: new Date().toISOString() })
-      .eq('id', id)
-      .then(({ error }) => error && console.error('[lounge-sub] review failed:', error.message));
-    if (status === 'approved' && sub) void pushToLounges(sub);
+    (async () => {
+      const sb = supabaseBrowser();
+      let loungeId = sub?.loungeId ?? null;
+      if (status === 'approved' && sub && !loungeId) {
+        loungeId = await pushToLounges(sub);
+      }
+      const { error } = await sb
+        .from('lounge_submissions')
+        .update({
+          status,
+          reviewed_by: userId,
+          reviewed_at: new Date().toISOString(),
+          ...(loungeId ? { lounge_id: loungeId } : {}),
+        })
+        .eq('id', id);
+      if (error) console.error('[lounge-sub] review failed:', error.message);
+      hydrateRemote();
+    })();
   } else {
     saveLocal();
   }

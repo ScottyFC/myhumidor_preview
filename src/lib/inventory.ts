@@ -1,0 +1,135 @@
+'use client';
+
+/**
+ * Lounge inventory + published menu. Supabase `inventory_items` (keyed to the
+ * lounge by slug → id) when configured, localStorage otherwise. The public
+ * lounge page shows only published items.
+ */
+
+import { isSupabaseConfigured, supabaseBrowser } from './supabase';
+
+export interface InventoryItem {
+  cigarId: string;
+  slug?: string;
+  brand: string;
+  name: string;
+  size: string;
+  price: number;
+  quantity: number;
+}
+
+const invKey = (id: string) => `myhumidor:inventory:${id}`;
+const pubKey = (id: string) => `myhumidor:published:${id}`;
+
+async function loungeIdForSlug(slug: string): Promise<string | null> {
+  try {
+    const { data } = await supabaseBrowser().from('lounges').select('id').eq('slug', slug).single();
+    return data?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+type Row = {
+  cigar_id: string; slug: string | null; brand: string | null; name: string | null;
+  size: string | null; price: number | null; quantity: number | null;
+};
+const SELECT = 'cigar_id, slug, brand, name, size, price, quantity';
+function rowTo(r: Row): InventoryItem {
+  return {
+    cigarId: r.cigar_id, slug: r.slug ?? '', brand: r.brand ?? '', name: r.name ?? '',
+    size: r.size ?? '', price: Number(r.price ?? 0), quantity: r.quantity ?? 1,
+  };
+}
+function localRead(key: string): InventoryItem[] {
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? '[]');
+  } catch {
+    return [];
+  }
+}
+
+export async function getInventory(slug: string, localId?: string): Promise<InventoryItem[]> {
+  if (isSupabaseConfigured) {
+    const lid = await loungeIdForSlug(slug);
+    if (!lid) return [];
+    const { data, error } = await supabaseBrowser().from('inventory_items').select(SELECT).eq('lounge_id', lid);
+    if (error) {
+      console.error('[inventory] load failed:', error.message);
+      return [];
+    }
+    return (data ?? []).map((r) => rowTo(r as Row));
+  }
+  return localRead(invKey(localId ?? slug));
+}
+
+export async function getPublishedMenu(slug: string, localId?: string): Promise<InventoryItem[]> {
+  if (isSupabaseConfigured) {
+    const lid = await loungeIdForSlug(slug);
+    if (!lid) return [];
+    const { data, error } = await supabaseBrowser()
+      .from('inventory_items')
+      .select(SELECT)
+      .eq('lounge_id', lid)
+      .eq('published', true);
+    if (error) {
+      console.error('[inventory] published load failed:', error.message);
+      return [];
+    }
+    return (data ?? []).map((r) => rowTo(r as Row));
+  }
+  return localRead(pubKey(localId ?? slug));
+}
+
+export async function saveInventory(slug: string, items: InventoryItem[], localId?: string): Promise<boolean> {
+  if (isSupabaseConfigured) {
+    const lid = await loungeIdForSlug(slug);
+    if (!lid) return false;
+    const sb = supabaseBrowser();
+    if (items.length) {
+      const rows = items.map((i) => ({
+        lounge_id: lid, cigar_id: i.cigarId, slug: i.slug ?? null, brand: i.brand, name: i.name,
+        size: i.size, price: i.price, quantity: i.quantity,
+      }));
+      const { error } = await sb.from('inventory_items').upsert(rows, { onConflict: 'lounge_id,cigar_id' });
+      if (error) {
+        console.error('[inventory] save failed:', error.message);
+        return false;
+      }
+    }
+    // remove any items no longer in the set
+    let del = sb.from('inventory_items').delete().eq('lounge_id', lid);
+    const ids = items.map((i) => i.cigarId);
+    if (ids.length) del = del.not('cigar_id', 'in', `(${ids.join(',')})`);
+    const { error: delErr } = await del;
+    if (delErr) console.error('[inventory] prune failed:', delErr.message);
+    return true;
+  }
+  try {
+    localStorage.setItem(invKey(localId ?? slug), JSON.stringify(items));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function publishMenu(slug: string, items: InventoryItem[], localId?: string): Promise<boolean> {
+  if (isSupabaseConfigured) {
+    const ok = await saveInventory(slug, items, localId);
+    if (!ok) return false;
+    const lid = await loungeIdForSlug(slug);
+    if (!lid) return false;
+    const { error } = await supabaseBrowser().from('inventory_items').update({ published: true }).eq('lounge_id', lid);
+    if (error) {
+      console.error('[inventory] publish failed:', error.message);
+      return false;
+    }
+    return true;
+  }
+  try {
+    localStorage.setItem(pubKey(localId ?? slug), JSON.stringify(items));
+    return true;
+  } catch {
+    return false;
+  }
+}

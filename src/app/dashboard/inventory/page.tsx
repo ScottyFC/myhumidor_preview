@@ -8,10 +8,10 @@ import {
 } from 'lucide-react';
 import type { CatalogCigar, CatalogStore, InventoryItem } from '@/types';
 import { cn, formatUSD } from '@/lib/utils';
+import { getInventory, saveInventory, publishMenu } from '@/lib/inventory';
+import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
 
 const STORE_KEY = 'myhumidor:active-store';
-const invKey = (storeId: string) => `myhumidor:inventory:${storeId}`;
-const pubKey = (storeId: string) => `myhumidor:published:${storeId}`;
 
 const TEMPLATE_CSV = `brand,name,size,price,quantity
 Padron,1964 Anniversary Series Exclusivo Maduro,Robusto,17.50,12
@@ -26,15 +26,14 @@ export default function InventoryPage() {
   const [published, setPublished] = useState(false);
   const [importMsg, setImportMsg] = useState('');
 
-  // Load active store + its inventory from localStorage on mount
+  // Load active store + its inventory on mount
   useEffect(() => {
     try {
       const s = localStorage.getItem(STORE_KEY);
       if (s) {
         const parsed: CatalogStore = JSON.parse(s);
         setStore(parsed);
-        const inv = localStorage.getItem(invKey(parsed.id));
-        if (inv) setItems(JSON.parse(inv));
+        getInventory(parsed.slug, parsed.id).then((inv) => setItems(inv));
       }
     } catch {
       /* ignore */
@@ -42,26 +41,21 @@ export default function InventoryPage() {
     setHydrated(true);
   }, []);
 
-  // Persist inventory whenever it changes
+  // Persist inventory whenever it changes (debounced so price edits don't spam)
   useEffect(() => {
     if (!hydrated || !store) return;
-    try {
-      localStorage.setItem(invKey(store.id), JSON.stringify(items));
-    } catch {
-      /* ignore */
-    }
     setPublished(false); // edits make the published menu stale until re-published
+    const t = setTimeout(() => {
+      void saveInventory(store.slug, items, store.id);
+    }, 700);
+    return () => clearTimeout(t);
   }, [items, store, hydrated]);
 
   function selectStore(s: CatalogStore) {
     setStore(s);
     localStorage.setItem(STORE_KEY, JSON.stringify(s));
-    try {
-      const inv = localStorage.getItem(invKey(s.id));
-      setItems(inv ? JSON.parse(inv) : []);
-    } catch {
-      setItems([]);
-    }
+    setItems([]);
+    getInventory(s.slug, s.id).then((inv) => setItems(inv));
   }
 
   function addCigar(c: CatalogCigar) {
@@ -90,14 +84,10 @@ export default function InventoryPage() {
     setItems((prev) => prev.filter((i) => i.cigarId !== cigarId));
   }
 
-  function publish() {
+  async function publish() {
     if (!store) return;
-    try {
-      localStorage.setItem(pubKey(store.id), JSON.stringify(items));
-      setPublished(true);
-    } catch {
-      /* ignore */
-    }
+    const ok = await publishMenu(store.slug, items, store.id);
+    if (ok) setPublished(true);
   }
 
   function downloadTemplate() {
@@ -378,6 +368,7 @@ function StorePicker({
             <div className="text-xs text-smoke-400">
               {store.address ? `${store.address}, ` : ''}{store.city}, {store.state}
             </div>
+            <LoungeLogoEditor slug={store.slug} force />
           </div>
         </div>
         <button onClick={() => setOpen(true)} className="btn-ghost text-xs">

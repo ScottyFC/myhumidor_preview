@@ -11,7 +11,7 @@ import { isAdmin, onAdminsChange } from '@/lib/admin';
 
 const TABS = [
   { href: '/humidor', label: 'Humidor', icon: Box },
-  { href: '/top', label: 'Top Cigars', icon: Flame },
+  { href: '/top', label: 'Cigars', icon: Flame },
   { href: '/search', label: 'Search', icon: Search },
   { href: '/map', label: 'Map', icon: MapPin },
   { href: '/lounges', label: 'Lounges', icon: Store },

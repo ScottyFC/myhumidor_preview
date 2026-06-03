@@ -3,30 +3,18 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatUSD } from '@/lib/utils';
+import { getPublishedMenu, type InventoryItem } from '@/lib/inventory';
 
-interface PublishedItem {
-  cigarId: string;
-  slug?: string;
-  brand: string;
-  name: string;
-  size: string;
-  price: number;
-  quantity: number;
-}
-
-const pubKey = (storeId: string) => `myhumidor:published:${storeId}`;
-
-export function LoungeMenu({ storeId, fallbackCount }: { storeId: string; fallbackCount?: number }) {
-  const [items, setItems] = useState<PublishedItem[] | null>(null);
+export function LoungeMenu({ slug, storeId, fallbackCount }: { slug: string; storeId?: string; fallbackCount?: number }) {
+  const [items, setItems] = useState<InventoryItem[] | null>(null);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(pubKey(storeId));
-      setItems(raw ? JSON.parse(raw) : []);
-    } catch {
-      setItems([]);
-    }
-  }, [storeId]);
+    let off = false;
+    getPublishedMenu(slug, storeId).then((m) => !off && setItems(m));
+    return () => {
+      off = true;
+    };
+  }, [slug, storeId]);
 
   if (items === null) return null; // hydrating
 

@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin } from 'lucide-react';
+import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin, MessageSquare } from 'lucide-react';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { isAdmin, isBootstrapAdmin, listAdmins, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
 import {
@@ -11,6 +12,9 @@ import {
 } from '@/lib/lounge-submissions';
 import { recentLounges, certifyLounge, geocodeMissingLounges, type RecentLounge } from '@/lib/db';
 import {
+  getChangeRequests, setChangeRequestStatus, onChangeRequestsChange, type ChangeRequest,
+} from '@/lib/change-requests';
+import {
   getSubmissions,
   setSubmissionStatus,
   onSubmissionsChange,
@@ -18,7 +22,7 @@ import {
 } from '@/lib/submissions';
 import { cn } from '@/lib/utils';
 
-type Tab = 'cigars' | 'lounges' | 'certify' | 'admins';
+type Tab = 'cigars' | 'lounges' | 'certify' | 'requests' | 'admins';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -62,6 +66,7 @@ export default function AdminPage() {
     { id: 'cigars', label: 'Cigar submissions', icon: Cigarette },
     { id: 'lounges', label: 'Lounge submissions', icon: Store },
     { id: 'certify', label: 'Certify lounges', icon: BadgeCheck },
+    { id: 'requests', label: 'Change requests', icon: MessageSquare },
     { id: 'admins', label: 'Admins', icon: ShieldCheck },
   ];
 
@@ -101,6 +106,7 @@ export default function AdminPage() {
       {tab === 'cigars' && <CigarQueue />}
       {tab === 'lounges' && <LoungeQueue />}
       {tab === 'certify' && <CertifyQueue />}
+      {tab === 'requests' && <ChangeRequestQueue />}
       {tab === 'admins' && <AdminManager myId={session?.publicId ?? ''} />}
     </div>
   );
@@ -137,9 +143,21 @@ function CigarQueue() {
       </Section>
       {decided.length > 0 && (
         <Section title="Recently decided">
-          {decided.slice(0, 8).map((s) => (
-            <Row key={s.id} title={`${s.brand} ${s.name}`} sub={s.size}>
+          {decided.slice(0, 12).map((s) => (
+            <Row
+              key={s.id}
+              title={`${s.brand} ${s.name}`}
+              sub={`${s.size}${s.reviewerName ? ` · ${s.status} by ${s.reviewerName}` : ''}`}
+            >
               <StatusPill status={s.status as 'approved' | 'rejected'} />
+              {s.status === 'rejected' && (
+                <button
+                  onClick={() => setSubmissionStatus(s.id, 'approved')}
+                  className="inline-flex h-8 items-center gap-1 rounded-md border-[0.5px] border-ember-400/30 px-2.5 text-xs font-medium text-ember-100 hover:bg-ember-400/10"
+                >
+                  <Check size={13} strokeWidth={2} /> Approve instead
+                </button>
+              )}
             </Row>
           ))}
         </Section>
@@ -175,9 +193,21 @@ function LoungeQueue() {
       </Section>
       {decided.length > 0 && (
         <Section title="Recently decided">
-          {decided.slice(0, 8).map((s) => (
-            <Row key={s.id} title={s.name} sub={[s.city, s.state].filter(Boolean).join(', ')}>
+          {decided.slice(0, 12).map((s) => (
+            <Row
+              key={s.id}
+              title={s.name}
+              sub={`${[s.city, s.state].filter(Boolean).join(', ')}${s.reviewerName ? ` · ${s.status} by ${s.reviewerName}` : ''}`}
+            >
               <StatusPill status={s.status as 'approved' | 'rejected'} />
+              {s.status === 'rejected' && (
+                <button
+                  onClick={() => setLoungeSubmissionStatus(s.id, 'approved')}
+                  className="inline-flex h-8 items-center gap-1 rounded-md border-[0.5px] border-ember-400/30 px-2.5 text-xs font-medium text-ember-100 hover:bg-ember-400/10"
+                >
+                  <Check size={13} strokeWidth={2} /> Approve instead
+                </button>
+              )}
             </Row>
           ))}
         </Section>
@@ -319,6 +349,76 @@ function AdminManager({ myId }: { myId: string }) {
 }
 
 /* ── small UI helpers ── */
+function ChangeRequestQueue() {
+  const [reqs, setReqs] = useState<ChangeRequest[]>([]);
+  useEffect(() => {
+    const sync = () => setReqs(getChangeRequests());
+    sync();
+    return onChangeRequestsChange(sync);
+  }, []);
+
+  const open = reqs.filter((r) => r.status === 'open');
+  const closed = reqs.filter((r) => r.status !== 'open');
+
+  return (
+    <div className="space-y-6">
+      <Section title={`Open (${open.length})`}>
+        {open.length === 0 ? (
+          <div className="text-sm text-smoke-400">No open correction requests. They appear here when members flag wrong data.</div>
+        ) : (
+          open.map((r) => (
+            <div key={r.id} className="rounded-lg border-[0.5px] border-ember-400/15 bg-char/40 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="eyebrow">{r.targetType}</span>
+                    <Link
+                      href={`/${r.targetType === 'cigar' ? 'cigars' : 'lounges'}/${r.targetId}`}
+                      className="truncate text-sm font-medium hover:text-ember-100"
+                    >
+                      {r.targetName}
+                    </Link>
+                  </div>
+                  <p className="mt-1.5 text-sm text-smoke-200">{r.message}</p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    onClick={() => setChangeRequestStatus(r.id, 'resolved')}
+                    className="inline-flex h-8 items-center gap-1 rounded-md bg-ember-400 px-2.5 text-xs font-medium text-paper hover:bg-ember-600"
+                  >
+                    <Check size={13} strokeWidth={2} /> Resolve
+                  </button>
+                  <button
+                    onClick={() => setChangeRequestStatus(r.id, 'dismissed')}
+                    className="inline-flex h-8 items-center gap-1 rounded-md border-[0.5px] border-ember-400/25 px-2.5 text-xs text-smoke-300 hover:bg-ember-400/10"
+                  >
+                    <X size={13} strokeWidth={2} /> Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </Section>
+      {closed.length > 0 && (
+        <Section title="Recently handled">
+          {closed.slice(0, 12).map((r) => (
+            <Row
+              key={r.id}
+              title={r.targetName}
+              sub={`${r.message.slice(0, 60)}${r.reviewerName ? ` · ${r.status} by ${r.reviewerName}` : ''}`}
+            >
+              <span className="rounded-full bg-char px-2.5 py-0.5 text-[11px] uppercase tracking-wider text-smoke-300">
+                {r.status}
+              </span>
+            </Row>
+          ))}
+        </Section>
+      )}
+    </div>
+  );
+}
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
