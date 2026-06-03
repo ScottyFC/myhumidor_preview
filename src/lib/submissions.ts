@@ -245,13 +245,20 @@ export function setSubmissionStatus(id: string, status: 'approved' | 'rejected')
   if (isSupabaseConfigured) {
     (async () => {
       const sb = supabaseBrowser();
-      // Push to catalog only if it hasn't been pushed before (idempotent across
-      // admins, and works when amending a rejected item to approved).
-      let catalogId = sub?.catalogId ?? null;
-      if (status === 'approved' && sub && !catalogId) {
+      // Read the authoritative current state so a stale view / double-click /
+      // second admin can't trigger a duplicate catalog insert.
+      const { data: fresh } = await sb
+        .from('cigar_submissions')
+        .select('status, catalog_id')
+        .eq('id', id)
+        .single();
+      let catalogId: string | null = fresh?.catalog_id ?? sub?.catalogId ?? null;
+      const alreadyApproved = fresh?.status === 'approved' || !!catalogId;
+
+      if (status === 'approved' && sub && !alreadyApproved) {
         catalogId = await pushToCatalog(sub);
       }
-      const { error } = await sb
+      const { data: updated, error } = await sb
         .from('cigar_submissions')
         .update({
           status,
@@ -259,9 +266,13 @@ export function setSubmissionStatus(id: string, status: 'approved' | 'rejected')
           reviewed_at: new Date().toISOString(),
           ...(catalogId ? { catalog_id: catalogId } : {}),
         })
-        .eq('id', id);
-      if (error) console.error('[submissions] review failed:', error.message);
-      else if (sub) {
+        .eq('id', id)
+        .select('id');
+      if (error) {
+        console.error('[submissions] review failed:', error.message);
+      } else if (!updated || updated.length === 0) {
+        console.error('[submissions] review changed no rows — your account may not be a super admin (RLS).');
+      } else if (sub) {
         logEvent({
           action: status === 'approved' ? 'cigar.approved' : 'cigar.rejected',
           entityType: 'cigar',

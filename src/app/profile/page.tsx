@@ -73,7 +73,7 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
       <div className="flex flex-col gap-6 border-b border-ember-400/15 pb-8 sm:flex-row sm:items-end">
-        <Avatar profile={profile} editable onChange={(url) => saveProfile({ avatarDataUrl: url })} />
+        <Avatar profile={profile} />
 
         <div className="min-w-0 flex-1">
           {session?.type === 'lounge' ? (
@@ -102,26 +102,10 @@ export default function ProfilePage() {
           <button onClick={() => setEditing((v) => !v)} className="btn-ghost text-xs">
             {editing ? 'Close' : 'Edit profile'}
           </button>
+          <ShareProfile handle={profile.handle} />
           <Link href={`/u/${profile.handle}`} className="btn-ghost text-xs">
             <Share2 size={13} strokeWidth={1.5} /> Public view
           </Link>
-          {session && !isBootstrapAdmin(session.publicId) && (
-            <button
-              onClick={() => (admin ? revokeAdmin(session.publicId) : promoteAdmin(session.publicId))}
-              className="btn-ghost text-xs"
-              title="Demo control — toggle super-admin access"
-            >
-              {admin ? (
-                <>
-                  <ShieldOff size={13} strokeWidth={1.5} /> Exit admin (demo)
-                </>
-              ) : (
-                <>
-                  <ShieldCheck size={13} strokeWidth={1.5} className="text-ember-400" /> Become super admin (demo)
-                </>
-              )}
-            </button>
-          )}
         </div>
       </div>
 
@@ -139,17 +123,18 @@ function EditForm({ profile, onDone }: { profile: ProfileFields; onDone: () => v
   const [city, setCity] = useState(profile.city);
   const [state, setState] = useState(profile.state);
   const [bio, setBio] = useState(profile.bio);
+  const [avatarDataUrl, setAvatarDataUrl] = useState<string | undefined>();
   const [saving, setSaving] = useState(false);
 
   async function save() {
     setSaving(true);
-    // TODO: in production, update public.profiles + auth metadata via Supabase.
     saveProfile({
       displayName: displayName.trim() || 'Member',
       handle: handleFromName(displayName.trim() || 'member'),
       city: city.trim(),
       state: state.trim(),
       bio: bio.trim(),
+      ...(avatarDataUrl ? { avatarDataUrl } : {}),
     });
     await new Promise((r) => setTimeout(r, 300));
     setSaving(false);
@@ -158,6 +143,13 @@ function EditForm({ profile, onDone }: { profile: ProfileFields; onDone: () => v
 
   return (
     <div className="mt-6 rounded-xl border-[0.5px] border-ember-400/20 bg-char/50 p-6">
+      <div className="mb-5 flex items-center gap-4">
+        <Avatar profile={profile} editable onChange={(url) => setAvatarDataUrl(url)} />
+        <div className="text-xs text-smoke-400">
+          {avatarDataUrl ? 'New photo ready — ' : 'Click the photo to choose a new one. It saves when you press '}
+          <span className="text-ember-100">Save profile</span>.
+        </div>
+      </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Display name">
           <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className={inputCls} />
@@ -182,6 +174,22 @@ function EditForm({ profile, onDone }: { profile: ProfileFields; onDone: () => v
           </Field>
         </div>
       </div>
+      <div className="mt-5 rounded-lg border-[0.5px] border-dashed border-ember-400/20 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-medium">Connect Facebook</div>
+            <div className="text-xs text-smoke-400">Cross-post your activity to your Facebook feed.</div>
+          </div>
+          <button
+            onClick={() => alert('Facebook connection is coming soon.')}
+            className="inline-flex items-center gap-2 rounded-md border-[0.5px] border-ember-400/30 px-3 py-1.5 text-xs font-medium text-ember-100 hover:bg-ember-400/10"
+          >
+            Connect Facebook
+            <span className="rounded-full bg-ember-400/15 px-1.5 py-0.5 text-[9px] uppercase tracking-wider">Soon</span>
+          </button>
+        </div>
+      </div>
+
       <div className="mt-4 flex gap-2">
         <button
           onClick={save}
@@ -196,6 +204,29 @@ function EditForm({ profile, onDone }: { profile: ProfileFields; onDone: () => v
         </button>
       </div>
     </div>
+  );
+}
+
+function ShareProfile({ handle }: { handle: string }) {
+  const [copied, setCopied] = useState(false);
+  async function share() {
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/u/${handle}` : `/u/${handle}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'My MyHumidor profile', url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* user cancelled */
+    }
+  }
+  return (
+    <button onClick={share} className="btn-ghost text-xs">
+      <Share2 size={13} strokeWidth={1.5} /> {copied ? 'Link copied!' : 'Share'}
+    </button>
   );
 }
 

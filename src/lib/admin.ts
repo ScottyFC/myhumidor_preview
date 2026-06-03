@@ -13,7 +13,7 @@ import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
 import { logEvent } from './audit';
 
-const BOOTSTRAP_ADMINS = ['USER-cd2c8383eb384b379fda954b90e99b49'];
+const BOOTSTRAP_ADMINS = ['USER-33b6d7104a014f8b8bcad6b1499ef96e'];
 
 const KEY = 'myhumidor:admins';
 const EVENT = 'myhumidor:admins-change';

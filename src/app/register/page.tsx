@@ -13,7 +13,7 @@ type Mode = 'signup' | 'signin';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>('signup');
+  const [mode, setMode] = useState<Mode>('signin');
   const [type, setType] = useState<AccountType>('consumer');
   const [busy, setBusy] = useState<AuthProvider | null>(null);
 
@@ -126,15 +126,15 @@ export default function RegisterPage() {
             active={type === 'consumer'}
             onClick={() => setType('consumer')}
             icon={<User size={18} strokeWidth={1.5} />}
-            title="Cigar lover"
+            title="Cigar Aficionado"
             sub="Rate, collect, discover"
           />
           <TypeCard
             active={type === 'lounge'}
             onClick={() => setType('lounge')}
             icon={<Store size={18} strokeWidth={1.5} />}
-            title="Lounge / shop"
-            sub="Menu, TV stick, credits"
+            title="Retailer"
+            sub="Manage inventory & posts"
           />
         </div>
       )}
@@ -142,7 +142,7 @@ export default function RegisterPage() {
       {/* Manual */}
       <div className="space-y-3">
         {mode === 'signup' && type === 'consumer' && (
-          <Input label="Display name" value={displayName} onChange={setDisplayName} placeholder="Sean" />
+          <Input label="Display name" value={displayName} onChange={setDisplayName} placeholder="Your name" />
         )}
         {mode === 'signup' && type === 'lounge' && (
           <>

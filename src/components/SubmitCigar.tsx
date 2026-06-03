@@ -6,6 +6,7 @@ import { Upload, X, Check, Loader2, AlertCircle, ImageIcon } from 'lucide-react'
 import type { CatalogCigar } from '@/types';
 import { cn } from '@/lib/utils';
 import { addSubmission } from '@/lib/submissions';
+import { subscribeAuth } from '@/lib/auth';
 
 const COMMON_SIZES = [
   'Robusto', 'Toro', 'Churchill', 'Corona', 'Torpedo', 'Figurado',
@@ -27,10 +28,14 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
   const [photoError, setPhotoError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+  const [authMsg, setAuthMsg] = useState('');
 
   // Duplicate detection
   const [dupes, setDupes] = useState<CatalogCigar[]>([]);
   const reqId = useRef(0);
+
+  useEffect(() => subscribeAuth((s) => setSignedIn(!!s)), []);
 
   useEffect(() => {
     const q = `${brand} ${name}`.trim();
@@ -72,10 +77,13 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
 
   async function submit() {
     if (!valid) return;
+    if (!signedIn) {
+      setAuthMsg('Please sign in to submit a cigar — submissions are tied to your account.');
+      return;
+    }
     setSubmitting(true);
-    // TODO: production — upload photo to Supabase Storage, then insert a row into
-    // cigar_submissions with the returned URL. Here we persist locally.
-    await new Promise((r) => setTimeout(r, 600));
+    setAuthMsg('');
+    await new Promise((r) => setTimeout(r, 300));
     addSubmission({
       brand: brand.trim(),
       name: name.trim(),
@@ -200,13 +208,21 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
         {photoError && <div className="mt-1.5 text-xs text-red-400">{photoError}</div>}
       </div>
 
+      {!signedIn && (
+        <p className="mt-4 rounded-md border-[0.5px] border-ember-400/20 bg-char/60 p-3 text-sm text-smoke-200">
+          Please <Link href="/register?next=/submit" className="text-ember-100 underline-offset-2 hover:underline">sign in</Link> to
+          submit a cigar — submissions are tied to your account.
+        </p>
+      )}
+      {authMsg && <p className="mt-3 text-sm text-red-300">{authMsg}</p>}
+
       <div className="mt-6 flex items-center gap-3 border-t border-ember-400/10 pt-5">
         <button
           onClick={submit}
-          disabled={!valid || submitting}
+          disabled={!valid || submitting || !signedIn}
           className={cn(
             'inline-flex items-center gap-2 rounded-md px-5 py-2 text-sm font-medium transition',
-            valid && !submitting ? 'bg-ember-400 text-paper hover:bg-ember-600' : 'bg-smoke-800 text-smoke-400'
+            valid && !submitting && signedIn ? 'bg-ember-400 text-paper hover:bg-ember-600' : 'bg-smoke-800 text-smoke-400'
           )}
         >
           {submitting ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} strokeWidth={2} />}

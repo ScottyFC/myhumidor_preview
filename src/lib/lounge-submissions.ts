@@ -224,11 +224,18 @@ export function setLoungeSubmissionStatus(id: string, status: 'approved' | 'reje
   if (isSupabaseConfigured) {
     (async () => {
       const sb = supabaseBrowser();
-      let loungeId = sub?.loungeId ?? null;
-      if (status === 'approved' && sub && !loungeId) {
+      const { data: fresh } = await sb
+        .from('lounge_submissions')
+        .select('status, lounge_id')
+        .eq('id', id)
+        .single();
+      let loungeId: string | null = fresh?.lounge_id ?? sub?.loungeId ?? null;
+      const alreadyApproved = fresh?.status === 'approved' || !!loungeId;
+
+      if (status === 'approved' && sub && !alreadyApproved) {
         loungeId = await pushToLounges(sub);
       }
-      const { error } = await sb
+      const { data: updated, error } = await sb
         .from('lounge_submissions')
         .update({
           status,
@@ -236,9 +243,12 @@ export function setLoungeSubmissionStatus(id: string, status: 'approved' | 'reje
           reviewed_at: new Date().toISOString(),
           ...(loungeId ? { lounge_id: loungeId } : {}),
         })
-        .eq('id', id);
+        .eq('id', id)
+        .select('id');
       if (error) console.error('[lounge-sub] review failed:', error.message);
-      else if (sub) {
+      else if (!updated || updated.length === 0) {
+        console.error('[lounge-sub] review changed no rows — your account may not be a super admin (RLS).');
+      } else if (sub) {
         logEvent({
           action: status === 'approved' ? 'lounge.approved' : 'lounge.rejected',
           entityType: 'lounge',

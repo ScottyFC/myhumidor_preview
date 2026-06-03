@@ -223,7 +223,37 @@ lounge submissions).
 - **Logos**: a lounge's photo shows everywhere it's set (even before it's
   claimed); confirmed owners/members (and super admins) can replace it.
 
-## ⏳ Remaining / future hardening
+## ✅ Phase 10 — Bug fixes, sole super admin, tiers, registration
+
+**Run `supabase/migrations/phase10.sql` once** (it's idempotent and also
+backfills anything missed from phase7/9).
+
+- **Duplicate/“reappearing” submission bug**: root cause was the moderation
+  status update failing (missing `catalog_id` column if phase7 wasn't run, or the
+  acting account not being a real super admin → RLS blocks the update with no
+  error, so the row stayed pending and re-clicking re-inserted). Now the code
+  reads the authoritative DB state before acting (no double catalog insert),
+  warns in console if the update changes 0 rows, and the migration backfills the
+  columns. **The real fix is being a DB super admin** — see below.
+- **Sign-ups not coming through**: the signup trigger now picks a collision-safe
+  handle (duplicate email-prefixes no longer abort the profile insert), and the
+  migration backfills profiles for any existing auth users without one.
+- **Sole super admin**: `33b6d710-4a01-4f8b-8bca-d6b1499ef96e` is now the only
+  super admin (migration + bootstrap allowlist). The demo “Become super admin”
+  button is removed.
+- **Account required** to submit a cigar and to submit/verify a lounge (both
+  forms now require sign-in and surface errors).
+- **Registration**: sign-in is the default (create-account is the secondary
+  link), account types renamed to **Cigar Aficionado** / **Retailer** (“Manage
+  inventory & posts”), and the “Sean” placeholder is gone.
+- **Lounge tiers** on `/lounges/join` (Basic free / Pro / Premium / Elite-soon).
+- **Profile**: avatars upload only inside Edit Profile and save with the form;
+  added a **Share** button; admin-only details stay gated to super admins.
+- **Facebook connect**: placeholder button (marked “Soon”) — a real Graph API
+  integration is a separate build.
+- Review window already shows the uploaded submission photo.
+
+## ⏳ Remaining / future
 - **Change requests** (`change_requests`) into the admin queue.
 - **Lounge inventory / published menus** (`inventory_items`) to Supabase.
 - Geocoding submitted lounges so they show on the map + main directory (they

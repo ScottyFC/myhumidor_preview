@@ -5,8 +5,7 @@ export const metadata = {
   title: 'Become a Verified Lounge · MyHumidor by CigarTV',
 };
 
-export default function JoinLoungePage() {
-  return (
+export default function JoinLoungePage() {  return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
       <header className="mb-12">
         <div className="eyebrow mb-2">For lounges and shops</div>
@@ -51,7 +50,10 @@ export default function JoinLoungePage() {
 
       <div className="band-rule h-px w-full" />
 
-      {/* The credit economy */}
+      <LoungeTiers />
+
+      <div className="band-rule h-px w-full" />
+
       <section className="py-12">
         <div className="eyebrow mb-6">The credit economy</div>
         <div className="grid gap-10 md:grid-cols-2">
@@ -151,5 +153,102 @@ function Benefit({
       <div className="font-display text-lg font-medium leading-tight">{title}</div>
       <p className="mt-2 text-sm leading-relaxed text-smoke-400">{body}</p>
     </div>
+  );
+}
+
+function LoungeTiers() {
+  const tiers = [
+    {
+      name: 'Basic', price: 'Free', tag: 'Always free',
+      pitch: 'Be on the map. We never charge a lounge just to be discoverable.',
+      features: [
+        'Claim your lounge & verify ownership',
+        'Update hours, contact, and location',
+        'Appear on Cigar Maps and in nearby search',
+      ],
+      cta: 'Claim your lounge', href: '/lounges', highlight: false, soon: false,
+    },
+    {
+      name: 'Pro', price: '$49–$99', per: '/mo', tag: 'Most popular',
+      pitch: 'Show what you carry and talk to the community.',
+      features: [
+        'Upload & manage live inventory — users see what’s in stock',
+        'Lounge Dashboard: post deals, new arrivals & events to the feed',
+        'Basic analytics: page & inventory views',
+      ],
+      cta: 'Start with Pro', href: '/lounges', highlight: true, soon: false,
+    },
+    {
+      name: 'Premium', price: '$149–$199', per: '/mo', tag: '',
+      pitch: 'Stand out and stock exactly what locals want.',
+      features: [
+        '“Featured Lounge” status — gold, bold placement on the map',
+        'Push notifications to users within a 10-mile radius',
+        'Advanced analytics: aggregate local “Virtual Humidors” demand',
+      ],
+      cta: 'Go Premium', href: '/lounges', highlight: false, soon: false,
+    },
+    {
+      name: 'Elite / Automation', price: '$249–$299', per: '/mo', tag: 'Coming soon',
+      pitch: 'Never manually update inventory again — we plug into your register.',
+      features: [
+        'Everything in Premium',
+        'Real-time POS sync (Square, Clover, Lightspeed, Korona)',
+        'Automated “Just Arrived” alerts within 10 miles',
+        'White-glove onboarding & priority support',
+      ],
+      cta: 'Join the waitlist', href: '/lounges/join', highlight: false, soon: true,
+    },
+  ];
+
+  return (
+    <section className="py-12">
+      <div className="eyebrow mb-2">Plans</div>
+      <h2 className="font-display text-3xl tracking-tightest sm:text-4xl">Choose how far you take it</h2>
+      <p className="mt-2 max-w-2xl text-smoke-200">
+        Start free on the map. Upgrade when you want live inventory, the social feed, analytics, and reach.
+      </p>
+      <div className="mt-8 grid gap-4 lg:grid-cols-4 sm:grid-cols-2">
+        {tiers.map((t) => (
+          <div
+            key={t.name}
+            className={
+              'flex flex-col rounded-xl border-[0.5px] p-5 ' +
+              (t.highlight
+                ? 'border-ember-400/50 bg-ember-400/5'
+                : t.soon
+                ? 'border-ember-400/15 bg-char/30 opacity-90'
+                : 'border-ember-400/15 bg-char/40')
+            }
+          >
+            {t.tag && (
+              <span className="mb-2 inline-block w-fit rounded-full bg-ember-400/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-ember-100">
+                {t.tag}
+              </span>
+            )}
+            <div className="font-display text-xl">{t.name}</div>
+            <div className="mt-1 font-display text-2xl text-paper">
+              {t.price}<span className="text-sm text-smoke-400">{t.per ?? ''}</span>
+            </div>
+            <p className="mt-2 text-sm text-smoke-300">{t.pitch}</p>
+            <ul className="mt-4 flex-1 space-y-2 text-sm text-smoke-200">
+              {t.features.map((f) => (
+                <li key={f} className="flex gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-ember-400" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href={t.href}
+              className={'mt-5 inline-flex items-center justify-center gap-1.5 rounded-md px-4 py-2 text-sm font-medium transition ' +
+                (t.soon ? 'border-[0.5px] border-ember-400/30 text-ember-100 hover:bg-ember-400/10' : 'bg-ember-400 text-paper hover:bg-ember-600')}
+            >
+              {t.cta} <ArrowRight size={13} strokeWidth={1.5} />
+            </Link>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
