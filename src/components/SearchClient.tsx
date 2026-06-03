@@ -97,7 +97,7 @@ export function SearchClient() {
           autoFocus
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by brand, cigar, shop, or city…"
+          placeholder="Search Thousands of Cigars, Lounges, Shops and Fellow Smokers"
           className="w-full rounded-lg border-[0.5px] border-ember-400/25 bg-char/70 py-3.5 pl-11 pr-11 text-base focus:border-ember-400 focus:outline-none"
         />
       </div>

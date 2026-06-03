@@ -123,11 +123,18 @@ export default function AdminPage() {
 function CigarQueue() {
   const [subs, setSubs] = useState<Submission[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [err, setErr] = useState('');
   useEffect(() => {
     const sync = () => setSubs(getSubmissions());
     sync();
     return onSubmissionsChange(sync);
   }, []);
+
+  async function decide(id: string, status: 'approved' | 'rejected') {
+    setErr('');
+    const r = await setSubmissionStatus(id, status);
+    if (!r.ok) setErr(r.error ?? 'Update failed.');
+  }
 
   const pending = subs.filter((s) => s.status === 'pending');
   const decided = subs.filter((s) => s.status !== 'pending');
@@ -138,6 +145,11 @@ function CigarQueue() {
 
   return (
     <div className="space-y-6">
+      {err && (
+        <div className="rounded-md border-[0.5px] border-red-500/40 bg-red-500/10 px-3 py-2.5 text-sm text-red-200">
+          {err}
+        </div>
+      )}
       <Section title={`Pending (${pending.length})`}>
         {pending.length === 0 ? (
           <div className="text-sm text-smoke-400">Nothing waiting. Nice and clean.</div>
@@ -155,8 +167,8 @@ function CigarQueue() {
                   </div>
                 </button>
                 <div className="flex shrink-0 gap-2">
-                  <Approve onClick={() => setSubmissionStatus(s.id, 'approved')} />
-                  <Reject onClick={() => setSubmissionStatus(s.id, 'rejected')} />
+                  <Approve onClick={() => decide(s.id, 'approved')} />
+                  <Reject onClick={() => decide(s.id, 'rejected')} />
                 </div>
               </div>
               {openId === s.id && <SubmissionDetail s={s} />}
@@ -170,12 +182,12 @@ function CigarQueue() {
             <Row
               key={s.id}
               title={`${s.brand} ${s.name}`}
-              sub={`${s.size}${s.reviewerName ? ` · ${s.status} by ${s.reviewerName}` : ''}`}
+              sub={`${s.size}${s.reviewerName ? ` · ${s.status} by ${s.reviewerName}` : ` · ${s.status}`}`}
             >
               <StatusPill status={s.status as 'approved' | 'rejected'} />
               {s.status === 'rejected' && (
                 <button
-                  onClick={() => setSubmissionStatus(s.id, 'approved')}
+                  onClick={() => decide(s.id, 'approved')}
                   className="inline-flex h-8 items-center gap-1 rounded-md border-[0.5px] border-ember-400/30 px-2.5 text-xs font-medium text-ember-100 hover:bg-ember-400/10"
                 >
                   <Check size={13} strokeWidth={2} /> Approve instead
@@ -299,25 +311,37 @@ function ClaimsQueue() {
 
 function LoungeQueue() {
   const [subs, setSubs] = useState<LoungeSubmission[]>([]);
+  const [err, setErr] = useState('');
   useEffect(() => {
     const sync = () => setSubs(getLoungeSubmissions());
     sync();
     return onLoungeSubmissionsChange(sync);
   }, []);
 
+  async function decide(id: string, status: 'approved' | 'rejected') {
+    setErr('');
+    const r = await setLoungeSubmissionStatus(id, status);
+    if (!r.ok) setErr(r.error ?? 'Update failed.');
+  }
+
   const pending = subs.filter((s) => s.status === 'pending');
   const decided = subs.filter((s) => s.status !== 'pending');
 
   return (
     <div className="space-y-6">
+      {err && (
+        <div className="rounded-md border-[0.5px] border-red-500/40 bg-red-500/10 px-3 py-2.5 text-sm text-red-200">
+          {err}
+        </div>
+      )}
       <Section title={`Pending (${pending.length})`}>
         {pending.length === 0 ? (
           <div className="text-sm text-smoke-400">No lounge submissions waiting. They appear here when members submit a lounge.</div>
         ) : (
           pending.map((s) => (
             <Row key={s.id} title={s.name} sub={[s.address, s.city, s.state].filter(Boolean).join(', ')}>
-              <Approve onClick={() => setLoungeSubmissionStatus(s.id, 'approved')} />
-              <Reject onClick={() => setLoungeSubmissionStatus(s.id, 'rejected')} />
+              <Approve onClick={() => decide(s.id, 'approved')} />
+              <Reject onClick={() => decide(s.id, 'rejected')} />
             </Row>
           ))
         )}
@@ -328,12 +352,12 @@ function LoungeQueue() {
             <Row
               key={s.id}
               title={s.name}
-              sub={`${[s.city, s.state].filter(Boolean).join(', ')}${s.reviewerName ? ` · ${s.status} by ${s.reviewerName}` : ''}`}
+              sub={`${[s.city, s.state].filter(Boolean).join(', ')}${s.reviewerName ? ` · ${s.status} by ${s.reviewerName}` : ` · ${s.status}`}`}
             >
               <StatusPill status={s.status as 'approved' | 'rejected'} />
               {s.status === 'rejected' && (
                 <button
-                  onClick={() => setLoungeSubmissionStatus(s.id, 'approved')}
+                  onClick={() => decide(s.id, 'approved')}
                   className="inline-flex h-8 items-center gap-1 rounded-md border-[0.5px] border-ember-400/30 px-2.5 text-xs font-medium text-ember-100 hover:bg-ember-400/10"
                 >
                   <Check size={13} strokeWidth={2} /> Approve instead

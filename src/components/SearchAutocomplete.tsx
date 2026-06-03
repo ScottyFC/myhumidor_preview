@@ -123,7 +123,7 @@ export function SearchAutocomplete({ className }: { className?: string }) {
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        placeholder="Search 23,500+ cigars and shops…"
+        placeholder="Search Thousands of Cigars, Lounges, Shops and Fellow Smokers"
         aria-label="Search cigars and shops"
         className="w-full rounded-md border-[0.5px] border-ember-400/20 bg-char/60 py-2 pl-9 pr-9 text-sm focus:border-ember-400 focus:outline-none"
       />

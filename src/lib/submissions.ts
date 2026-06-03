@@ -237,54 +237,65 @@ async function pushToCatalog(sub: Submission): Promise<string | null> {
   }
 }
 
-export function setSubmissionStatus(id: string, status: 'approved' | 'rejected') {
+export async function setSubmissionStatus(
+  id: string,
+  status: 'approved' | 'rejected'
+): Promise<{ ok: boolean; error?: string }> {
   start();
   const sub = cache.find((s) => s.id === id);
+  // optimistic
   cache = cache.map((s) => (s.id === id ? { ...s, status } : s));
   fire();
-  if (isSupabaseConfigured) {
-    (async () => {
-      const sb = supabaseBrowser();
-      // Read the authoritative current state so a stale view / double-click /
-      // second admin can't trigger a duplicate catalog insert.
-      const { data: fresh } = await sb
-        .from('cigar_submissions')
-        .select('status, catalog_id')
-        .eq('id', id)
-        .single();
-      let catalogId: string | null = fresh?.catalog_id ?? sub?.catalogId ?? null;
-      const alreadyApproved = fresh?.status === 'approved' || !!catalogId;
-
-      if (status === 'approved' && sub && !alreadyApproved) {
-        catalogId = await pushToCatalog(sub);
-      }
-      const { data: updated, error } = await sb
-        .from('cigar_submissions')
-        .update({
-          status,
-          reviewed_by: userId,
-          reviewed_at: new Date().toISOString(),
-          ...(catalogId ? { catalog_id: catalogId } : {}),
-        })
-        .eq('id', id)
-        .select('id');
-      if (error) {
-        console.error('[submissions] review failed:', error.message);
-      } else if (!updated || updated.length === 0) {
-        console.error('[submissions] review changed no rows — your account may not be a super admin (RLS).');
-      } else if (sub) {
-        logEvent({
-          action: status === 'approved' ? 'cigar.approved' : 'cigar.rejected',
-          entityType: 'cigar',
-          entityId: catalogId ?? sub.id,
-          entityName: `${sub.brand} ${sub.name}`,
-        });
-      }
-      hydrateRemote();
-    })();
-  } else {
+  if (!isSupabaseConfigured) {
     saveLocal();
+    return { ok: true };
   }
+  const sb = supabaseBrowser();
+  // authoritative current state — prevents a duplicate catalog insert
+  const { data: fresh } = await sb
+    .from('cigar_submissions')
+    .select('status, catalog_id')
+    .eq('id', id)
+    .single();
+  let catalogId: string | null = fresh?.catalog_id ?? sub?.catalogId ?? null;
+  const alreadyApproved = fresh?.status === 'approved' || !!catalogId;
+
+  if (status === 'approved' && sub && !alreadyApproved) {
+    catalogId = await pushToCatalog(sub);
+  }
+  const { data: updated, error } = await sb
+    .from('cigar_submissions')
+    .update({
+      status,
+      reviewed_by: userId,
+      reviewed_at: new Date().toISOString(),
+      ...(catalogId ? { catalog_id: catalogId } : {}),
+    })
+    .eq('id', id)
+    .select('id');
+
+  if (error) {
+    console.error('[submissions] review failed:', error.message);
+    await hydrateRemote();
+    return { ok: false, error: error.message };
+  }
+  if (!updated || updated.length === 0) {
+    await hydrateRemote();
+    return {
+      ok: false,
+      error: 'No rows updated — this account is not a super admin in the database (run phase10.sql and sign in as the super admin).',
+    };
+  }
+  if (sub) {
+    logEvent({
+      action: status === 'approved' ? 'cigar.approved' : 'cigar.rejected',
+      entityType: 'cigar',
+      entityId: catalogId ?? sub.id,
+      entityName: `${sub.brand} ${sub.name}`,
+    });
+  }
+  await hydrateRemote();
+  return { ok: true };
 }
 
 export function onSubmissionsChange(cb: () => void): () => void {

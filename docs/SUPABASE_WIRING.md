@@ -253,6 +253,28 @@ backfills anything missed from phase7/9).
   integration is a separate build.
 - Review window already shows the uploaded submission photo.
 
+## ✅ Phase 11 — Decision errors surfaced, profile removal, footer, account menu
+
+**Run `supabase/migrations/phase11.sql` once** (super-admin profile deletion).
+
+- **Approvals not moving / rejected→approved not updating**: the decision call
+  now returns success/failure and the admin queue shows a **red error banner**
+  instead of silently reverting. If you see “No rows updated — this account is
+  not a super admin,” the fix is to run `phase10.sql` and sign in as
+  `33b6d710-4a01-4f8b-8bca-d6b1499ef96e`. That RLS block (acting account isn’t a
+  DB super admin) is the cause of the row snapping back to pending.
+- **Remove profiles**: super admins get a “Remove profile” control on any
+  member’s public page (`/u/[handle]`). Cascades to that member’s ratings /
+  humidor / follows; the auth.users record still needs the dashboard/service role.
+- **Search placeholder**: “Search Thousands of Cigars, Lounges, Shops and Fellow
+  Smokers” in both the nav and full search.
+- **Footer**: Surgeon General warning, MyHumidor™ trademark disclaimer, Contact
+  us (submissions@cigartv.com), Help, and Terms links.
+- **Account menu** (top-right under your name): My Profile, Submit a Cigar,
+  Account Settings, Sign out.
+- **Account Settings** (`/account`): change email, change password, deactivate
+  (sign-out + flag; permanent deletion via the service role / email request).
+
 ## ⏳ Remaining / future
 - **Change requests** (`change_requests`) into the admin queue.
 - **Lounge inventory / published menus** (`inventory_items`) to Supabase.

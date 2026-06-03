@@ -43,6 +43,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               CigarTV
             </a>
           </div>
+
+          <div className="mx-auto mt-6 flex max-w-md flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-smoke-300">
+            <a href="mailto:submissions@cigartv.com" className="hover:text-ember-100">Contact us</a>
+            <Link href="/help" className="hover:text-ember-100">Help</Link>
+            <Link href="/terms" className="hover:text-ember-100">Terms</Link>
+          </div>
+
+          <p className="mx-auto mt-6 max-w-xl border-t border-ember-400/10 pt-4 text-[11px] leading-relaxed text-smoke-400">
+            <span className="font-medium text-smoke-300">SURGEON GENERAL WARNING:</span> Cigar smoking
+            can cause cancers of the mouth and throat, even if you do not inhale. Tobacco products are
+            intended for adults 21 and older. MyHumidor does not sell tobacco products.
+          </p>
+          <p className="mx-auto mt-3 max-w-xl text-[10px] leading-relaxed text-smoke-500">
+            MyHumidor™ and the MyHumidor logo are trademarks of CigarTV. All other brand names, logos,
+            and product images are the property of their respective owners and are used for
+            identification purposes only; their use does not imply endorsement.
+          </p>
         </footer>
       </body>
     </html>

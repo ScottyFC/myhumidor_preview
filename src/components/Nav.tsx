@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck } from 'lucide-react';
+import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import { subscribeAuth, signOut, type Session } from '@/lib/auth';
@@ -20,6 +20,7 @@ const TABS = [
 export function Nav() {
   const pathname = usePathname();
   const [session, setSession] = useState<Session | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [, bumpAdmin] = useState(0);
 
   useEffect(() => {
@@ -88,11 +89,11 @@ export function Nav() {
                   <span className="hidden sm:inline">Dashboard</span>
                 </Link>
               )}
-              <div className="flex items-center gap-2 rounded-md border-[0.5px] border-ember-400/20 bg-char/60 py-1 pl-1 pr-1">
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-1.5 rounded px-1.5 py-0.5 hover:bg-ember-400/10"
-                  title="Your profile"
+              <div className="relative">
+                <button
+                  onClick={() => setMenuOpen((v) => !v)}
+                  className="flex items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/20 bg-char/60 py-1.5 pl-2 pr-2 hover:bg-ember-400/10"
+                  title="Account"
                 >
                   <User size={14} strokeWidth={1.5} className="text-ember-100 sm:hidden" />
                   <span className="hidden text-xs sm:inline">
@@ -101,15 +102,30 @@ export function Nav() {
                       {session.type === 'lounge' ? 'Lounge' : 'Member'}
                     </span>
                   </span>
-                </Link>
-                <button
-                  onClick={signOut}
-                  aria-label="Sign out"
-                  title="Sign out"
-                  className="flex h-6 w-6 items-center justify-center rounded text-smoke-400 hover:text-paper"
-                >
-                  <LogOut size={14} strokeWidth={1.5} />
+                  <ChevronDown size={13} strokeWidth={1.5} className="text-smoke-400" />
                 </button>
+                {menuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                    <div className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-lg border-[0.5px] border-ember-400/20 bg-char shadow-xl">
+                      <MenuItem href="/profile" icon={<User size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                        My Profile
+                      </MenuItem>
+                      <MenuItem href="/submit" icon={<Cigarette size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                        Submit a Cigar
+                      </MenuItem>
+                      <MenuItem href="/account" icon={<Settings size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                        Account Settings
+                      </MenuItem>
+                      <button
+                        onClick={() => { setMenuOpen(false); signOut(); }}
+                        className="flex w-full items-center gap-2.5 border-t border-ember-400/10 px-4 py-2.5 text-left text-sm text-smoke-300 hover:bg-ember-400/10 hover:text-paper"
+                      >
+                        <LogOut size={14} strokeWidth={1.5} /> Sign out
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </>
           ) : (
@@ -144,5 +160,22 @@ export function Nav() {
         </div>
       </div>
     </header>
+  );
+}
+
+function MenuItem({
+  href, icon, onClick, children,
+}: {
+  href: string; icon: React.ReactNode; onClick?: () => void; children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-smoke-200 transition hover:bg-ember-400/10 hover:text-paper"
+    >
+      <span className="text-ember-100">{icon}</span>
+      {children}
+    </Link>
   );
 }

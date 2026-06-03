@@ -127,6 +127,7 @@ export function describeEvent(e: AuditEvent): string {
     case 'admin.promoted': return `promoted an account to super admin`;
     case 'admin.revoked': return `revoked admin from an account`;
     case 'inventory.published': return `published the menu for${n}`;
+    case 'profile.removed': return `removed the profile${n}`;
     default: return `${e.action}${n}`;
   }
 }

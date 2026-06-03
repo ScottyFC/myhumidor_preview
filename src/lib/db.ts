@@ -300,3 +300,21 @@ export async function uploadLoungeLogo(slug: string, dataUrl: string): Promise<s
     return null;
   }
 }
+
+/** Super-admin: remove a member's public profile by handle. */
+export async function deleteProfileByHandle(handle: string): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  try {
+    const sb = supabaseBrowser();
+    const { data: p } = await sb.from('profiles').select('id, display_name').eq('handle', handle).single();
+    const { error } = await sb.from('profiles').delete().eq('handle', handle);
+    if (error) {
+      console.error('[db] delete profile failed:', error.message);
+      return false;
+    }
+    logEvent({ action: 'profile.removed', entityType: 'profile', entityId: p?.id ?? handle, entityName: p?.display_name ?? handle });
+    return true;
+  } catch {
+    return false;
+  }
+}

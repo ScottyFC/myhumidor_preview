@@ -216,52 +216,64 @@ async function pushToLounges(sub: LoungeSubmission): Promise<string | null> {
   }
 }
 
-export function setLoungeSubmissionStatus(id: string, status: 'approved' | 'rejected') {
+export async function setLoungeSubmissionStatus(
+  id: string,
+  status: 'approved' | 'rejected'
+): Promise<{ ok: boolean; error?: string }> {
   start();
   const sub = cache.find((s) => s.id === id);
   cache = cache.map((s) => (s.id === id ? { ...s, status } : s));
   fire();
-  if (isSupabaseConfigured) {
-    (async () => {
-      const sb = supabaseBrowser();
-      const { data: fresh } = await sb
-        .from('lounge_submissions')
-        .select('status, lounge_id')
-        .eq('id', id)
-        .single();
-      let loungeId: string | null = fresh?.lounge_id ?? sub?.loungeId ?? null;
-      const alreadyApproved = fresh?.status === 'approved' || !!loungeId;
-
-      if (status === 'approved' && sub && !alreadyApproved) {
-        loungeId = await pushToLounges(sub);
-      }
-      const { data: updated, error } = await sb
-        .from('lounge_submissions')
-        .update({
-          status,
-          reviewed_by: userId,
-          reviewed_at: new Date().toISOString(),
-          ...(loungeId ? { lounge_id: loungeId } : {}),
-        })
-        .eq('id', id)
-        .select('id');
-      if (error) console.error('[lounge-sub] review failed:', error.message);
-      else if (!updated || updated.length === 0) {
-        console.error('[lounge-sub] review changed no rows — your account may not be a super admin (RLS).');
-      } else if (sub) {
-        logEvent({
-          action: status === 'approved' ? 'lounge.approved' : 'lounge.rejected',
-          entityType: 'lounge',
-          entityId: loungeId ?? sub.id,
-          entityName: sub.name,
-          loungeId: loungeId,
-        });
-      }
-      hydrateRemote();
-    })();
-  } else {
+  if (!isSupabaseConfigured) {
     saveLocal();
+    return { ok: true };
   }
+  const sb = supabaseBrowser();
+  const { data: fresh } = await sb
+    .from('lounge_submissions')
+    .select('status, lounge_id')
+    .eq('id', id)
+    .single();
+  let loungeId: string | null = fresh?.lounge_id ?? sub?.loungeId ?? null;
+  const alreadyApproved = fresh?.status === 'approved' || !!loungeId;
+
+  if (status === 'approved' && sub && !alreadyApproved) {
+    loungeId = await pushToLounges(sub);
+  }
+  const { data: updated, error } = await sb
+    .from('lounge_submissions')
+    .update({
+      status,
+      reviewed_by: userId,
+      reviewed_at: new Date().toISOString(),
+      ...(loungeId ? { lounge_id: loungeId } : {}),
+    })
+    .eq('id', id)
+    .select('id');
+
+  if (error) {
+    console.error('[lounge-sub] review failed:', error.message);
+    await hydrateRemote();
+    return { ok: false, error: error.message };
+  }
+  if (!updated || updated.length === 0) {
+    await hydrateRemote();
+    return {
+      ok: false,
+      error: 'No rows updated — this account is not a super admin in the database (run phase10.sql and sign in as the super admin).',
+    };
+  }
+  if (sub) {
+    logEvent({
+      action: status === 'approved' ? 'lounge.approved' : 'lounge.rejected',
+      entityType: 'lounge',
+      entityId: loungeId ?? sub.id,
+      entityName: sub.name,
+      loungeId: loungeId,
+    });
+  }
+  await hydrateRemote();
+  return { ok: true };
 }
 
 export function onLoungeSubmissionsChange(cb: () => void): () => void {
