@@ -10,6 +10,7 @@ import { LoungeMenu } from '@/components/LoungeMenu';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
 import { LoungePosts } from '@/components/LoungePosts';
+import { LoungeBadgeCollect } from '@/components/LoungeBadgeCollect';
 import { ChangeRequest } from '@/components/ChangeRequest';
 
 interface PageProps {
@@ -151,6 +152,7 @@ export default async function LoungePage({ params }: PageProps) {
       <section className="py-8">
         <ChangeRequest targetType="lounge" targetId={lounge.slug} targetName={lounge.name} />
         <LoungePosts slug={lounge.slug} />
+        <LoungeBadgeCollect slug={lounge.slug} />
       </section>
     </div>
   );

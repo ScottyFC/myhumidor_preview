@@ -10,6 +10,7 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 import { getCollection, fetchCollectionFor, type CollectionItem } from '@/lib/collection';
 import { getRatings, fetchRatingsFor, type UserRating } from '@/lib/ratings';
 import { ProfileBody } from '@/components/ProfileBody';
+import { BadgesSection } from '@/components/BadgesSection';
 import { Avatar } from '@/components/Avatar';
 import { FollowButton } from '@/components/FollowButton';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
@@ -128,6 +129,7 @@ export default function PublicProfilePage() {
 
       <div className="mt-8">
         <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self={false} />
+        {viewedId && <BadgesSection userId={viewedId} self={isSelf} humidor={humidor} ratings={ratings} />}
       </div>
     </div>
   );

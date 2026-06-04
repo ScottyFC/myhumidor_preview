@@ -275,7 +275,34 @@ backfills anything missed from phase7/9).
 - **Account Settings** (`/account`): change email, change password, deactivate
   (sign-out + flag; permanent deletion via the service role / email request).
 
-## ⏳ Remaining / future
+## ✅ Phase 12 — Avatar fix + badges (matched to your real table)
+
+**Run `supabase/migrations/phase12.sql` once**, and mark the `avatars` bucket
+**Public** in the dashboard.
+
+- **Profile photos not saving — fixed.** The `avatars` bucket had no Storage
+  policies, so uploads were silently denied. phase12 adds public-read +
+  authenticated-write (also fixes lounge logos, same bucket).
+- **Badges matched to your table** (`id, slug, name, criteria, tier`). The
+  migration only *adds* `image_url` + `lounge_id`, enables RLS with public read,
+  and attaches the seven uploaded PNGs to their matching slugs (incl.
+  `estelí-explorer`). The other ~254 badges render as tier-coloured medallions
+  (bronze/silver/gold/rare) until you add art — set `image_url` to `/badges/x.png`.
+- **Earning is live for the computable families** by parsing each badge's
+  criteria text: humidor counts, total reviews, “rate your first cigar”, brand
+  mastery (“Rate N different cigars from X”), vitola counts (“Rate N Robusto
+  vitolas”), tasting-note tags (“Identify the 'Cedar' note in N reviews”), and
+  the perfect-/low-score badges. Awarded automatically on profile view.
+  *Not yet auto-awarded* (no data tracked yet): country/wrapper origin, price
+  tiers, dates/streaks, social (likes/comments), band photos, account age,
+  Cuban/regional/limited — these stay locked until those fields exist.
+- Badges show on `/profile` and `/u/[handle]` (earned first, with a “Show all”).
+- **Premium custom badges**: Premium/Elite lounges get a badge designer in the
+  dashboard; visitors collect them from the lounge page.
+- Removed “By the numbers” on `/lounges/join`.
+
+> 3D: medals tilt to the pointer and sit on a Vanta.js WebGL backdrop loaded from
+> CDN at runtime (degrades to flat if blocked) — give it a look in the browser.
 - **Change requests** (`change_requests`) into the admin queue.
 - **Lounge inventory / published menus** (`inventory_items`) to Supabase.
 - Geocoding submitted lounges so they show on the map + main directory (they

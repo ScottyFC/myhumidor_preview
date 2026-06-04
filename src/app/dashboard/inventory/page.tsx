@@ -12,6 +12,7 @@ import { getInventory, saveInventory, publishMenu } from '@/lib/inventory';
 import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
 import { ActivityLog } from '@/components/ActivityLog';
 import { PostComposer } from '@/components/PostComposer';
+import { LoungeBadgeCreator } from '@/components/LoungeBadgeCreator';
 import { getMyLounges, type MyLounge } from '@/lib/lounges-owner';
 
 const STORE_KEY = 'myhumidor:active-store';
@@ -313,6 +314,10 @@ export default function InventoryPage() {
 
           {store && (
             <PostComposer slug={store.slug} loungeName={store.name} />
+          )}
+
+          {store && (
+            <LoungeBadgeCreator slug={store.slug} />
           )}
 
           {store && (

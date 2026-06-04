@@ -98,23 +98,6 @@ export default function JoinLoungePage() {  return (
 
       <div className="band-rule h-px w-full" />
 
-      {/* By the numbers */}
-      <section className="py-12">
-        <div className="eyebrow mb-6">By the numbers</div>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {[
-            ['$0', 'Up-front cost. No hardware fee, no monthly subscription.'],
-            ['24/7', 'Continuous CigarTV programming with full VOD catalog access.'],
-            ['5 mi+', 'Default geo radius for in-app store surfacing. Adjustable per market.'],
-          ].map(([num, label]) => (
-            <div key={num} className="rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-5">
-              <div className="font-display text-4xl tabular">{num}</div>
-              <div className="mt-2 text-xs leading-relaxed text-smoke-400">{label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="my-12 rounded-xl border-[0.5px] border-ember-400/30 bg-ember-400/5 p-10 text-center">
         <h3 className="font-display text-3xl mb-2">Apply for the Lounge Program</h3>

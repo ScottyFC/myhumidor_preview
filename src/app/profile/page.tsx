@@ -10,6 +10,7 @@ import { getProfile, saveProfile, onProfileChange, handleFromName, type ProfileF
 import { getCollection, onCollectionChange, type CollectionItem } from '@/lib/collection';
 import { getRatings, onRatingsChange, type UserRating } from '@/lib/ratings';
 import { ProfileBody } from '@/components/ProfileBody';
+import { BadgesSection } from '@/components/BadgesSection';
 import { Avatar } from '@/components/Avatar';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { cn } from '@/lib/utils';
@@ -113,6 +114,7 @@ export default function ProfilePage() {
 
       <div className="mt-8">
         <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self />
+        {session && <BadgesSection userId={session.uuid} self humidor={humidor} ratings={ratings} />}
       </div>
     </div>
   );
