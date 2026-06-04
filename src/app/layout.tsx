@@ -5,16 +5,32 @@ import './globals.css';
 import Link from 'next/link';
 import { Nav } from '@/components/Nav';
 
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.myhumidor.shop';
+
 export const metadata: Metadata = {
   title: 'MyHumidor by CigarTV',
   description:
     'Rate, collect, and discover premium cigars. Watch the CigarTV catalog and find every cigar in stock at lounges near you.',
-  metadataBase: new URL('https://myhumidor.app'),
+  metadataBase: new URL(SITE),
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }, { url: '/favicon.svg', type: 'image/svg+xml' }],
+    shortcut: '/favicon.svg',
+    apple: '/icon.svg',
+  },
   openGraph: {
     title: 'MyHumidor by CigarTV',
     description:
       'Rate, collect, and discover premium cigars. Watch the CigarTV catalog and find every cigar in stock at lounges near you.',
     type: 'website',
+    siteName: 'MyHumidor',
+    url: SITE,
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'MyHumidor by CigarTV' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'MyHumidor by CigarTV',
+    description: 'Rate, collect, and discover premium cigars.',
+    images: ['/og.png'],
   },
 };
 

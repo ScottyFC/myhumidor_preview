@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Award } from 'lucide-react';
 import { BadgeMedal } from '@/components/BadgeMedal';
 import { listBadges, earnedBadgeIds, evaluateAndAward, buildStats, type BadgeDef } from '@/lib/badges';
+import { subscribeAficionado } from '@/lib/aficionado';
 import type { CollectionItem } from '@/lib/collection';
 import type { UserRating } from '@/lib/ratings';
 
@@ -16,18 +17,37 @@ export function BadgesSection({
 }) {
   const [badges, setBadges] = useState<BadgeDef[] | null>(null);
   const [earned, setEarned] = useState<Set<string>>(new Set());
+  const [member, setMember] = useState(false);
   const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => (self ? subscribeAficionado(setMember) : undefined), [self]);
 
   useEffect(() => {
     let off = false;
     (async () => {
       const all = await listBadges();
-      if (self) await evaluateAndAward(userId, all, buildStats(humidor, ratings));
+      if (self) {
+        let enrich = {};
+        try {
+          const slugs = Array.from(new Set([...humidor, ...ratings].map((x) => x.slug)));
+          if (slugs.length) {
+            const res = await fetch('/api/cigars/enrich', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ slugs }),
+            });
+            enrich = (await res.json()).data ?? {};
+          }
+        } catch {
+          /* price/country badges just won't evaluate */
+        }
+        await evaluateAndAward(userId, all, buildStats(humidor, ratings, enrich), member);
+      }
       const mine = await earnedBadgeIds(userId);
       if (!off) { setBadges(all); setEarned(mine); }
     })();
     return () => { off = true; };
-  }, [userId, self, humidor, ratings]);
+  }, [userId, self, humidor, ratings, member]);
 
   const { earnedList, lockedList } = useMemo(() => {
     const list = (badges ?? []).filter((b) => !b.loungeId || earned.has(b.id));

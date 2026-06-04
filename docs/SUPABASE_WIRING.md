@@ -107,6 +107,16 @@ Run `supabase/migrations/phase13.sql` once (adds `profiles.aficionado` + grants
 - Removed the wavy Vanta backdrop on badges (medals keep the tilt).
 - MyHumidor Aficionado ($3.99-$5.99/mo, $40/yr): homepage section + working pieces (Verified Aficionado chip, real Aging Tracker (member-gated), ad-free feed). `33b6d710...` is a member. Flavor Profiling / giveaways / exclusive badges are marketed perks, not yet functional; upgrade button is a placeholder (no checkout) — membership is a DB flag for now.
 
+## Phase 14 — Profile redesign, price/country badges, recommender, exclusive tier
+
+Run `supabase/migrations/phase14.sql` once (adds `badges.aficionado_only` + seeds exclusive badges).
+
+- /profile now loads humidor + ratings from the DB by user id (same source as /u/handle), so the two pages match.
+- Price/country badges (e.g. Unicorn Chaser "costs over $100") now evaluate via a server enrichment route (/api/cigars/enrich) that supplies price + country per slug; parser handles price-over/under, Nicaraguan/Dominican/Cuban tobacco, vitolas, brand mastery, notes, counts.
+- Profiles are one page: badges at the top, then Humidor / Wishlist / Ratings as auto-scroll carousels (no tabs). Bigger avatar; more space above the Verified Aficionado chip.
+- Flavor Profiling recommender (Aficionado-gated): /api/recommendations suggests catalog cigars sharing brand/country with the user's 4★+ ratings. Nearby-in-stock is a link to /lounges for now (not precise distance/stock yet).
+- Exclusive badge tier: `aficionado_only` badges only auto-award to Aficionado members.
+
 persisted. (Remaining placeholders, for later phases: the cigar "community"
 likes/comments block returns empty, and the lounge-owner dashboard analytics
 still use sample numbers until the viewership pipeline exists.)

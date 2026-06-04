@@ -7,11 +7,13 @@ import { Check, Loader2, MapPin, Share2, X, ShieldCheck, ShieldOff, Crown } from
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { isAdmin, isBootstrapAdmin, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
 import { getProfile, saveProfile, onProfileChange, handleFromName, type ProfileFields } from '@/lib/profile';
-import { getCollection, onCollectionChange, type CollectionItem } from '@/lib/collection';
-import { getRatings, onRatingsChange, type UserRating } from '@/lib/ratings';
+import { getCollection, fetchCollectionFor, onCollectionChange, type CollectionItem } from '@/lib/collection';
+import { getRatings, fetchRatingsFor, onRatingsChange, type UserRating } from '@/lib/ratings';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { ProfileBody } from '@/components/ProfileBody';
 import { BadgesSection } from '@/components/BadgesSection';
 import { AgingTracker } from '@/components/AgingTracker';
+import { FlavorProfile } from '@/components/FlavorProfile';
 import { Avatar } from '@/components/Avatar';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { cn } from '@/lib/utils';
@@ -45,21 +47,35 @@ export default function ProfilePage() {
   }, [router]);
 
   useEffect(() => {
-    const sync = () => {
-      setProfile(getProfile());
-      setCollection(getCollection());
-      setRatings(getRatings());
-    };
+    const sync = () => setProfile(getProfile());
     sync();
     const u1 = onProfileChange(sync);
-    const u2 = onCollectionChange(sync);
-    const u3 = onRatingsChange(sync);
+    return () => u1();
+  }, [authState]);
+
+  // Load humidor + ratings from the database by user id — the same source as the
+  // public profile (/u/handle) — so the two pages always show identical data.
+  useEffect(() => {
+    if (!session) return;
+    let off = false;
+    const load = async () => {
+      const [coll, rts] = await Promise.all([
+        fetchCollectionFor(session.uuid),
+        fetchRatingsFor(session.uuid),
+      ]);
+      if (off) return;
+      setCollection(coll.length || isSupabaseConfigured ? coll : getCollection());
+      setRatings(rts.length || isSupabaseConfigured ? rts : getRatings());
+    };
+    load();
+    const u2 = onCollectionChange(load);
+    const u3 = onRatingsChange(load);
     return () => {
-      u1();
+      off = true;
       u2();
       u3();
     };
-  }, [authState]);
+  }, [session]);
 
   if (authState !== 'in' || !profile) {
     return (
@@ -75,7 +91,7 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
       <div className="flex flex-col gap-6 border-b border-ember-400/15 pb-8 sm:flex-row sm:items-end">
-        <Avatar profile={profile} />
+        <Avatar profile={profile} size={112} />
 
         <div className="min-w-0 flex-1">
           {session?.type === 'lounge' ? (
@@ -85,7 +101,7 @@ export default function ProfilePage() {
           )}
           <h1 className="font-display text-4xl tracking-tightest sm:text-5xl">{profile.displayName}</h1>
           {profile.aficionado && (
-            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border-[0.5px] border-ember-400/40 bg-ember-400/10 px-2.5 py-0.5 text-xs font-medium text-ember-100">
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border-[0.5px] border-ember-400/40 bg-ember-400/10 px-2.5 py-0.5 text-xs font-medium text-ember-100">
               <Crown size={12} strokeWidth={1.5} className="text-ember-400" /> Verified Aficionado
             </div>
           )}
@@ -119,9 +135,10 @@ export default function ProfilePage() {
       {editing && <EditForm profile={profile} onDone={() => setEditing(false)} />}
 
       <div className="mt-8">
+        {session && <BadgesSection userId={session.uuid} self humidor={humidor} ratings={ratings} />}
         <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self />
         <AgingTracker humidor={humidor} member={!!profile.aficionado} />
-        {session && <BadgesSection userId={session.uuid} self humidor={humidor} ratings={ratings} />}
+        <FlavorProfile member={!!profile.aficionado} humidor={humidor} wishlist={wishlist} ratings={ratings} />
       </div>
     </div>
   );

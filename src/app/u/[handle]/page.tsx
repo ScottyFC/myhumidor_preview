@@ -103,12 +103,12 @@ export default function PublicProfilePage() {
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
       <div className="flex flex-col gap-6 border-b border-ember-400/15 pb-8 sm:flex-row sm:items-end">
-        <Avatar profile={profile} />
+        <Avatar profile={profile} size={112} />
         <div className="min-w-0 flex-1">
           <div className="eyebrow mb-1">Member profile</div>
           <h1 className="font-display text-4xl tracking-tightest sm:text-5xl">{profile.displayName}</h1>
           {profile.aficionado && (
-            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border-[0.5px] border-ember-400/40 bg-ember-400/10 px-2.5 py-0.5 text-xs font-medium text-ember-100">
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border-[0.5px] border-ember-400/40 bg-ember-400/10 px-2.5 py-0.5 text-xs font-medium text-ember-100">
               <Crown size={12} strokeWidth={1.5} className="text-ember-400" /> Verified Aficionado
             </div>
           )}
@@ -133,8 +133,8 @@ export default function PublicProfilePage() {
       </div>
 
       <div className="mt-8">
-        <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self={false} />
         {viewedId && <BadgesSection userId={viewedId} self={isSelf} humidor={humidor} ratings={ratings} />}
+        <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self={false} />
       </div>
     </div>
   );

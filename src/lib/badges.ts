@@ -14,19 +14,20 @@ export interface BadgeDef {
   tier: BadgeTier;
   imageUrl?: string;
   loungeId?: string | null;
+  aficionadoOnly?: boolean;
 }
 
 type Row = {
   id: string; slug: string; name: string; criteria: string | null;
-  tier: string | null; image_url: string | null; lounge_id: string | null;
+  tier: string | null; image_url: string | null; lounge_id: string | null; aficionado_only: boolean | null;
 };
 function rowTo(r: Row): BadgeDef {
   return {
     id: r.id, slug: r.slug, name: r.name, criteria: r.criteria ?? undefined,
-    tier: (r.tier as BadgeTier) ?? 'bronze', imageUrl: r.image_url ?? undefined, loungeId: r.lounge_id,
+    tier: (r.tier as BadgeTier) ?? 'bronze', imageUrl: r.image_url ?? undefined, loungeId: r.lounge_id, aficionadoOnly: r.aficionado_only ?? false,
   };
 }
-const SELECT = 'id, slug, name, criteria, tier, image_url, lounge_id';
+const SELECT = 'id, slug, name, criteria, tier, image_url, lounge_id, aficionado_only';
 
 export async function listBadges(): Promise<BadgeDef[]> {
   if (!isSupabaseConfigured) return [];
@@ -65,10 +66,23 @@ export interface BadgeStats {
   rated: { brand: string; slug: string; size: string }[];
   sizes: string[];
   reviewNotes: string[];
+  prices: number[];        // prices of rated cigars (from enrichment)
+  countries: string[];     // lowercased countries of rated cigars (from enrichment)
 }
 
-export function buildStats(humidor: CollectionItem[], ratings: UserRating[]): BadgeStats {
+export type Enrichment = Record<string, { price: number | null; country: string | null }>;
+
+export function buildStats(humidor: CollectionItem[], ratings: UserRating[], enrich: Enrichment = {}): BadgeStats {
   const lc = (x?: string) => (x ?? '').toLowerCase();
+  const prices: number[] = [];
+  const countries: string[] = [];
+  for (const r of ratings) {
+    const e = enrich[r.slug];
+    if (e) {
+      if (typeof e.price === 'number') prices.push(e.price);
+      if (e.country) countries.push(e.country.toLowerCase());
+    }
+  }
   return {
     humidorCount: humidor.length,
     reviewCount: ratings.length,
@@ -77,6 +91,8 @@ export function buildStats(humidor: CollectionItem[], ratings: UserRating[]): Ba
     rated: ratings.map((r) => ({ brand: lc(r.brand), slug: r.slug, size: lc(r.size) })),
     sizes: [...humidor, ...ratings].map((x) => lc(x.size)),
     reviewNotes: ratings.map((r) => `${lc(r.notes)} ${(r.tastingNotes ?? []).map(lc).join(' ')}`),
+    prices,
+    countries,
   };
 }
 
@@ -100,7 +116,44 @@ export function evaluateCriteria(criteria: string | undefined, s: BadgeStats): {
     return { recognized: true, met: s.reviewCount >= n };
   }
 
-  let m = t.match(/rate\s+(\d+)\s+different cigars from\s+(.+)/) || t.match(/rate\s+(\d+)\s+different\s+(.+?)\s+cigars/);
+  // Price: "Rate N cigars that cost over/under $M" (N optional → 1)
+  let m = t.match(/(\d+)?\s*cigars?\s+that costs?\s+(over|under|more than|less than)\s*\$(\d+)/);
+  if (!m) {
+    const m2 = t.match(/costs?\s+(over|under|more than|less than)\s*\$(\d+)/);
+    if (m2) {
+      const over = /over|more/.test(m2[1]);
+      const amt = parseInt(m2[2], 10);
+      const count = s.prices.filter((p) => (over ? p > amt : p < amt)).length;
+      return { recognized: true, met: count >= 1 };
+    }
+  } else {
+    const n = m[1] ? parseInt(m[1], 10) : 1;
+    const over = /over|more/.test(m[2]);
+    const amt = parseInt(m[3], 10);
+    const count = s.prices.filter((p) => (over ? p > amt : p < amt)).length;
+    return { recognized: true, met: count >= n };
+  }
+
+  // Country / tobacco origin
+  const COUNTRY: Record<string, string> = {
+    nicaraguan: 'nicaragua', nicaragua: 'nicaragua', dominican: 'dominican',
+    cuban: 'cuba', honduran: 'honduras', mexican: 'mexico', ecuadorian: 'ecuador',
+  };
+  m = t.match(/(\d+)?\s*(?:different\s+|authentic\s+)?cigars?\s+with\s+(\w+)\s+tobacco/)
+    || t.match(/(\d+)?\s*(?:different\s+)?authentic\s+(\w+)\s+cigars?/)
+    || t.match(/rate your first authentic\s+(\w+)\s+cigar/);
+  if (m) {
+    const firstish = /your first/.test(t);
+    const word = (m[2] ?? m[1] ?? '').toLowerCase();
+    const key = COUNTRY[word];
+    if (key) {
+      const n = firstish ? 1 : (m[1] && /^\d+$/.test(m[1]) ? parseInt(m[1], 10) : 1);
+      const count = s.countries.filter((c) => c.includes(key)).length;
+      return { recognized: true, met: count >= n };
+    }
+  }
+
+  m = t.match(/rate\s+(\d+)\s+different cigars from\s+(.+)/) || t.match(/rate\s+(\d+)\s+different\s+(.+?)\s+cigars/);
   if (m) {
     const n = parseInt(m[1], 10);
     const brand = m[2].trim().replace(/[.,]$/, '');
@@ -131,11 +184,12 @@ export function evaluateCriteria(criteria: string | undefined, s: BadgeStats): {
   return { recognized: false, met: false };
 }
 
-export async function evaluateAndAward(userId: string, badges: BadgeDef[], stats: BadgeStats): Promise<number> {
+export async function evaluateAndAward(userId: string, badges: BadgeDef[], stats: BadgeStats, isMember = false): Promise<number> {
   if (!isSupabaseConfigured || !userId) return 0;
   const already = await earnedBadgeIds(userId);
   const toAward = badges.filter((b) => {
     if (b.loungeId || already.has(b.id)) return false;
+    if (b.aficionadoOnly && !isMember) return false; // exclusive tier
     const r = evaluateCriteria(b.criteria, stats);
     return r.recognized && r.met;
   });
