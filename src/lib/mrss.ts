@@ -147,34 +147,49 @@ function stripSeriesPrefix(title: string): string {
  * Fetch and parse the MRSS feed. Cached for 1 hour by Next.js fetch.
  */
 export async function fetchEpisodes(): Promise<Episode[]> {
-  const feedUrl =
-    process.env.NEXT_PUBLIC_MRSS_URL ||
-    (typeof window === 'undefined'
-      ? new URL('/feed.xml', `http://localhost:${process.env.PORT ?? 3000}`).toString()
-      : '/feed.xml');
+  try {
+    const xml = await fetchXmlSafely(resolveFeedUrl());
+    return xml ? parseFeedXml(xml) : [];
+  } catch {
+    // Episodes are non-critical chrome on the home page — never crash the render.
+    return [];
+  }
+}
 
-  const xml = await fetchXmlSafely(feedUrl);
-  return parseFeedXml(xml);
+function resolveFeedUrl(): string {
+  // 1) explicit override, 2) browser (relative), 3) server: real deployment origin.
+  if (process.env.NEXT_PUBLIC_MRSS_URL) return process.env.NEXT_PUBLIC_MRSS_URL;
+  if (typeof window !== 'undefined') return '/feed.xml';
+  const base =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${process.env.PORT ?? 3000}`);
+  return new URL('/feed.xml', base).toString();
 }
 
 async function fetchXmlSafely(feedUrl: string): Promise<string> {
-  // Server: try fetch first, then fall back to filesystem read (for dev where the
-  // dev server may not yet be answering /feed.xml during a Server Component render).
+  // Prefer fetching the statically-served asset (works in prod + on Vercel).
   try {
     const res = await fetch(feedUrl, { next: { revalidate: 3600 } });
     if (res.ok) return await res.text();
   } catch {
     // fall through
   }
+  // Dev fallback only: read from disk if it happens to be present. On Vercel the
+  // file isn't bundled into the function, so this is wrapped and never throws.
   if (typeof window === 'undefined') {
-    const fs = await import('fs/promises');
-    const path = await import('path');
-    return fs.readFile(path.join(process.cwd(), 'public', 'feed.xml'), 'utf-8');
+    try {
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      return await fs.readFile(path.join(process.cwd(), 'public', 'feed.xml'), 'utf-8');
+    } catch {
+      return '';
+    }
   }
-  throw new Error('Could not load MRSS feed from ' + feedUrl);
+  return '';
 }
 
 export function parseFeedXml(xml: string): Episode[] {
+  if (!xml) return [];
   const json = parser.parse(xml);
   const items: RawItem[] = json?.rss?.channel?.item ?? [];
   return items.map(itemToEpisode);
