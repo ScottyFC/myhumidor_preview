@@ -97,6 +97,16 @@ already exist from `schema.sql`.
 profiles, `/top` (now "Browse cigars"), `/lounges` (real seeded lounges), the
 home carousels/previews, and cigar links in the feed. The fabricated cigars,
 lounges, ratings, and feed posts are gone — so everything shown can be rated and
+## Phase 13 — Aficionado (Freemium), carousels, daily featured
+
+Run `supabase/migrations/phase13.sql` once (adds `profiles.aficionado` + grants
+`33b6d710...`, adds `lounges.boost_until`).
+
+- Auto-scroll carousels: featured cigars/lounges + recently-added strips auto-advance (pause on hover/touch/hidden tab; respect reduced-motion).
+- Featured rotates daily; credit-boosted lounges lead the carousel. Lounges boost from the dashboard Boost control (7-day window).
+- Removed the wavy Vanta backdrop on badges (medals keep the tilt).
+- MyHumidor Aficionado ($3.99-$5.99/mo, $40/yr): homepage section + working pieces (Verified Aficionado chip, real Aging Tracker (member-gated), ad-free feed). `33b6d710...` is a member. Flavor Profiling / giveaways / exclusive badges are marketed perks, not yet functional; upgrade button is a placeholder (no checkout) — membership is a DB flag for now.
+
 persisted. (Remaining placeholders, for later phases: the cigar "community"
 likes/comments block returns empty, and the lounge-owner dashboard analytics
 still use sample numbers until the viewership pipeline exists.)

@@ -84,16 +84,24 @@ export function catalogStats() {
 }
 
 /** Featured cigars for the home carousel — one per brand so logos don't repeat. */
+/** Day-of-epoch — changes once per day, so featured picks rotate daily. */
+function daySeed(): number {
+  return Math.floor(Date.now() / 86_400_000);
+}
+
 export function featuredCigars(limit = 12): CatalogCigar[] {
   const withImg = allCigars().filter((c) => c.image_url);
   // Keep only the first cigar of each brand (one logo per brand).
   const byBrand = new Map<string, CatalogCigar>();
   for (const c of withImg) if (!byBrand.has(c.brand)) byBrand.set(c.brand, c);
   const brands = [...byBrand.values()];
-  // Spread the picks across the alphabet so it isn't a run of A-names.
+  // Rotate the starting point each day, then spread across the alphabet.
+  const offset = daySeed() % Math.max(1, brands.length);
   const step = Math.max(1, Math.floor(brands.length / limit));
   const picks: CatalogCigar[] = [];
-  for (let i = 0; i < brands.length && picks.length < limit; i += step) picks.push(brands[i]);
+  for (let i = 0; i < brands.length && picks.length < limit; i += step) {
+    picks.push(brands[(i + offset) % brands.length]);
+  }
   return picks;
 }
 
@@ -104,12 +112,14 @@ export function findCatalogStoreBySlug(slug: string): CatalogStore | undefined {
 /** Real lounges for the directory / featured carousel (from the seeded data). */
 export function featuredLounges(limit = 8): CatalogStore[] {
   const stores = allStores();
-  // Prefer ones with coordinates so map/links behave; spread across the list.
   const usable = stores.filter((s) => s.lat && s.lng);
   const pool = usable.length >= limit ? usable : stores;
+  const offset = daySeed() % Math.max(1, pool.length);
   const step = Math.max(1, Math.floor(pool.length / limit));
   const picks: CatalogStore[] = [];
-  for (let i = 0; i < pool.length && picks.length < limit; i += step) picks.push(pool[i]);
+  for (let i = 0; i < pool.length && picks.length < limit; i += step) {
+    picks.push(pool[(i + offset) % pool.length]);
+  }
   return picks;
 }
 

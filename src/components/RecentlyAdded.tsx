@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BadgeCheck } from 'lucide-react';
+import { AutoScrollRow } from '@/components/AutoScrollRow';
 import {
   recentCigars, recentMembers, recentLounges,
   type RecentCigar, type RecentMember, type RecentLounge,
@@ -109,7 +110,7 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
   return (
     <div>
       <div className="eyebrow mb-3">{title}</div>
-      <div className="-mx-6 flex snap-x gap-4 overflow-x-auto px-6 pb-2 [scrollbar-width:thin]">{children}</div>
+      <AutoScrollRow className="-mx-6 px-6 pb-2">{children}</AutoScrollRow>
     </div>
   );
 }

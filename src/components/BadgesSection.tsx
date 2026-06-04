@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Award } from 'lucide-react';
 import { BadgeMedal } from '@/components/BadgeMedal';
-import { VantaBackdrop } from '@/components/VantaBackdrop';
 import { listBadges, earnedBadgeIds, evaluateAndAward, buildStats, type BadgeDef } from '@/lib/badges';
 import type { CollectionItem } from '@/lib/collection';
 import type { UserRating } from '@/lib/ratings';
@@ -53,8 +52,7 @@ export function BadgesSection({
         <span className="eyebrow">{earnedList.length} of {total} earned</span>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border-[0.5px] border-ember-400/15">
-        <VantaBackdrop className="absolute inset-0 opacity-40" />
+      <div className="relative overflow-hidden rounded-2xl border-[0.5px] border-ember-400/15 bg-char/30">
         <div className="relative grid grid-cols-2 gap-x-4 gap-y-7 p-6 sm:grid-cols-3 md:grid-cols-4">
           {display.map((b) => (
             <div key={b.id} className="flex flex-col items-center">

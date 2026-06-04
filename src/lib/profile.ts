@@ -19,6 +19,7 @@ export interface ProfileFields {
   state: string;
   bio: string;
   avatarDataUrl?: string; // demo: data URL. Supabase: Storage public URL.
+  aficionado?: boolean;
 }
 
 const KEY = 'myhumidor:profile';
@@ -66,7 +67,7 @@ async function hydrateRemote() {
   try {
     const { data, error } = await supabaseBrowser()
       .from('profiles')
-      .select('handle, display_name, city, state, bio, avatar_url')
+      .select('handle, display_name, city, state, bio, avatar_url, aficionado')
       .eq('id', userId)
       .single();
     if (error) {
@@ -81,6 +82,7 @@ async function hydrateRemote() {
         state: data.state ?? '',
         bio: data.bio ?? '',
         avatarDataUrl: data.avatar_url ?? undefined,
+        aficionado: data.aficionado ?? false,
       };
       fire();
     }
@@ -213,7 +215,7 @@ export async function fetchProfileByHandle(
   try {
     const { data, error } = await supabaseBrowser()
       .from('profiles')
-      .select('id, public_id, account_type, handle, display_name, city, state, bio, avatar_url')
+      .select('id, public_id, account_type, handle, display_name, city, state, bio, avatar_url, aficionado')
       .eq('handle', handle)
       .single();
     if (error || !data) return null;
@@ -228,6 +230,7 @@ export async function fetchProfileByHandle(
         state: data.state ?? '',
         bio: data.bio ?? '',
         avatarDataUrl: data.avatar_url ?? undefined,
+        aficionado: data.aficionado ?? false,
       },
     };
   } catch {

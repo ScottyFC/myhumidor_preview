@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Star, BadgeCheck, Megaphone, Sparkles, CalendarDays, Loader2, Users } from 'lucide-react';
 import { fetchFeed, type FeedPost } from '@/lib/feed';
+import { subscribeAficionado } from '@/lib/aficionado';
 import { BrandTile } from '@/components/BrandTile';
 import { FollowButton } from '@/components/FollowButton';
 
 export function Feed() {
   const [posts, setPosts] = useState<FeedPost[] | null>(null);
+  const [adFree, setAdFree] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -17,6 +19,10 @@ export function Feed() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => subscribeAficionado(setAdFree), []);
+
+  const shown = adFree ? (posts ?? []).filter((p) => !(p as { promoted?: boolean }).promoted) : posts;
 
   if (posts === null) {
     return (
@@ -43,9 +49,11 @@ export function Feed() {
   return (
     <div className="space-y-3">
       <p className="text-xs text-smoke-400">
-        Activity from people you follow and lounges. Promoted lounge posts are labeled.
+        {adFree
+          ? 'Activity from people you follow and lounges. Ad-free — Aficionado perk.'
+          : 'Activity from people you follow and lounges. Promoted lounge posts are labeled.'}
       </p>
-      {posts.map((p) => (p.isLounge ? <LoungePost key={p.id} p={p} /> : <UserPost key={p.id} p={p} />))}
+      {(shown ?? []).map((p) => (p.isLounge ? <LoungePost key={p.id} p={p} /> : <UserPost key={p.id} p={p} />))}
     </div>
   );
 }

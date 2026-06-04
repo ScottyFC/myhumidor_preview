@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Check, Loader2, MapPin, Share2, X, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Check, Loader2, MapPin, Share2, X, ShieldCheck, ShieldOff, Crown } from 'lucide-react';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { isAdmin, isBootstrapAdmin, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
 import { getProfile, saveProfile, onProfileChange, handleFromName, type ProfileFields } from '@/lib/profile';
@@ -11,6 +11,7 @@ import { getCollection, onCollectionChange, type CollectionItem } from '@/lib/co
 import { getRatings, onRatingsChange, type UserRating } from '@/lib/ratings';
 import { ProfileBody } from '@/components/ProfileBody';
 import { BadgesSection } from '@/components/BadgesSection';
+import { AgingTracker } from '@/components/AgingTracker';
 import { Avatar } from '@/components/Avatar';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { cn } from '@/lib/utils';
@@ -83,6 +84,11 @@ export default function ProfilePage() {
             <div className="eyebrow mb-1">Member</div>
           )}
           <h1 className="font-display text-4xl tracking-tightest sm:text-5xl">{profile.displayName}</h1>
+          {profile.aficionado && (
+            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border-[0.5px] border-ember-400/40 bg-ember-400/10 px-2.5 py-0.5 text-xs font-medium text-ember-100">
+              <Crown size={12} strokeWidth={1.5} className="text-ember-400" /> Verified Aficionado
+            </div>
+          )}
           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-smoke-300">
             <span className="text-smoke-400">@{profile.handle}</span>
             {profile.city && (
@@ -114,6 +120,7 @@ export default function ProfilePage() {
 
       <div className="mt-8">
         <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self />
+        <AgingTracker humidor={humidor} member={!!profile.aficionado} />
         {session && <BadgesSection userId={session.uuid} self humidor={humidor} ratings={ratings} />}
       </div>
     </div>

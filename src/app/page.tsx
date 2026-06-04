@@ -2,10 +2,13 @@ import Link from 'next/link';
 import { ArrowRight, MapPin, Tv, Flame, BadgeCheck } from 'lucide-react';
 import { fetchEpisodes, recentEpisodes } from '@/lib/mrss';
 import { featuredCigars, featuredLounges } from '@/lib/catalog';
+import { boostedLounges } from '@/lib/featured-server';
 import { RecentEpisode } from '@/components/RecentEpisode';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
+import { AutoScrollRow } from '@/components/AutoScrollRow';
+import { AficionadoSection } from '@/components/AficionadoSection';
 
 export const revalidate = 3600;
 
@@ -15,7 +18,11 @@ export default async function HomePage() {
   const allFeatured = featuredCigars(24);
   const featured = allFeatured.slice(0, 12);
   const browse = allFeatured.slice(12, 17);
-  const lounges = featuredLounges(8);
+  const boosted = await boostedLounges(4);
+  const baseLounges = featuredLounges(8);
+  // Credit-boosted lounges lead the carousel; fill the rest with the daily picks.
+  const seen = new Set(boosted.map((l) => l.slug));
+  const lounges = [...boosted, ...baseLounges.filter((l) => !seen.has(l.slug))].slice(0, 8);
 
   return (
     <div className="mx-auto max-w-7xl px-6 pt-8">
@@ -54,12 +61,12 @@ export default async function HomePage() {
           href="/top"
           icon={<Flame size={14} strokeWidth={1.5} className="text-ember-400" />}
         />
-        <div className="-mx-6 flex snap-x gap-4 overflow-x-auto px-6 pb-3 [scrollbar-width:thin]">
+        <AutoScrollRow className="-mx-6 px-6 pb-3">
           {featured.map((c) => (
             <Link
               key={c.uuid}
               href={`/cigars/${c.slug}`}
-              className="group w-44 shrink-0 snap-start"
+              className="group w-44 shrink-0"
             >
               <BrandTile
                 name={c.brand}
@@ -75,7 +82,7 @@ export default async function HomePage() {
               </div>
             </Link>
           ))}
-        </div>
+        </AutoScrollRow>
       </section>
 
       <Rule />
@@ -88,12 +95,12 @@ export default async function HomePage() {
           href="/lounges"
           icon={<MapPin size={14} strokeWidth={1.5} className="text-ember-400" />}
         />
-        <div className="-mx-6 flex snap-x gap-4 overflow-x-auto px-6 pb-3 [scrollbar-width:thin]">
+        <AutoScrollRow className="-mx-6 px-6 pb-3">
           {lounges.map((l) => (
             <Link
               key={l.id}
               href={`/lounges/${l.slug}`}
-              className="group w-60 shrink-0 snap-start rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4 transition hover:border-ember-400/40"
+              className="group w-60 shrink-0 rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4 transition hover:border-ember-400/40"
             >
               <div className="flex items-center gap-3">
                 <BrandTile name={l.name} className="h-12 w-12 shrink-0 text-lg" rounded="rounded-lg" />
@@ -109,8 +116,12 @@ export default async function HomePage() {
               </div>
             </Link>
           ))}
-        </div>
+        </AutoScrollRow>
       </section>
+
+      <Rule />
+
+      <AficionadoSection />
 
       <Rule />
 
