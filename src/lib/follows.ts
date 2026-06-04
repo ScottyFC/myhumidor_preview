@@ -133,3 +133,45 @@ export function onFollowingChange(cb: () => void): () => void {
     window.removeEventListener('storage', cb);
   };
 }
+
+/* ── Reading another user's followers / following (by user id) ───────────── */
+export interface FollowPerson {
+  handle: string;
+  displayName: string;
+  avatarUrl?: string;
+}
+
+export async function fetchFollowStats(targetUserId: string): Promise<{ followers: number; following: number }> {
+  if (!isSupabaseConfigured || !targetUserId) return { followers: 0, following: 0 };
+  try {
+    const sb = supabaseBrowser();
+    const [{ count: followers }, { count: following }] = await Promise.all([
+      sb.from('follows').select('*', { count: 'exact', head: true }).eq('followee_id', targetUserId),
+      sb.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetUserId),
+    ]);
+    return { followers: followers ?? 0, following: following ?? 0 };
+  } catch {
+    return { followers: 0, following: 0 };
+  }
+}
+
+/** kind='followers' → people who follow target; 'following' → people target follows. */
+export async function fetchFollowList(targetUserId: string, kind: 'followers' | 'following', limit = 50): Promise<FollowPerson[]> {
+  if (!isSupabaseConfigured || !targetUserId) return [];
+  try {
+    const sb = supabaseBrowser();
+    const col = kind === 'followers' ? 'followee_id' : 'follower_id';
+    const pick = kind === 'followers' ? 'follower_id' : 'followee_id';
+    const { data: rows } = await sb.from('follows').select(pick).eq(col, targetUserId).limit(limit);
+    const ids = (rows ?? []).map((r) => (r as Record<string, string>)[pick]).filter(Boolean);
+    if (ids.length === 0) return [];
+    const { data: profs } = await sb.from('profiles').select('handle, display_name, avatar_url').in('id', ids);
+    return (profs ?? []).map((p) => ({
+      handle: p.handle,
+      displayName: p.display_name ?? 'Member',
+      avatarUrl: p.avatar_url ?? undefined,
+    }));
+  } catch {
+    return [];
+  }
+}

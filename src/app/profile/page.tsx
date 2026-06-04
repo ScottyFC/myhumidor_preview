@@ -14,6 +14,7 @@ import { ProfileBody } from '@/components/ProfileBody';
 import { BadgesSection } from '@/components/BadgesSection';
 import { AgingTracker } from '@/components/AgingTracker';
 import { FlavorProfile } from '@/components/FlavorProfile';
+import { FollowStats } from '@/components/FollowStats';
 import { Avatar } from '@/components/Avatar';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { cn } from '@/lib/utils';
@@ -115,6 +116,7 @@ export default function ProfilePage() {
             )}
           </div>
           {profile.bio && <p className="mt-2 max-w-xl text-sm text-smoke-200">{profile.bio}</p>}
+          {session && <FollowStats userId={session.uuid} />}
           {session && session.type === 'lounge' && (
             <div className="mt-2 font-mono text-[11px] text-smoke-500">{session.publicId}</div>
           )}
