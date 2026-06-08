@@ -55,15 +55,18 @@ create policy "members read accrual" on public.device_credit_daily
 grant all on public.device_credit_daily to anon, authenticated, service_role;
 
 -- ── Credit ledger (audit of every grant) ─────────────────────────────────────
+-- NOTE: schema.sql may already define credit_ledger with columns (delta, reason,
+-- recorded_at). We match that shape on fresh installs and only ADD what's new,
+-- so this is safe whether or not the table already exists.
 create table if not exists public.credit_ledger (
   id uuid primary key default uuid_generate_v4(),
   lounge_id uuid not null references public.lounges(id) on delete cascade,
-  device_id uuid references public.lounge_devices(id) on delete set null,
-  amount integer not null,
+  delta int not null,
   reason text not null default 'stream',
-  created_at timestamptz not null default now()
+  recorded_at timestamptz not null default now()
 );
-create index if not exists credit_ledger_lounge_idx on public.credit_ledger(lounge_id, created_at desc);
+alter table public.credit_ledger add column if not exists device_id uuid references public.lounge_devices(id) on delete set null;
+create index if not exists credit_lounge_idx on public.credit_ledger(lounge_id, recorded_at desc);
 alter table public.credit_ledger enable row level security;
 drop policy if exists "members read ledger" on public.credit_ledger;
 create policy "members read ledger" on public.credit_ledger
@@ -134,7 +137,7 @@ begin
   if v_delta > 0 then
     update device_credit_daily set credits = v_new_credits where device_id = p_device and day = current_date;
     update lounges set credits = coalesce(credits,0) + v_delta where id = v_lounge;
-    insert into credit_ledger (lounge_id, device_id, amount, reason) values (v_lounge, p_device, v_delta, 'stream');
+    insert into credit_ledger (lounge_id, device_id, delta, reason) values (v_lounge, p_device, v_delta, 'stream');
   end if;
 
   update lounge_devices set last_seen = now(),

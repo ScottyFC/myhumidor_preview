@@ -96,14 +96,14 @@ export async function recentLedger(loungeId: string, limit = 10): Promise<Credit
   try {
     const { data } = await supabaseBrowser()
       .from('credit_ledger')
-      .select('id, device_id, amount, reason, created_at')
+      .select('id, device_id, delta, reason, recorded_at')
       .eq('lounge_id', loungeId)
-      .order('created_at', { ascending: false })
+      .order('recorded_at', { ascending: false })
       .limit(limit);
     return (data ?? []).map((r) => ({
       id: r.id as string, deviceId: (r.device_id as string) ?? null,
-      amount: (r.amount as number) ?? 0, reason: (r.reason as string) ?? 'stream',
-      createdAt: (r.created_at as string) ?? '',
+      amount: (r.delta as number) ?? 0, reason: (r.reason as string) ?? 'stream',
+      createdAt: (r.recorded_at as string) ?? '',
     }));
   } catch {
     return [];
