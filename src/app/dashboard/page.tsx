@@ -3,6 +3,7 @@ import { BadgeCheck, Users, Clock, Zap, Wallet, Tv, Lock, ArrowRight, Package } 
 import { getOwnerDashboard } from '@/lib/mock-data';
 import { LiveStream } from '@/components/LiveStream';
 import { LoungeCreditsBanner } from '@/components/LoungeCreditsBanner';
+import { DeviceManager } from '@/components/DeviceManager';
 import { cn } from '@/lib/utils';
 
 export const metadata = {
@@ -110,6 +111,11 @@ export default function DashboardPage() {
           </Link>
         </section>
       </div>
+
+      {/* Screens & credits (real device registration + earnings) */}
+      <section className="mt-10 border-t border-ember-400/10 pt-8">
+        <DeviceManager />
+      </section>
 
       {/* 7-day watch hours */}
       <section className="mt-8">
