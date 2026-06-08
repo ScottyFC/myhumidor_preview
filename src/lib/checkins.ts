@@ -55,7 +55,14 @@ export async function createCheckIn(input: {
   rating?: number; review?: string; photoDataUrl?: string;
 }): Promise<boolean> {
   bind();
-  if (!isSupabaseConfigured || !userId) return false;
+  if (!isSupabaseConfigured) return false;
+  if (!userId) {
+    try {
+      const { data } = await supabaseBrowser().auth.getUser();
+      userId = data.user?.id ?? null;
+    } catch { /* ignore */ }
+  }
+  if (!userId) return false;
   try {
     const sb = supabaseBrowser();
     let loungeId: string | null = null;

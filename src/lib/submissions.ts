@@ -244,9 +244,19 @@ export async function submitCigar(input: {
 }): Promise<SubmitResult> {
   start();
   const slug = slugify(`${input.brand} ${input.name}`);
-  if (!isSupabaseConfigured || !userId) {
+  if (!isSupabaseConfigured) {
     addSubmission({ brand: input.brand, name: input.name, country: input.country ?? '', size: input.size ?? '', price: input.price ?? null, notes: input.notes, photoDataUrl: input.photoDataUrl });
     return { ok: true, slug, duplicatePending: false, autoApproved: false };
+  }
+  // Auth resolves async; resolve the signed-in user directly if the cache is cold.
+  if (!userId) {
+    try {
+      const { data } = await supabaseBrowser().auth.getUser();
+      userId = data.user?.id ?? null;
+    } catch { /* ignore */ }
+  }
+  if (!userId) {
+    return { ok: false, slug, duplicatePending: false, autoApproved: false, error: 'You appear to be signed out. Please sign in and try again.' };
   }
 
   const sb = supabaseBrowser();

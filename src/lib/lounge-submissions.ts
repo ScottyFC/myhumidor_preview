@@ -126,20 +126,33 @@ export function getLoungeSubmissions(): LoungeSubmission[] {
 
 export async function submitLounge(
   f: Omit<LoungeSubmission, 'id' | 'status' | 'createdAt'>
-): Promise<boolean> {
+): Promise<{ ok: boolean; error?: string }> {
   start();
   const sub: LoungeSubmission = { ...f, id: `lsub_${Date.now()}`, status: 'pending', createdAt: new Date().toISOString() };
   cache = [sub, ...cache];
   fire();
   if (isSupabaseConfigured) {
-    if (!userId) {
-      console.error('[lounge-sub] not signed in — cannot submit');
-      return false;
+    // The module's cached userId may not be hydrated yet (auth resolves async),
+    // so resolve the signed-in user directly to avoid a false "not signed in".
+    let uid = userId;
+    if (!uid) {
+      try {
+        const { data } = await supabaseBrowser().auth.getUser();
+        uid = data.user?.id ?? null;
+        if (uid) userId = uid;
+      } catch {
+        /* ignore */
+      }
+    }
+    if (!uid) {
+      cache = cache.filter((x) => x.id !== sub.id);
+      fire();
+      return { ok: false, error: 'You appear to be signed out. Please sign in and try again.' };
     }
     const { data, error } = await supabaseBrowser()
       .from('lounge_submissions')
       .insert({
-        submitted_by: userId,
+        submitted_by: uid,
         name: f.name,
         address: f.address || null,
         city: f.city || null,
@@ -154,16 +167,18 @@ export async function submitLounge(
       .single();
     if (error) {
       console.error('[lounge-sub] insert failed:', error.message);
-      return false;
+      cache = cache.filter((x) => x.id !== sub.id);
+      fire();
+      return { ok: false, error: error.message };
     }
     if (data) {
       cache = [rowTo(data as Row), ...cache.filter((x) => x.id !== sub.id)];
       fire();
     }
-    return true;
+    return { ok: true };
   }
   saveLocal();
-  return true;
+  return { ok: true };
 }
 
 async function pushToLounges(sub: LoungeSubmission): Promise<string | null> {

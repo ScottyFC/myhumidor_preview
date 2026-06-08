@@ -30,7 +30,7 @@ export function SubmitLounge() {
     }
     setBusy(true);
     setErr('');
-    const ok = await submitLounge({
+    const res = await submitLounge({
       name: f.name.trim(),
       address: f.address.trim(),
       city: f.city.trim(),
@@ -41,8 +41,8 @@ export function SubmitLounge() {
       claimsOwnership: owns,
     });
     setBusy(false);
-    if (ok) setDone(true);
-    else setErr("Couldn't submit — please try again, or check you're signed in.");
+    if (res.ok) setDone(true);
+    else setErr(res.error || "Couldn't submit — please try again, or check you're signed in.");
   }
 
   if (done) {
