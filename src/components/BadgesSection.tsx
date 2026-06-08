@@ -60,6 +60,8 @@ export function BadgesSection({
   }, [badges, earned]);
 
   if (!badges || badges.length === 0) return null;
+  // On someone else's profile, only show the case if they've earned badges.
+  if (!self && earnedList.length === 0) return null;
 
   const total = earnedList.length + lockedList.length;
   const lockedToShow = showAll ? lockedList : lockedList.slice(0, self ? 12 : 0);

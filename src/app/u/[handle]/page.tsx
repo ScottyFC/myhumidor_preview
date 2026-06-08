@@ -17,7 +17,7 @@ import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { RemoveProfileButton } from '@/components/RemoveProfileButton';
 import { FollowStats } from '@/components/FollowStats';
 import { ProfileSocialLinks } from '@/components/SocialLinks';
-import { CheckInFeed } from '@/components/CheckInFeed';
+import { ActivityFeed } from '@/components/ActivityFeed';
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -139,7 +139,7 @@ export default function PublicProfilePage() {
 
       <div className="mt-8">
         {viewedId && <BadgesSection userId={viewedId} self={isSelf} humidor={humidor} ratings={ratings} />}
-        {viewedId && <CheckInFeed userId={viewedId} title="Check-ins" />}
+        {viewedId && <ActivityFeed userId={viewedId} ratings={ratings} title="Activity" />}
         <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self={false} />
       </div>
     </div>

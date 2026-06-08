@@ -127,6 +127,15 @@ bucket (so phase12 storage policies + Public bucket must be in place).
 - Social links: profiles.socials + lounges.socials (jsonb). Edit in profile edit mode and the lounge dashboard; icons display on both profile types.
 - Suggested follows: self-only block on /profile — newest members, locals (same state) first, excludes self + people already followed.
 
+## Phase 16 — Follow lounges, richer feed, public activity
+
+Run `supabase/migrations/phase16.sql` once (adds `lounge_follows`).
+
+- Users can follow lounges (Follow button + follower count on the lounge profile). When a lounge posts, its followers get a notification (respecting the "Posts from lounges you follow" setting).
+- Home feed now merges followed users ratings AND check-ins (photo + review), plus recent/promoted lounge posts, sorted newest-first with promoted leading.
+- Public profiles show followers/following (FollowStats) and earned badges (hidden when none earned).
+- Profiles now have a unified Activity feed: ratings with their written reviews + tasting-note tags, interleaved with check-ins, newest first.
+
 persisted. (Remaining placeholders, for later phases: the cigar "community"
 likes/comments block returns empty, and the lounge-owner dashboard analytics
 still use sample numbers until the viewership pipeline exists.)

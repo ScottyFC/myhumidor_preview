@@ -2,6 +2,7 @@
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { logEvent } from './audit';
+import { notifyLoungeFollowers } from './lounge-follows';
 
 export type PostKind = 'deal' | 'new_arrival' | 'event';
 
@@ -91,6 +92,8 @@ export async function createPost(input: {
       loungeId: input.loungeId,
       meta: { kind: input.kind, title: input.title },
     });
+    // Notify everyone who follows this lounge.
+    notifyLoungeFollowers(input.loungeId, input.loungeName ?? 'A lounge', input.title);
     return true;
   } catch {
     return false;

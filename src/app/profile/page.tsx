@@ -16,7 +16,7 @@ import { AgingTracker } from '@/components/AgingTracker';
 import { FlavorProfile } from '@/components/FlavorProfile';
 import { FollowStats } from '@/components/FollowStats';
 import { ProfileSocialLinks, SocialLinksEditor } from '@/components/SocialLinks';
-import { CheckInFeed } from '@/components/CheckInFeed';
+import { ActivityFeed } from '@/components/ActivityFeed';
 import { SuggestedFollows } from '@/components/SuggestedFollows';
 import { Avatar } from '@/components/Avatar';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
@@ -147,7 +147,7 @@ export default function ProfilePage() {
 
       <div className="mt-8">
         {session && <BadgesSection userId={session.uuid} self humidor={humidor} ratings={ratings} />}
-        {session && <CheckInFeed userId={session.uuid} title="Your check-ins" />}
+        {session && <ActivityFeed userId={session.uuid} ratings={ratings} title="Your activity" />}
         <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self />
         <AgingTracker humidor={humidor} member={!!profile.aficionado} />
         <FlavorProfile member={!!profile.aficionado} humidor={humidor} wishlist={wishlist} ratings={ratings} />

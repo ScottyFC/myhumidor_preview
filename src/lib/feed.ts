@@ -10,7 +10,7 @@
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { getSession } from './auth';
 
-export type FeedKind = 'rated' | 'deal' | 'new_arrival' | 'event';
+export type FeedKind = 'rated' | 'deal' | 'new_arrival' | 'event' | 'check_in';
 
 export interface FeedPost {
   id: string;
@@ -20,12 +20,15 @@ export interface FeedPost {
   authorHandle: string;
   authorVerified?: boolean;
   when: string;
+  ts?: number;
   promoted?: boolean;
   cigar?: { brand: string; line: string; slug: string };
   rating?: number;
   loungeSlug?: string;
+  loungeName?: string;
   title?: string;
   body?: string;
+  photoUrl?: string;
 }
 
 function ago(iso: string): string {
@@ -69,8 +72,35 @@ export async function fetchFeed(): Promise<FeedPost[]> {
             authorName: p?.display_name ?? 'Member',
             authorHandle: p?.handle ?? 'member',
             when: ago(r.created_at),
+            ts: new Date(r.created_at).getTime(),
             cigar: { brand: r.brand ?? '', line: r.name ?? '', slug: r.slug ?? '' },
             rating: Number(r.overall),
+          });
+        }
+
+        // Check-ins from people you follow.
+        const { data: cis } = await sb
+          .from('check_ins')
+          .select('id, user_id, cigar_brand, cigar_name, cigar_slug, lounge_slug, lounge_name, rating, review, photo_url, created_at')
+          .in('user_id', ids)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        for (const c of cis ?? []) {
+          const p = who.get(c.user_id);
+          posts.push({
+            id: `c_${c.id}`,
+            kind: 'check_in',
+            isLounge: false,
+            authorName: p?.display_name ?? 'Member',
+            authorHandle: p?.handle ?? 'member',
+            when: ago(c.created_at),
+            ts: new Date(c.created_at).getTime(),
+            cigar: { brand: c.cigar_brand ?? '', line: c.cigar_name ?? '', slug: c.cigar_slug ?? '' },
+            rating: c.rating != null ? Number(c.rating) : undefined,
+            loungeSlug: c.lounge_slug ?? undefined,
+            loungeName: c.lounge_name ?? undefined,
+            body: c.review ?? undefined,
+            photoUrl: c.photo_url ?? undefined,
           });
         }
       }
@@ -99,6 +129,7 @@ export async function fetchFeed(): Promise<FeedPost[]> {
           loungeSlug: l?.slug,
           promoted: lp.promoted ?? false,
           when: ago(lp.created_at),
+          ts: new Date(lp.created_at).getTime(),
           title: lp.title,
           body: lp.body ?? undefined,
         });
@@ -109,5 +140,8 @@ export async function fetchFeed(): Promise<FeedPost[]> {
   }
 
   // Promoted lounge posts first, then newest overall.
-  return posts;
+  return posts.sort((a, b) => {
+    if (!!b.promoted !== !!a.promoted) return b.promoted ? 1 : -1;
+    return (b.ts ?? 0) - (a.ts ?? 0);
+  });
 }

@@ -13,6 +13,7 @@ import { LoungePosts } from '@/components/LoungePosts';
 import { LoungeBadgeCollect } from '@/components/LoungeBadgeCollect';
 import { CheckInFeed } from '@/components/CheckInFeed';
 import { LoungeSocialLinks } from '@/components/SocialLinks';
+import { LoungeFollow } from '@/components/LoungeFollow';
 import { ChangeRequest } from '@/components/ChangeRequest';
 
 interface PageProps {
@@ -133,6 +134,7 @@ export default async function LoungePage({ params }: PageProps) {
             </div>
           )}
           <LoungeSocialLinks slug={lounge.slug} />
+          <div className="pt-1"><LoungeFollow loungeId={lounge.id} /></div>
         </div>
       </header>
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Star, BadgeCheck, Megaphone, Sparkles, CalendarDays, Loader2, Users } from 'lucide-react';
+import { Star, BadgeCheck, Megaphone, Sparkles, CalendarDays, Loader2, Users, Flame } from 'lucide-react';
 import { fetchFeed, type FeedPost } from '@/lib/feed';
 import { subscribeAficionado } from '@/lib/aficionado';
 import { BrandTile } from '@/components/BrandTile';
@@ -73,9 +73,12 @@ function UserPost({ p }: { p: FeedPost }) {
             </div>
             <FollowButton handle={p.authorHandle} size="sm" />
           </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-smoke-300">
-            <Star size={12} strokeWidth={1.5} className="text-ember-400" />
-            rated
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-smoke-300">
+            {p.kind === 'check_in' ? <Flame size={12} strokeWidth={1.5} className="text-ember-400" /> : <Star size={12} strokeWidth={1.5} className="text-ember-400" />}
+            {p.kind === 'check_in' ? 'checked in' : 'rated'}
+            {p.kind === 'check_in' && p.loungeSlug && (
+              <span className="text-smoke-300">at <Link href={`/lounges/${p.loungeSlug}`} className="hover:text-ember-100">{p.loungeName}</Link></span>
+            )}
             {p.rating != null && (
               <span className="inline-flex items-center gap-0.5 text-ember-100">
                 · <Star size={11} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
@@ -83,7 +86,7 @@ function UserPost({ p }: { p: FeedPost }) {
               </span>
             )}
           </div>
-          {p.cigar && (
+          {p.cigar && p.cigar.slug && (
             <Link
               href={`/cigars/${p.cigar.slug}`}
               className="mt-2 flex items-center gap-3 rounded-lg border-[0.5px] border-ember-400/15 bg-char/60 p-2.5 transition hover:border-ember-400/40"
@@ -94,6 +97,11 @@ function UserPost({ p }: { p: FeedPost }) {
                 <div className="truncate text-sm font-medium">{p.cigar.line}</div>
               </div>
             </Link>
+          )}
+          {p.body && <p className="mt-2 text-sm text-smoke-200">{p.body}</p>}
+          {p.photoUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={p.photoUrl} alt="check-in" className="mt-2 max-h-64 rounded-lg object-cover" />
           )}
         </div>
       </div>
