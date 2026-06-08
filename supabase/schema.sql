@@ -168,7 +168,7 @@ create policy "users see own submissions" on public.cigar_submissions
 -- Admins review everything
 create policy "admins review submissions" on public.cigar_submissions
   for all using (
-    exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.role in ('admin','super_admin'))
   );
 
 -- Helper: fuzzy duplicate check before accepting a submission.
