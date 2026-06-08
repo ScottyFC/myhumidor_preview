@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin, MessageSquare, History, KeyRound, ChevronDown } from 'lucide-react';
+import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin, MessageSquare, History, KeyRound, ChevronDown, Megaphone } from 'lucide-react';
+import { AdManager } from '@/components/AdManager';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { isAdmin, isBootstrapAdmin, listAdmins, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
 import {
@@ -26,7 +27,7 @@ import {
 } from '@/lib/submissions';
 import { cn } from '@/lib/utils';
 
-type Tab = 'cigars' | 'lounges' | 'claims' | 'certify' | 'requests' | 'log' | 'admins';
+type Tab = 'cigars' | 'lounges' | 'claims' | 'certify' | 'requests' | 'log' | 'ads' | 'admins';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -70,6 +71,7 @@ export default function AdminPage() {
     { id: 'cigars', label: 'Cigar submissions', icon: Cigarette },
     { id: 'lounges', label: 'Lounge submissions', icon: Store },
     { id: 'claims', label: 'Lounge claims', icon: KeyRound },
+    { id: 'ads', label: 'Ad campaigns', icon: Megaphone },
     { id: 'certify', label: 'Certify lounges', icon: BadgeCheck },
     { id: 'requests', label: 'Change requests', icon: MessageSquare },
     { id: 'log', label: 'Activity log', icon: History },
@@ -114,6 +116,7 @@ export default function AdminPage() {
       {tab === 'claims' && <ClaimsQueue />}
       {tab === 'certify' && <CertifyQueue />}
       {tab === 'requests' && <ChangeRequestQueue />}
+      {tab === 'ads' && <AdManager />}
       {tab === 'log' && <ActivityLog />}
       {tab === 'admins' && <AdminManager myId={session?.publicId ?? ''} />}
     </div>

@@ -45,3 +45,20 @@ export async function supabaseServer() {
     },
   });
 }
+
+/**
+ * SERVER-ONLY service-role client. Reads the secret from SUPABASE_SERVICE_KEY,
+ * which must be set as a server environment variable (e.g. in Vercel) and is
+ * NEVER prefixed with NEXT_PUBLIC, so it is never shipped to the browser or the
+ * TV app. Returns null if the key isn't configured, so callers can fall back to
+ * the anon client. This bypasses row-level security — use only in route handlers
+ * for trusted server work (e.g. serving ads, reconciliation jobs).
+ */
+export function supabaseService() {
+  const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+  if (!serviceKey || !SUPABASE_URL) return null;
+  // Plain client, no cookies/session — auth is the service role itself.
+  return createServerClient(SUPABASE_URL, serviceKey, {
+    cookies: { getAll() { return []; }, setAll() { /* no-op */ } },
+  });
+}
