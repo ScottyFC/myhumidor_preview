@@ -339,7 +339,17 @@ function LoungeQueue() {
           <div className="text-sm text-smoke-400">No lounge submissions waiting. They appear here when members submit a lounge.</div>
         ) : (
           pending.map((s) => (
-            <Row key={s.id} title={s.name} sub={[s.address, s.city, s.state].filter(Boolean).join(', ')}>
+            <Row
+              key={s.id}
+              title={`${s.kind === 'verify' ? '🛡 Verify · ' : ''}${s.name}`}
+              sub={[
+                [s.address, s.city, s.state].filter(Boolean).join(', '),
+                s.phone, s.website,
+                s.businessLicense ? `License: ${s.businessLicense}` : '',
+                s.contactName ? `Contact: ${s.contactName}` : '',
+                s.claimsOwnership ? 'Claims ownership' : '',
+              ].filter(Boolean).join(' · ')}
+            >
               <Approve onClick={() => decide(s.id, 'approved')} />
               <Reject onClick={() => decide(s.id, 'rejected')} />
             </Row>

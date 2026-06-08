@@ -146,13 +146,38 @@ export default function ProfilePage() {
       )}
 
       <div className="mt-8">
-        {session && <BadgesSection userId={session.uuid} self humidor={humidor} ratings={ratings} />}
-        {session && <ActivityFeed userId={session.uuid} ratings={ratings} title="Your activity" />}
-        <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self />
-        <AgingTracker humidor={humidor} member={!!profile.aficionado} />
-        <FlavorProfile member={!!profile.aficionado} humidor={humidor} wishlist={wishlist} ratings={ratings} />
-        {session && <SuggestedFollows selfId={session.uuid} state={profile.state || undefined} />}
+        {session?.type === 'lounge' ? (
+          <LoungeBusinessPanel state={profile.state || undefined} selfId={session.uuid} />
+        ) : (
+          <>
+            {session && <BadgesSection userId={session.uuid} self humidor={humidor} ratings={ratings} />}
+            {session && <ActivityFeed userId={session.uuid} ratings={ratings} title="Your activity" />}
+            <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self />
+            <AgingTracker humidor={humidor} member={!!profile.aficionado} />
+            <FlavorProfile member={!!profile.aficionado} humidor={humidor} wishlist={wishlist} ratings={ratings} />
+            {session && <SuggestedFollows selfId={session.uuid} state={profile.state || undefined} />}
+          </>
+        )}
       </div>
+    </div>
+  );
+}
+
+function LoungeBusinessPanel({ state, selfId }: { state?: string; selfId: string }) {
+  return (
+    <div className="space-y-8">
+      <div className="rounded-xl border-[0.5px] border-ember-400/20 bg-char/40 p-6">
+        <div className="eyebrow mb-2">Business account</div>
+        <p className="max-w-xl text-sm text-smoke-200">
+          This is your lounge’s business profile — no humidor, ratings, or badges. Manage your inventory,
+          posts, and viewership from the dashboard, and follow other lounges and members to build your feed.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href="/dashboard" className="btn-primary text-xs">Open dashboard</Link>
+          <Link href="/verify" className="btn-ghost text-xs">Verify &amp; certify</Link>
+        </div>
+      </div>
+      <SuggestedFollows selfId={selfId} state={state} />
     </div>
   );
 }

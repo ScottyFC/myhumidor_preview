@@ -136,6 +136,19 @@ Run `supabase/migrations/phase16.sql` once (adds `lounge_follows`).
 - Public profiles show followers/following (FollowStats) and earned badges (hidden when none earned).
 - Profiles now have a unified Activity feed: ratings with their written reviews + tasting-note tags, interleaved with check-ins, newest first.
 
+## Phase 18 — Lounge business accounts, credits, verify/certify
+
+Run `supabase/migrations/phase18.sql` once (adds `lounges.credits` default 1000, and `business_license` / `contact_name` / `kind` to `lounge_submissions`).
+
+- **Lounge toolbar** is now distinct from the consumer one: the "Humidor" tab becomes **Inventory** (→ dashboard), and the top bar gains **My Lounge** (jumps to the lounge's public page), **Verify**, and **Dashboard** buttons. The account menu drops "Check in" and adds "My Lounge Page", "Verify & Certify", and "Add a Cigar".
+- **Verify & certify** (`/verify`): a lounge owner submits verifiable business details (legal name, address, phone, website, business license / tax ID, contact name). Saved to `lounge_submissions` with `kind='verify'` and `claims_ownership=true`, so it lands in the same admin queue; approving it verifies and links ownership of the lounge. The admin pending list now shows the license, contact, phone, and website inline.
+- **Business profiles**: lounge accounts no longer render humidor, ratings, badges, aging, or flavor sections on `/profile` or `/u/[handle]`. They get a business panel plus follower/following counts and suggested follows, and can follow both members and other lounges to build a feed.
+- **Credits**: every lounge starts at 1,000 credits (`lounges.credits`). The dashboard shows the live balance; it will grow with viewing time once screens connect to the CigarTV app.
+- **Search**: `/api/stores` now merges the live `lounges` table with the static 713-store directory, so newly approved lounges (e.g. Creekside Cigar Co) are findable. DB matches lead, deduped by slug.
+
+### Lounge submission insert fix (auth race)
+`submitLounge`, `submitCigar`, and `createCheckIn` no longer trust a possibly-cold cached user id — they resolve the signed-in user via `auth.getUser()` when needed and surface the real error to the UI instead of silently failing.
+
 ## Phase 17 — Likes, comments, and the new submission workflow
 
 Run `supabase/migrations/phase17.sql` once (adds `likes`, `comments`, `cigar_submissions.slug`, and a catalog-insert policy for verified lounges).

@@ -21,6 +21,9 @@ export interface MyLounge {
   name: string;
   city: string;
   state: string;
+  credits: number;
+  verified: boolean;
+  certified: boolean;
   role: 'owner' | 'manager' | 'staff';
 }
 
@@ -168,13 +171,16 @@ export async function getMyLounges(): Promise<MyLounge[]> {
     const ids = (mems ?? []).map((m) => m.lounge_id);
     if (!ids.length) return [];
     const roleById = new Map((mems ?? []).map((m) => [m.lounge_id, m.role]));
-    const { data: lounges } = await sb.from('lounges').select('id, slug, name, city, state').in('id', ids);
+    const { data: lounges } = await sb.from('lounges').select('id, slug, name, city, state, credits, verified, certified').in('id', ids);
     return (lounges ?? []).map((l) => ({
       loungeId: l.id,
       slug: l.slug,
       name: l.name,
       city: l.city ?? '',
       state: l.state ?? '',
+      credits: (l as { credits?: number }).credits ?? 1000,
+      verified: (l as { verified?: boolean }).verified ?? false,
+      certified: (l as { certified?: boolean }).certified ?? false,
       role: (roleById.get(l.id) as MyLounge['role']) ?? 'manager',
     }));
   } catch {

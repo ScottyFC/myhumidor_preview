@@ -3,15 +3,24 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings, Bell } from 'lucide-react';
+import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings, Bell, Package } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import { subscribeAuth, signOut, type Session } from '@/lib/auth';
+import { getMyLounges } from '@/lib/lounges-owner';
 import { isAdmin, onAdminsChange } from '@/lib/admin';
 
-const TABS = [
+const CONSUMER_TABS = [
   { href: '/humidor', label: 'Humidor', icon: Box },
+  { href: '/top', label: 'Cigars', icon: Flame },
+  { href: '/search', label: 'Search', icon: Search },
+  { href: '/map', label: 'Map', icon: MapPin },
+  { href: '/lounges', label: 'Lounges', icon: Store },
+];
+
+const LOUNGE_TABS = [
+  { href: '/dashboard', label: 'Inventory', icon: Package },
   { href: '/top', label: 'Cigars', icon: Flame },
   { href: '/search', label: 'Search', icon: Search },
   { href: '/map', label: 'Map', icon: MapPin },
@@ -23,12 +32,25 @@ export function Nav() {
   const [session, setSession] = useState<Session | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [, bumpAdmin] = useState(0);
+  const [loungeSlug, setLoungeSlug] = useState<string | null>(null);
 
   useEffect(() => {
     return subscribeAuth(setSession);
   }, []);
 
   useEffect(() => onAdminsChange(() => bumpAdmin((n) => n + 1)), []);
+
+  const isLounge = session?.type === 'lounge';
+
+  useEffect(() => {
+    if (!isLounge) { setLoungeSlug(null); return; }
+    let off = false;
+    getMyLounges().then((ls) => { if (!off) setLoungeSlug(ls[0]?.slug ?? null); });
+    return () => { off = true; };
+  }, [isLounge, session?.uuid]);
+
+  const TABS = isLounge ? LOUNGE_TABS : CONSUMER_TABS;
+  const myLoungeHref = loungeSlug ? `/lounges/${loungeSlug}` : '/lounges';
 
   // Humidor requires an account — send signed-out users to register.
   const tabHref = (href: string) =>
@@ -84,11 +106,21 @@ export function Nav() {
                   <span className="hidden sm:inline">Admin</span>
                 </Link>
               )}
-              {session.type === 'lounge' && (
-                <Link href="/dashboard" className="btn-ghost text-xs">
-                  <LayoutDashboard size={14} strokeWidth={1.5} />
-                  <span className="hidden sm:inline">Dashboard</span>
-                </Link>
+              {isLounge && (
+                <>
+                  <Link href={myLoungeHref} className="btn-ghost text-xs" title="View your lounge page">
+                    <Store size={14} strokeWidth={1.5} />
+                    <span className="hidden sm:inline">My Lounge</span>
+                  </Link>
+                  <Link href="/verify" className="btn-ghost text-xs" title="Verify & certify your lounge">
+                    <ShieldCheck size={14} strokeWidth={1.5} className="text-ember-400" />
+                    <span className="hidden sm:inline">Verify</span>
+                  </Link>
+                  <Link href="/dashboard" className="btn-ghost text-xs">
+                    <LayoutDashboard size={14} strokeWidth={1.5} />
+                    <span className="hidden sm:inline">Dashboard</span>
+                  </Link>
+                </>
               )}
               <NotificationBell />
               <div className="relative">
@@ -113,12 +145,31 @@ export function Nav() {
                       <MenuItem href="/profile" icon={<User size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                         My Profile
                       </MenuItem>
-                      <MenuItem href="/check-in" icon={<Flame size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
-                        Check in
-                      </MenuItem>
-                      <MenuItem href="/submit" icon={<Cigarette size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
-                        Submit a Cigar
-                      </MenuItem>
+                      {isLounge ? (
+                        <>
+                          <MenuItem href={myLoungeHref} icon={<Store size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                            My Lounge Page
+                          </MenuItem>
+                          <MenuItem href="/dashboard" icon={<LayoutDashboard size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                            Dashboard
+                          </MenuItem>
+                          <MenuItem href="/verify" icon={<ShieldCheck size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                            Verify &amp; Certify
+                          </MenuItem>
+                          <MenuItem href="/submit" icon={<Cigarette size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                            Add a Cigar
+                          </MenuItem>
+                        </>
+                      ) : (
+                        <>
+                          <MenuItem href="/check-in" icon={<Flame size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                            Check in
+                          </MenuItem>
+                          <MenuItem href="/submit" icon={<Cigarette size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                            Submit a Cigar
+                          </MenuItem>
+                        </>
+                      )}
                       <MenuItem href="/account" icon={<Settings size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                         Account Settings
                       </MenuItem>

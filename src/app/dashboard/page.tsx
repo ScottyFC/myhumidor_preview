@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { BadgeCheck, Users, Clock, Zap, Wallet, Tv, Lock, ArrowRight, Package } from 'lucide-react';
 import { getOwnerDashboard } from '@/lib/mock-data';
 import { LiveStream } from '@/components/LiveStream';
+import { LoungeCreditsBanner } from '@/components/LoungeCreditsBanner';
 import { cn } from '@/lib/utils';
 
 export const metadata = {
@@ -14,6 +15,7 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 pt-10">
+      <LoungeCreditsBanner />
       {/* Private scope banner */}
       <div className="mb-6 flex items-center gap-2 rounded-md border-[0.5px] border-ember-400/20 bg-ember-400/5 px-4 py-2 text-xs text-smoke-200">
         <Lock size={12} strokeWidth={1.5} className="text-ember-400" />

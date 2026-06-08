@@ -25,6 +25,7 @@ export default function PublicProfilePage() {
   const [loaded, setLoaded] = useState(false);
   const [isSelf, setIsSelf] = useState(false);
   const [viewedId, setViewedId] = useState<string | null>(null);
+  const [viewedType, setViewedType] = useState<'consumer' | 'lounge'>('consumer');
   const [profile, setProfile] = useState<ProfileFields | null>(null);
   const [collection, setCollection] = useState<CollectionItem[]>([]);
   const [ratings, setRatings] = useState<UserRating[]>([]);
@@ -51,6 +52,7 @@ export default function PublicProfilePage() {
           if (found) {
             setProfile(found.profile);
             setViewedId(found.publicId);
+            setViewedType(found.type === 'lounge' ? 'lounge' : 'consumer');
             const [coll, rts] = await Promise.all([
               fetchCollectionFor(found.userId),
               fetchRatingsFor(found.userId),
@@ -108,7 +110,7 @@ export default function PublicProfilePage() {
       <div className="flex flex-col gap-6 border-b border-ember-400/15 pb-8 sm:flex-row sm:items-end">
         <Avatar profile={profile} size={112} />
         <div className="min-w-0 flex-1">
-          <div className="eyebrow mb-1">Member profile</div>
+          <div className="eyebrow mb-1">{viewedType === 'lounge' ? 'Lounge' : 'Member profile'}</div>
           <h1 className="font-display text-4xl tracking-tightest sm:text-5xl">{profile.displayName}</h1>
           {profile.aficionado && (
             <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border-[0.5px] border-ember-400/40 bg-ember-400/10 px-2.5 py-0.5 text-xs font-medium text-ember-100">
@@ -138,9 +140,20 @@ export default function PublicProfilePage() {
       </div>
 
       <div className="mt-8">
-        {viewedId && <BadgesSection userId={viewedId} self={isSelf} humidor={humidor} ratings={ratings} />}
-        {viewedId && <ActivityFeed userId={viewedId} ratings={ratings} title="Activity" />}
-        <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self={false} />
+        {viewedType === 'lounge' ? (
+          <div className="rounded-xl border-[0.5px] border-ember-400/20 bg-char/40 p-6 text-sm text-smoke-200">
+            This is a lounge business profile. Follow it to see its posts and arrivals in your feed.
+            {profile.handle && (
+              <span> Looking for its location, menu, and check-ins? Visit the lounge’s page from the Lounges directory.</span>
+            )}
+          </div>
+        ) : (
+          <>
+            {viewedId && <BadgesSection userId={viewedId} self={isSelf} humidor={humidor} ratings={ratings} />}
+            {viewedId && <ActivityFeed userId={viewedId} ratings={ratings} title="Activity" />}
+            <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self={false} />
+          </>
+        )}
       </div>
     </div>
   );

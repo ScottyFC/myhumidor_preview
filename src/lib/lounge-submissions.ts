@@ -18,6 +18,9 @@ export interface LoungeSubmission {
   notes?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+  businessLicense?: string;
+  contactName?: string;
+  kind?: 'new' | 'verify';
   reviewedBy?: string | null;
   reviewerName?: string;
   loungeId?: string | null;
@@ -59,6 +62,9 @@ type Row = {
   status: 'pending' | 'approved' | 'rejected'; created_at: string | null;
   reviewed_by: string | null; lounge_id: string | null; claims_ownership: boolean | null;
   submitted_by: string | null;
+  business_license?: string | null;
+  contact_name?: string | null;
+  kind?: string | null;
 };
 function rowTo(r: Row): LoungeSubmission {
   return {
@@ -67,9 +73,12 @@ function rowTo(r: Row): LoungeSubmission {
     notes: r.notes ?? undefined, status: r.status, createdAt: r.created_at ?? new Date().toISOString(),
     reviewedBy: r.reviewed_by, loungeId: r.lounge_id, claimsOwnership: r.claims_ownership ?? false,
     submittedBy: r.submitted_by,
+    businessLicense: r.business_license ?? undefined,
+    contactName: r.contact_name ?? undefined,
+    kind: (r.kind as 'new' | 'verify') ?? 'new',
   };
 }
-const SELECT = 'id, name, address, city, state, phone, email, website, notes, status, created_at, reviewed_by, lounge_id, claims_ownership, submitted_by';
+const SELECT = 'id, name, address, city, state, phone, email, website, notes, status, created_at, reviewed_by, lounge_id, claims_ownership, submitted_by, business_license, contact_name, kind';
 
 async function hydrateRemote() {
   try {
@@ -178,6 +187,46 @@ export async function submitLounge(
     return { ok: true };
   }
   saveLocal();
+  return { ok: true };
+}
+
+/** Verify/certify request: a lounge owner submits verifiable business details for
+ *  admin review. Recorded in lounge_submissions with kind='verify' so it appears
+ *  in the same admin queue; approving it verifies (and links ownership of) the lounge. */
+export async function requestVerification(f: {
+  name: string; address?: string; city?: string; state?: string; phone?: string;
+  email?: string; website?: string; businessLicense?: string; contactName?: string; notes?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  start();
+  if (!isSupabaseConfigured) return { ok: true };
+  let uid = userId;
+  if (!uid) {
+    try {
+      const { data } = await supabaseBrowser().auth.getUser();
+      uid = data.user?.id ?? null;
+      if (uid) userId = uid;
+    } catch { /* ignore */ }
+  }
+  if (!uid) return { ok: false, error: 'You appear to be signed out. Please sign in and try again.' };
+  const { error } = await supabaseBrowser().from('lounge_submissions').insert({
+    submitted_by: uid,
+    name: f.name,
+    address: f.address || null,
+    city: f.city || null,
+    state: f.state || null,
+    phone: f.phone || null,
+    email: f.email || null,
+    website: f.website || null,
+    business_license: f.businessLicense || null,
+    contact_name: f.contactName || null,
+    notes: f.notes || null,
+    claims_ownership: true,
+    kind: 'verify',
+  });
+  if (error) {
+    console.error('[lounge-verify] insert failed:', error.message);
+    return { ok: false, error: error.message };
+  }
   return { ok: true };
 }
 
