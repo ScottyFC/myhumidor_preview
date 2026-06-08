@@ -7,6 +7,7 @@ import { fetchFeed, type FeedPost } from '@/lib/feed';
 import { subscribeAficionado } from '@/lib/aficionado';
 import { BrandTile } from '@/components/BrandTile';
 import { FollowButton } from '@/components/FollowButton';
+import { EngagementBar } from '@/components/EngagementBar';
 
 export function Feed() {
   const [posts, setPosts] = useState<FeedPost[] | null>(null);
@@ -103,6 +104,12 @@ function UserPost({ p }: { p: FeedPost }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={p.photoUrl} alt="check-in" className="mt-2 max-h-64 rounded-lg object-cover" />
           )}
+          <EngagementBar
+            type={p.kind === 'check_in' ? 'checkin' : 'rating'}
+            id={p.id.replace(/^[rc]_/, '')}
+            ownerId={p.authorId}
+            entityName={p.cigar ? [p.cigar.brand, p.cigar.line].filter(Boolean).join(' ') : undefined}
+          />
         </div>
       </div>
     </div>
@@ -135,6 +142,7 @@ function LoungePost({ p }: { p: FeedPost }) {
             <span className="font-display text-base">{p.title}</span>
           </div>
           {p.body && <p className="mt-1 text-sm text-smoke-200">{p.body}</p>}
+          <EngagementBar type="lounge_post" id={p.id.replace(/^lp_/, '')} entityName={p.title} />
         </div>
       </div>
     </div>

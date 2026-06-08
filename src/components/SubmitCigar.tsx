@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Upload, X, Check, Loader2, AlertCircle, ImageIcon } from 'lucide-react';
 import type { CatalogCigar } from '@/types';
 import { cn } from '@/lib/utils';
-import { addSubmission } from '@/lib/submissions';
+import { submitCigar, type SubmitResult } from '@/lib/submissions';
 import { subscribeAuth } from '@/lib/auth';
 
 const COMMON_SIZES = [
@@ -28,6 +28,7 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
   const [photoError, setPhotoError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [result, setResult] = useState<SubmitResult | null>(null);
   const [signedIn, setSignedIn] = useState(false);
   const [authMsg, setAuthMsg] = useState('');
 
@@ -83,8 +84,7 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
     }
     setSubmitting(true);
     setAuthMsg('');
-    await new Promise((r) => setTimeout(r, 300));
-    addSubmission({
+    const res = await submitCigar({
       brand: brand.trim(),
       name: name.trim(),
       country: country.trim(),
@@ -94,23 +94,38 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
       notes: notes.trim() || undefined,
     });
     setSubmitting(false);
+    setResult(res);
     setDone(true);
   }
 
   if (done) {
+    const autoApproved = result?.autoApproved;
     return (
       <div className="rounded-xl border-[0.5px] border-ember-400/30 bg-ember-400/5 p-8 text-center">
         <Check className="mx-auto text-ember-400" size={36} strokeWidth={1.5} />
-        <h2 className="font-display mt-3 text-2xl">Submitted for review</h2>
-        <p className="mx-auto mt-2 max-w-md text-sm text-smoke-200">
-          Thanks for growing the catalog. <span className="text-paper">{brand} {name}</span> is in
-          the review queue — once approved it appears in search and you earn a contributor badge.
-        </p>
+        <h2 className="font-display mt-3 text-2xl">{autoApproved ? 'Added to the catalog' : 'Posted — pending review'}</h2>
+        {autoApproved ? (
+          <p className="mx-auto mt-2 max-w-md text-sm text-smoke-200">
+            <span className="text-paper">{brand} {name}</span> met the criteria and, as a verified lounge,
+            was approved and pushed live immediately. It’s now public and searchable. (Logged for our records.)
+          </p>
+        ) : (
+          <p className="mx-auto mt-2 max-w-md text-sm text-smoke-200">
+            <span className="text-paper">{brand} {name}</span> will show on your profile and feed right away, but it
+            stays visible to you until our team approves it. Once approved it becomes public and searchable for everyone.
+          </p>
+        )}
+        {result?.duplicatePending && !autoApproved && (
+          <p className="mx-auto mt-3 max-w-md rounded-md border-[0.5px] border-ember-400/30 bg-char/60 px-3 py-2 text-xs text-smoke-200">
+            Heads up — another member already submitted this cigar and it’s pending review. That’s fine: you can keep
+            posting about it, and we’ll make sure it only ends up in the catalog once.
+          </p>
+        )}
         <div className="mt-5 flex justify-center gap-3">
           <button
             onClick={() => {
               setBrand(''); setName(''); setCountry(''); setSize('');
-              setPrice(''); setNotes(''); setPhoto(undefined); setDone(false);
+              setPrice(''); setNotes(''); setPhoto(undefined); setDone(false); setResult(null);
             }}
             className="btn-primary"
           >

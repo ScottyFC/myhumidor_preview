@@ -113,6 +113,7 @@ export function describeEvent(e: AuditEvent): string {
   const n = e.entityName ? ` “${e.entityName}”` : '';
   switch (e.action) {
     case 'cigar.approved': return `approved cigar${n}`;
+    case 'cigar.auto_approved': return `auto-approved cigar${n} (verified lounge)`;
     case 'cigar.rejected': return `rejected cigar${n}`;
     case 'cigar.deleted': return `removed cigar${n} from the catalog`;
     case 'lounge.approved': return `approved lounge${n}`;

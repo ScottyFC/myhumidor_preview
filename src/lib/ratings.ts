@@ -12,6 +12,7 @@ import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
 
 export interface UserRating {
+  id?: string;
   cigarId: string;
   slug: string;
   brand: string;
@@ -55,6 +56,7 @@ function saveLocal() {
 
 /* ── Supabase row mapping ────────────────────────────────────────────────── */
 type Row = {
+  id: string;
   cigar_id: string;
   slug: string | null;
   brand: string | null;
@@ -71,6 +73,7 @@ type Row = {
 
 function rowToRating(r: Row): UserRating {
   return {
+    id: r.id,
     cigarId: r.cigar_id,
     slug: r.slug ?? '',
     brand: r.brand ?? '',
@@ -87,7 +90,7 @@ function rowToRating(r: Row): UserRating {
 }
 
 const SELECT =
-  'cigar_id, slug, brand, name, size, flavor_score, burn_score, appearance_score, overall, notes, tasting_notes, created_at';
+  'id, cigar_id, slug, brand, name, size, flavor_score, burn_score, appearance_score, overall, notes, tasting_notes, created_at';
 
 async function hydrateRemote() {
   try {

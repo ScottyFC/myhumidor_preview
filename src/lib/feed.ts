@@ -18,6 +18,7 @@ export interface FeedPost {
   isLounge: boolean;
   authorName: string;
   authorHandle: string;
+  authorId?: string;
   authorVerified?: boolean;
   when: string;
   ts?: number;
@@ -69,6 +70,7 @@ export async function fetchFeed(): Promise<FeedPost[]> {
             id: `r_${r.id}`,
             kind: 'rated',
             isLounge: false,
+            authorId: r.user_id,
             authorName: p?.display_name ?? 'Member',
             authorHandle: p?.handle ?? 'member',
             when: ago(r.created_at),
@@ -91,6 +93,7 @@ export async function fetchFeed(): Promise<FeedPost[]> {
             id: `c_${c.id}`,
             kind: 'check_in',
             isLounge: false,
+            authorId: c.user_id,
             authorName: p?.display_name ?? 'Member',
             authorHandle: p?.handle ?? 'member',
             when: ago(c.created_at),

@@ -136,6 +136,15 @@ Run `supabase/migrations/phase16.sql` once (adds `lounge_follows`).
 - Public profiles show followers/following (FollowStats) and earned badges (hidden when none earned).
 - Profiles now have a unified Activity feed: ratings with their written reviews + tasting-note tags, interleaved with check-ins, newest first.
 
+## Phase 17 — Likes, comments, and the new submission workflow
+
+Run `supabase/migrations/phase17.sql` once (adds `likes`, `comments`, `cigar_submissions.slug`, and a catalog-insert policy for verified lounges).
+
+- Likes + comments on every feed item and on profile Activity rows (ratings + check-ins + lounge posts). Likes/comments notify the owner (honoring their notification settings). Counts + inline comment threads.
+- Submission workflow: submitting a cigar that is not in the catalog records it as pending and tells the user it will show on their own profile/feed but stays private until approved. Posts (ratings/check-ins) reference the cigar inline, so they appear immediately on the user's page.
+- If another member already has the same cigar pending, the submitter is told but can still post.
+- A verified lounge submitting a not-yet-listed cigar with full details (brand, name, country, size) is auto-approved and pushed live immediately, and the action is logged on the admin Activity log as "auto-approved (verified lounge)".
+
 persisted. (Remaining placeholders, for later phases: the cigar "community"
 likes/comments block returns empty, and the lounge-owner dashboard analytics
 still use sample numbers until the viewership pipeline exists.)

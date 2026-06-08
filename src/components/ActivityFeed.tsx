@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Star, Flame, MapPin } from 'lucide-react';
 import { getCheckInsForUser, type CheckIn } from '@/lib/checkins';
+import { EngagementBar } from '@/components/EngagementBar';
 import type { UserRating } from '@/lib/ratings';
 
 type Item =
@@ -42,7 +43,9 @@ export function ActivityFeed({ userId, ratings, title = 'Activity' }: { userId: 
       </div>
       <div className="space-y-3">
         {items.map((it) =>
-          it.type === 'checkin' ? <CheckInRow key={`c_${it.c.id}`} c={it.c} /> : <RatingRow key={`r_${it.r.cigarId}`} r={it.r} />
+          it.type === 'checkin'
+            ? <CheckInRow key={`c_${it.c.id}`} c={it.c} ownerId={userId} />
+            : <RatingRow key={`r_${it.r.id ?? it.r.cigarId}`} r={it.r} ownerId={userId} />
         )}
       </div>
     </div>
@@ -53,7 +56,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return <div className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">{children}</div>;
 }
 
-function RatingRow({ r }: { r: UserRating }) {
+function RatingRow({ r, ownerId }: { r: UserRating; ownerId: string }) {
   return (
     <Shell>
       <div className="flex items-center gap-1.5 text-xs text-smoke-300">
@@ -75,11 +78,12 @@ function RatingRow({ r }: { r: UserRating }) {
           ))}
         </div>
       )}
+      {r.id && <EngagementBar type="rating" id={r.id} ownerId={ownerId} entityName={[r.brand, r.name].filter(Boolean).join(' ')} />}
     </Shell>
   );
 }
 
-function CheckInRow({ c }: { c: CheckIn }) {
+function CheckInRow({ c, ownerId }: { c: CheckIn; ownerId: string }) {
   return (
     <Shell>
       <div className="flex gap-3">
@@ -111,6 +115,7 @@ function CheckInRow({ c }: { c: CheckIn }) {
             </div>
           )}
           {c.review && <p className="mt-1 text-sm text-smoke-200">{c.review}</p>}
+          <EngagementBar type="checkin" id={c.id} ownerId={ownerId} entityName={[c.cigarBrand, c.cigarName].filter(Boolean).join(' ')} />
         </div>
       </div>
     </Shell>

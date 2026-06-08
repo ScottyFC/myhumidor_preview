@@ -209,6 +209,101 @@ function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'cigar';
 }
 
+/** Is this user an operator (member/owner) of a *verified* lounge? */
+async function isVerifiedLoungeOperator(uid: string): Promise<boolean> {
+  if (!isSupabaseConfigured || !uid) return false;
+  try {
+    const sb = supabaseBrowser();
+    const { data } = await sb
+      .from('lounge_members')
+      .select('lounge_id, lounges!inner(verified)')
+      .eq('user_id', uid);
+    return (data ?? []).some((r) => (r as { lounges?: { verified?: boolean } }).lounges?.verified);
+  } catch {
+    return false;
+  }
+}
+
+export interface SubmitResult {
+  ok: boolean;
+  slug: string;
+  duplicatePending: boolean;   // someone else already has this pending
+  autoApproved: boolean;       // verified lounge → pushed live immediately
+  error?: string;
+}
+
+/**
+ * Submit a cigar. The submitter can post about it immediately (ratings/check-ins
+ * store the cigar inline), but it stays off the public catalog until approved —
+ * unless a verified lounge submits it with full details, which auto-approves and
+ * pushes it live (logged for traceability).
+ */
+export async function submitCigar(input: {
+  brand: string; name: string; country?: string; size?: string; price?: number | null;
+  notes?: string; photoDataUrl?: string;
+}): Promise<SubmitResult> {
+  start();
+  const slug = slugify(`${input.brand} ${input.name}`);
+  if (!isSupabaseConfigured || !userId) {
+    addSubmission({ brand: input.brand, name: input.name, country: input.country ?? '', size: input.size ?? '', price: input.price ?? null, notes: input.notes, photoDataUrl: input.photoDataUrl });
+    return { ok: true, slug, duplicatePending: false, autoApproved: false };
+  }
+
+  const sb = supabaseBrowser();
+  try {
+    const { data: inCatalog } = await sb.from('catalog_cigars').select('slug').eq('slug', slug).maybeSingle();
+
+    const { data: pendingRows } = await sb
+      .from('cigar_submissions')
+      .select('id, submitted_by, status')
+      .eq('slug', slug).eq('status', 'pending');
+    const duplicatePending = (pendingRows ?? []).some((r) => r.submitted_by !== userId);
+
+    const verified = await isVerifiedLoungeOperator(userId);
+    const criteriaMet = !!(input.brand && input.name && input.country && input.size);
+    const autoApprove = verified && criteriaMet && !inCatalog;
+
+    let photo_url: string | null = null;
+    if (input.photoDataUrl?.startsWith('data:')) photo_url = await uploadPhoto(input.photoDataUrl);
+
+    let catalogId: string | null = null;
+    if (autoApprove) {
+      catalogId = await pushToCatalog({
+        id: '', brand: input.brand, name: input.name, country: input.country ?? '', size: input.size ?? '',
+        price: input.price ?? null, photoDataUrl: input.photoDataUrl, status: 'approved', createdAt: new Date().toISOString(),
+      } as Submission);
+    }
+
+    const { error } = await sb.from('cigar_submissions').insert({
+      submitted_by: userId,
+      brand: input.brand, name: input.name, slug,
+      country: input.country || null, size: input.size || null, price: input.price ?? null,
+      photo_url, notes: input.notes ?? null,
+      status: autoApprove ? 'approved' : 'pending',
+      ...(catalogId ? { catalog_id: catalogId, reviewed_by: userId } : {}),
+    });
+    if (error) {
+      console.error('[submissions] submit failed:', error.message);
+      return { ok: false, slug, duplicatePending, autoApproved: false, error: error.message };
+    }
+
+    if (autoApprove) {
+      logEvent({
+        action: 'cigar.auto_approved',
+        entityType: 'cigar',
+        entityId: catalogId ?? slug,
+        entityName: `${input.brand} ${input.name}`,
+        meta: { reason: 'verified_lounge', slug },
+      });
+    }
+    await hydrateRemote();
+    return { ok: true, slug, duplicatePending, autoApproved: autoApprove };
+  } catch (e) {
+    console.error('[submissions] submit error:', e);
+    return { ok: false, slug, duplicatePending: false, autoApproved: false, error: 'submit failed' };
+  }
+}
+
 /** Promote an approved submission into the live catalog so it's searchable.
  *  Idempotent: only inserts once (guarded by catalog_id), so two admins
  *  approving the same item can't create duplicates. */
