@@ -16,6 +16,8 @@ import { FollowButton } from '@/components/FollowButton';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { RemoveProfileButton } from '@/components/RemoveProfileButton';
 import { FollowStats } from '@/components/FollowStats';
+import { ProfileSocialLinks } from '@/components/SocialLinks';
+import { CheckInFeed } from '@/components/CheckInFeed';
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -124,6 +126,7 @@ export default function PublicProfilePage() {
           </div>
           {profile.bio && <p className="mt-2 max-w-xl text-sm text-smoke-200">{profile.bio}</p>}
           {viewedId && <FollowStats userId={viewedId} />}
+          {viewedId && <ProfileSocialLinks userId={viewedId} />}
           {viewedId && <AdminOnlyId id={viewedId} label="User UUID" />}
           {!isSelf && <RemoveProfileButton handle={profile.handle} displayName={profile.displayName} />}
         </div>
@@ -136,6 +139,7 @@ export default function PublicProfilePage() {
 
       <div className="mt-8">
         {viewedId && <BadgesSection userId={viewedId} self={isSelf} humidor={humidor} ratings={ratings} />}
+        {viewedId && <CheckInFeed userId={viewedId} title="Check-ins" />}
         <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self={false} />
       </div>
     </div>

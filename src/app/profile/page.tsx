@@ -15,6 +15,9 @@ import { BadgesSection } from '@/components/BadgesSection';
 import { AgingTracker } from '@/components/AgingTracker';
 import { FlavorProfile } from '@/components/FlavorProfile';
 import { FollowStats } from '@/components/FollowStats';
+import { ProfileSocialLinks, SocialLinksEditor } from '@/components/SocialLinks';
+import { CheckInFeed } from '@/components/CheckInFeed';
+import { SuggestedFollows } from '@/components/SuggestedFollows';
 import { Avatar } from '@/components/Avatar';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { cn } from '@/lib/utils';
@@ -117,6 +120,7 @@ export default function ProfilePage() {
           </div>
           {profile.bio && <p className="mt-2 max-w-xl text-sm text-smoke-200">{profile.bio}</p>}
           {session && <FollowStats userId={session.uuid} />}
+          {session && <ProfileSocialLinks userId={session.uuid} />}
           {session && session.type === 'lounge' && (
             <div className="mt-2 font-mono text-[11px] text-smoke-500">{session.publicId}</div>
           )}
@@ -135,12 +139,19 @@ export default function ProfilePage() {
       </div>
 
       {editing && <EditForm profile={profile} onDone={() => setEditing(false)} />}
+      {editing && session && (
+        <div className="mt-4">
+          <SocialLinksEditor kind="profile" owner={session.uuid} />
+        </div>
+      )}
 
       <div className="mt-8">
         {session && <BadgesSection userId={session.uuid} self humidor={humidor} ratings={ratings} />}
+        {session && <CheckInFeed userId={session.uuid} title="Your check-ins" />}
         <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self />
         <AgingTracker humidor={humidor} member={!!profile.aficionado} />
         <FlavorProfile member={!!profile.aficionado} humidor={humidor} wishlist={wishlist} ratings={ratings} />
+        {session && <SuggestedFollows selfId={session.uuid} state={profile.state || undefined} />}
       </div>
     </div>
   );

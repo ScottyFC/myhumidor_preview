@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings } from 'lucide-react';
+import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings, Bell } from 'lucide-react';
+import { NotificationBell } from '@/components/NotificationBell';
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import { subscribeAuth, signOut, type Session } from '@/lib/auth';
@@ -89,6 +90,7 @@ export function Nav() {
                   <span className="hidden sm:inline">Dashboard</span>
                 </Link>
               )}
+              <NotificationBell />
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen((v) => !v)}
@@ -111,11 +113,17 @@ export function Nav() {
                       <MenuItem href="/profile" icon={<User size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                         My Profile
                       </MenuItem>
+                      <MenuItem href="/check-in" icon={<Flame size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                        Check in
+                      </MenuItem>
                       <MenuItem href="/submit" icon={<Cigarette size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                         Submit a Cigar
                       </MenuItem>
                       <MenuItem href="/account" icon={<Settings size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                         Account Settings
+                      </MenuItem>
+                      <MenuItem href="/account#notifications" icon={<Bell size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                        Notification Settings
                       </MenuItem>
                       <button
                         onClick={() => { setMenuOpen(false); signOut(); }}

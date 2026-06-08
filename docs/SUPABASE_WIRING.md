@@ -117,6 +117,16 @@ Run `supabase/migrations/phase14.sql` once (adds `badges.aficionado_only` + seed
 - Flavor Profiling recommender (Aficionado-gated): /api/recommendations suggests catalog cigars sharing brand/country with the user's 4★+ ratings. Nearby-in-stock is a link to /lounges for now (not precise distance/stock yet).
 - Exclusive badge tier: `aficionado_only` badges only auto-award to Aficionado members.
 
+## Phase 15 — Check-ins, notifications, social links, follow suggestions
+
+Run `supabase/migrations/phase15.sql` once. Check-in photos reuse the `avatars`
+bucket (so phase12 storage policies + Public bucket must be in place).
+
+- Check-ins: /check-in (in the account menu) — pick a cigar, optional lounge, star rating, review, photo. Shows on the lounge profile ("Recent check-ins") and on the user's profile; a check-in notifies the lounge's members.
+- Notifications: bell in the toolbar with unread count + dropdown; mark-all-read on open; realtime. Follow events are wired now. Manage at /account#notifications (also in the profile dropdown). Like/comment + lounge-follow notifications are scaffolded but need an underlying like/comment + lounge-follow system (not built yet).
+- Social links: profiles.socials + lounges.socials (jsonb). Edit in profile edit mode and the lounge dashboard; icons display on both profile types.
+- Suggested follows: self-only block on /profile — newest members, locals (same state) first, excludes self + people already followed.
+
 persisted. (Remaining placeholders, for later phases: the cigar "community"
 likes/comments block returns empty, and the lounge-owner dashboard analytics
 still use sample numbers until the viewership pipeline exists.)

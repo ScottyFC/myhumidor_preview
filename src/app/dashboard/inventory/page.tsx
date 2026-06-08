@@ -14,6 +14,7 @@ import { ActivityLog } from '@/components/ActivityLog';
 import { PostComposer } from '@/components/PostComposer';
 import { LoungeBadgeCreator } from '@/components/LoungeBadgeCreator';
 import { BoostLounge } from '@/components/BoostLounge';
+import { SocialLinksEditor } from '@/components/SocialLinks';
 import { getMyLounges, type MyLounge } from '@/lib/lounges-owner';
 
 const STORE_KEY = 'myhumidor:active-store';
@@ -323,6 +324,12 @@ export default function InventoryPage() {
 
           {store && (
             <BoostLounge slug={store.slug} />
+          )}
+
+          {store && (
+            <div className="mt-8">
+              <SocialLinksEditor kind="lounge" owner={store.slug} />
+            </div>
           )}
 
           {store && (

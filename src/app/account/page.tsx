@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, KeyRound, Loader2, Check, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Mail, KeyRound, Loader2, Check, AlertTriangle, ArrowLeft, Bell } from 'lucide-react';
 import { subscribeAuth, signOut, type Session } from '@/lib/auth';
 import { isSupabaseConfigured, supabaseBrowser } from '@/lib/supabase';
+import { getNotifySettings, saveNotifySettings, type NotifySettings } from '@/lib/notifications';
 
 export default function AccountSettingsPage() {
   const router = useRouter();
@@ -43,6 +44,9 @@ export default function AccountSettingsPage() {
       <div className="mt-8 space-y-5">
         <ChangeEmail />
         <ChangePassword />
+        <div id="notifications" className="scroll-mt-24">
+          <NotificationSettings userId={session?.uuid ?? ''} />
+        </div>
         <Deactivate onDone={() => router.push('/')} />
       </div>
     </div>
@@ -63,6 +67,49 @@ function Card({ title, icon, children }: { title: string; icon: React.ReactNode;
 
 const inputCls =
   'w-full rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-3 py-2 text-sm text-paper placeholder:text-smoke-400 focus:border-ember-400 focus:outline-none';
+
+function NotificationSettings({ userId }: { userId: string }) {
+  const [s, setS] = useState<NotifySettings | null>(null);
+  useEffect(() => { if (userId) getNotifySettings(userId).then(setS); }, [userId]);
+
+  async function toggle(key: keyof NotifySettings) {
+    if (!s) return;
+    const next = { ...s, [key]: !s[key] };
+    setS(next);
+    await saveNotifySettings(userId, { [key]: next[key] });
+  }
+
+  const rows: { key: keyof NotifySettings; label: string }[] = [
+    { key: 'notify_follows', label: 'New followers' },
+    { key: 'notify_likes', label: 'Likes on your activity' },
+    { key: 'notify_comments', label: 'Comments on your activity' },
+    { key: 'notify_lounges', label: 'Posts from lounges you follow' },
+  ];
+
+  return (
+    <Card title="Notifications" icon={<Bell size={16} strokeWidth={1.5} />}>
+      {!s ? (
+        <div className="py-2"><Loader2 size={16} className="animate-spin text-ember-400" /></div>
+      ) : (
+        <div className="divide-y divide-ember-400/10">
+          {rows.map((r) => (
+            <label key={r.key} className="flex cursor-pointer items-center justify-between py-2.5 text-sm">
+              <span className="text-smoke-200">{r.label}</span>
+              <button
+                type="button"
+                onClick={() => toggle(r.key)}
+                className={`relative h-5 w-9 rounded-full transition ${s[r.key] ? 'bg-ember-400' : 'bg-smoke-700'}`}
+                aria-pressed={s[r.key]}
+              >
+                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-paper transition ${s[r.key] ? 'left-[18px]' : 'left-0.5'}`} />
+              </button>
+            </label>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
 
 function ChangeEmail() {
   const [email, setEmail] = useState('');

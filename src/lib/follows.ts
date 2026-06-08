@@ -10,6 +10,7 @@
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
+import { notify } from './notifications';
 
 const KEY = 'myhumidor:following';
 const EVENT = 'myhumidor:following-change';
@@ -80,6 +81,7 @@ async function persistFollow(handle: string, following: boolean) {
       { onConflict: 'follower_id,followee_id' }
     );
     if (error) console.error('[follows] follow failed:', error.message);
+    else notify(followeeId, { type: 'follow' });
   } else {
     const { error } = await sb.from('follows').delete().eq('follower_id', userId).eq('followee_id', followeeId);
     if (error) console.error('[follows] unfollow failed:', error.message);
@@ -171,6 +173,47 @@ export async function fetchFollowList(targetUserId: string, kind: 'followers' | 
       displayName: p.display_name ?? 'Member',
       avatarUrl: p.avatar_url ?? undefined,
     }));
+  } catch {
+    return [];
+  }
+}
+
+/** Recently-joined members to suggest following (excludes self + already-followed). */
+export async function fetchSuggestedFollows(selfId: string, opts: { state?: string; limit?: number } = {}): Promise<FollowPerson[]> {
+  if (!isSupabaseConfigured || !selfId) return [];
+  const limit = opts.limit ?? 8;
+  try {
+    const sb = supabaseBrowser();
+    // Who self already follows (to exclude).
+    const { data: f } = await sb.from('follows').select('followee_id').eq('follower_id', selfId);
+    const exclude = new Set([selfId, ...(f ?? []).map((r) => r.followee_id as string)]);
+
+    const pickFrom = (rows: { id: string; handle: string; display_name: string | null; avatar_url: string | null }[]) =>
+      rows.filter((p) => p.id && !exclude.has(p.id) && p.handle);
+
+    // Prefer locals (same state), then fill with newest national signups.
+    let local: typeof pickFrom extends never ? never : ReturnType<typeof pickFrom> = [];
+    if (opts.state) {
+      const { data } = await sb.from('profiles')
+        .select('id, handle, display_name, avatar_url, created_at')
+        .eq('account_type', 'consumer').eq('state', opts.state)
+        .order('created_at', { ascending: false }).limit(limit * 2);
+      local = pickFrom(data ?? []);
+    }
+    const { data: national } = await sb.from('profiles')
+      .select('id, handle, display_name, avatar_url, created_at')
+      .eq('account_type', 'consumer')
+      .order('created_at', { ascending: false }).limit(limit * 3);
+
+    const merged: FollowPerson[] = [];
+    const seen = new Set<string>();
+    for (const p of [...local, ...pickFrom(national ?? [])]) {
+      if (seen.has(p.id)) continue;
+      seen.add(p.id);
+      merged.push({ handle: p.handle, displayName: p.display_name ?? 'Member', avatarUrl: p.avatar_url ?? undefined });
+      if (merged.length >= limit) break;
+    }
+    return merged;
   } catch {
     return [];
   }
