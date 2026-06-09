@@ -10,6 +10,7 @@ import { LoungeMenu } from '@/components/LoungeMenu';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
 import { LoungePosts } from '@/components/LoungePosts';
+import { LoungeOwnerComposer } from '@/components/LoungeOwnerComposer';
 import { LoungeBadgeCollect } from '@/components/LoungeBadgeCollect';
 import { CheckInFeed } from '@/components/CheckInFeed';
 import { LoungeSocialLinks } from '@/components/SocialLinks';
@@ -156,6 +157,7 @@ export default async function LoungePage({ params }: PageProps) {
       {/* Suggest a correction */}
       <section className="py-8">
         <ChangeRequest targetType="lounge" targetId={lounge.slug} targetName={lounge.name} />
+        <LoungeOwnerComposer slug={lounge.slug} loungeName={lounge.name} />
         <LoungePosts slug={lounge.slug} />
         <CheckInFeed loungeSlug={lounge.slug} title="Recent check-ins" />
         <LoungeBadgeCollect slug={lounge.slug} />

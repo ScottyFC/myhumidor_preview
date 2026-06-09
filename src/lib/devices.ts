@@ -112,3 +112,56 @@ export async function recentLedger(loungeId: string, limit = 10): Promise<Credit
 
 export const CREDITS_PER_HOUR = 10;
 export const DAILY_CAP_PER_TV = 120;
+
+export interface DayStat { label: string; hours: number; credits: number; }
+
+/** Last 7 days of streaming for a lounge, oldest → newest (real, from accrual). */
+export async function streamStats7d(loungeId: string): Promise<DayStat[]> {
+  const days: DayStat[] = [];
+  const byDay: Record<string, { seconds: number; credits: number }> = {};
+  const labels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const keys: string[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    keys.push(key);
+    days.push({ label: labels[d.getDay()], hours: 0, credits: 0 });
+  }
+  if (isSupabaseConfigured && loungeId) {
+    try {
+      const { data } = await supabaseBrowser()
+        .from('device_credit_daily')
+        .select('day, seconds, credits')
+        .eq('lounge_id', loungeId)
+        .gte('day', keys[0]);
+      (data ?? []).forEach((r) => {
+        const k = r.day as string;
+        byDay[k] = byDay[k] || { seconds: 0, credits: 0 };
+        byDay[k].seconds += (r.seconds as number) ?? 0;
+        byDay[k].credits += (r.credits as number) ?? 0;
+      });
+      keys.forEach((k, i) => {
+        if (byDay[k]) { days[i].hours = byDay[k].seconds / 3600; days[i].credits = byDay[k].credits; }
+      });
+    } catch { /* ignore */ }
+  }
+  return days;
+}
+
+/** Rename the lounge (and the owner's display name) — best effort. */
+export async function renameLounge(loungeId: string | null, name: string): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured || !name.trim()) return { ok: false, error: 'Enter a name.' };
+  try {
+    const sb = supabaseBrowser();
+    const { data: u } = await sb.auth.getUser();
+    const uid = u.user?.id;
+    if (uid) await sb.from('profiles').update({ display_name: name.trim() }).eq('id', uid);
+    if (loungeId) {
+      const { error } = await sb.from('lounges').update({ name: name.trim() }).eq('id', loungeId);
+      if (error) return { ok: false, error: error.message };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}

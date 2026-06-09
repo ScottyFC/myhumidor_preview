@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Megaphone, Sparkles, CalendarDays } from 'lucide-react';
+import { Megaphone, Sparkles, CalendarDays, Store } from 'lucide-react';
 import { getPostsForSlug, KIND_LABEL, type LoungePost } from '@/lib/lounge-posts';
 
-const ICON = { deal: Megaphone, new_arrival: Sparkles, event: CalendarDays } as const;
+const ICON = { deal: Megaphone, new_arrival: Sparkles, event: CalendarDays, update: Store } as const;
 
 export function LoungePosts({ slug }: { slug: string }) {
   const [posts, setPosts] = useState<LoungePost[] | null>(null);
@@ -41,6 +41,10 @@ export function LoungePosts({ slug }: { slug: string }) {
               </div>
               <div className="mt-1 font-display text-lg">{p.title}</div>
               {p.body && <p className="mt-1 text-sm text-smoke-200">{p.body}</p>}
+              {p.photoUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.photoUrl} alt={p.title} className="mt-3 max-h-72 w-full rounded-lg object-cover" />
+              )}
             </div>
           );
         })}

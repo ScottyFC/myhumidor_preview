@@ -33,6 +33,7 @@ export function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [, bumpAdmin] = useState(0);
   const [loungeSlug, setLoungeSlug] = useState<string | null>(null);
+  const [loungeDone, setLoungeDone] = useState(false); // verified AND certified
 
   useEffect(() => {
     return subscribeAuth(setSession);
@@ -43,9 +44,13 @@ export function Nav() {
   const isLounge = session?.type === 'lounge';
 
   useEffect(() => {
-    if (!isLounge) { setLoungeSlug(null); return; }
+    if (!isLounge) { setLoungeSlug(null); setLoungeDone(false); return; }
     let off = false;
-    getMyLounges().then((ls) => { if (!off) setLoungeSlug(ls[0]?.slug ?? null); });
+    getMyLounges().then((ls) => {
+      if (off) return;
+      setLoungeSlug(ls[0]?.slug ?? null);
+      setLoungeDone(!!(ls[0]?.verified && ls[0]?.certified));
+    });
     return () => { off = true; };
   }, [isLounge, session?.uuid]);
 
@@ -112,10 +117,12 @@ export function Nav() {
                     <Store size={14} strokeWidth={1.5} />
                     <span className="hidden sm:inline">My Lounge</span>
                   </Link>
-                  <Link href="/verify" className="btn-ghost text-xs" title="Verify & certify your lounge">
-                    <ShieldCheck size={14} strokeWidth={1.5} className="text-ember-400" />
-                    <span className="hidden sm:inline">Verify</span>
-                  </Link>
+                  {!loungeDone && (
+                    <Link href="/verify" className="btn-ghost text-xs" title="Verify & certify your lounge">
+                      <ShieldCheck size={14} strokeWidth={1.5} className="text-ember-400" />
+                      <span className="hidden sm:inline">Verify</span>
+                    </Link>
+                  )}
                   <Link href="/dashboard" className="btn-ghost text-xs">
                     <LayoutDashboard size={14} strokeWidth={1.5} />
                     <span className="hidden sm:inline">Dashboard</span>
@@ -153,9 +160,11 @@ export function Nav() {
                           <MenuItem href="/dashboard" icon={<LayoutDashboard size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                             Dashboard
                           </MenuItem>
-                          <MenuItem href="/verify" icon={<ShieldCheck size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
-                            Verify &amp; Certify
-                          </MenuItem>
+                          {!loungeDone && (
+                            <MenuItem href="/verify" icon={<ShieldCheck size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                              Verify &amp; Certify
+                            </MenuItem>
+                          )}
                           <MenuItem href="/submit" icon={<Cigarette size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                             Add a Cigar
                           </MenuItem>

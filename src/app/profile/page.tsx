@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Check, Loader2, MapPin, Share2, X, ShieldCheck, ShieldOff, Crown } from 'lucide-react';
+import { Check, Loader2, MapPin, Share2, X, ShieldCheck, ShieldOff, Crown, BadgeCheck } from 'lucide-react';
 import { subscribeAuth, type Session } from '@/lib/auth';
+import { getMyLounges } from '@/lib/lounges-owner';
 import { isAdmin, isBootstrapAdmin, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
 import { getProfile, saveProfile, onProfileChange, handleFromName, type ProfileFields } from '@/lib/profile';
 import { getCollection, fetchCollectionFor, onCollectionChange, type CollectionItem } from '@/lib/collection';
@@ -164,6 +165,17 @@ export default function ProfilePage() {
 }
 
 function LoungeBusinessPanel({ state, selfId }: { state?: string; selfId: string }) {
+  const [done, setDone] = useState(false);
+  const [slug, setSlug] = useState<string | null>(null);
+  useEffect(() => {
+    let off = false;
+    getMyLounges().then((ls) => {
+      if (off) return;
+      setDone(!!(ls[0]?.verified && ls[0]?.certified));
+      setSlug(ls[0]?.slug ?? null);
+    });
+    return () => { off = true; };
+  }, []);
   return (
     <div className="space-y-8">
       <div className="rounded-xl border-[0.5px] border-ember-400/20 bg-char/40 p-6">
@@ -172,10 +184,22 @@ function LoungeBusinessPanel({ state, selfId }: { state?: string; selfId: string
           This is your lounge’s business profile — no humidor, ratings, or badges. Manage your inventory,
           posts, and viewership from the dashboard, and follow other lounges and members to build your feed.
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <Link href="/dashboard" className="btn-primary text-xs">Open dashboard</Link>
-          <Link href="/verify" className="btn-ghost text-xs">Verify &amp; certify</Link>
+          {done ? (
+            <span className="inline-flex items-center gap-1.5 text-xs text-ember-100">
+              <BadgeCheck size={14} strokeWidth={1.5} className="text-ember-400" /> Verified &amp; certified
+            </span>
+          ) : (
+            <Link href="/verify" className="btn-ghost text-xs">Verify &amp; certify</Link>
+          )}
         </div>
+        {done && slug && (
+          <p className="mt-3 text-xs text-smoke-400">
+            Not your lounge, or claimed by someone else?{' '}
+            <Link href={`/lounges/${slug}`} className="text-ember-100 underline">Submit a change request</Link>.
+          </p>
+        )}
       </div>
       <SuggestedFollows selfId={selfId} state={state} />
     </div>
