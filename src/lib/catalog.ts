@@ -65,6 +65,26 @@ export function findCatalogCigarBySlug(slug: string): CatalogCigar | undefined {
   return allCigars().find((c) => c.slug === slug);
 }
 
+/** Stable slug for a brand name (used by /brands/[slug]). */
+export function brandSlug(brand: string): string {
+  return (brand || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/**
+ * All catalog cigars for a brand, looked up by its slug. Returns the canonical
+ * brand label (first match) plus every cigar under it, sorted by name.
+ */
+export function cigarsByBrand(slug: string): { brand: string | null; cigars: CatalogCigar[] } {
+  const matches = allCigars().filter((c) => brandSlug(c.brand) === slug);
+  if (matches.length === 0) return { brand: null, cigars: [] };
+  matches.sort((a, b) => a.name.localeCompare(b.name));
+  return { brand: matches[0].brand, cigars: matches };
+}
+
 export function searchStores(query: string, limit = 25, offset = 0): SearchResult<CatalogStore> {
   const q = query.trim().toLowerCase();
   const source = allStores();

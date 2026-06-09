@@ -6,6 +6,11 @@ import type { CollectionItem } from '@/lib/collection';
 import type { UserRating } from '@/lib/ratings';
 import { AutoScrollRow } from '@/components/AutoScrollRow';
 
+// Mirror of catalog.brandSlug (catalog is server-only, so we inline it here).
+function slugifyBrand(b: string): string {
+  return b.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+
 export function ProfileBody({
   humidor,
   wishlist,
@@ -17,8 +22,32 @@ export function ProfileBody({
   ratings: UserRating[];
   self: boolean;
 }) {
+  const brands = Array.from(
+    new Set(
+      [...humidor, ...wishlist, ...ratings]
+        .map((i) => i.brand?.trim())
+        .filter((b): b is string => !!b)
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
   return (
     <div className="space-y-10">
+      {brands.length > 0 && (
+        <Section title="Brands" count={brands.length}>
+          <div className="flex flex-wrap gap-2">
+            {brands.map((b) => (
+              <Link
+                key={b}
+                href={`/brands/${slugifyBrand(b)}`}
+                className="rounded-full border-[0.5px] border-ember-400/25 bg-char/50 px-3.5 py-1.5 text-xs text-smoke-200 transition hover:border-ember-400/60 hover:text-ember-100"
+              >
+                {b}
+              </Link>
+            ))}
+          </div>
+        </Section>
+      )}
+
       <Section title="Humidor" count={humidor.length}>
         {humidor.length === 0 ? (
           <Empty self={self} label="Humidor is empty." cta="Find cigars" />

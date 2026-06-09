@@ -1,3 +1,10 @@
+## Catalog import — Top 300 boutique cigars + USA lounges
+
+Imported into the static catalog (`src/data/cigars.json`, `src/data/stores.json`) — no SQL needed; ships on the next deploy.
+- **Cigars:** 300 added (0 skipped — all boutique brands new to the catalog), deduped by normalized brand+name and slug.
+- **Lounges:** 15 added, 3 skipped as duplicates/similar names. These were added without coordinates (the source CSV had none and geocoding isn't available offline), so they appear in search, listings, and have profile pages, but won't drop a map pin until geocoded. They can be geocoded later or fixed via the verify flow.
+- **Brand grouping:** new `/brands/[slug]` page lists every catalog cigar for a brand (plus any DB `catalog_cigars` of that brand). The profile now shows a selectable **Brands** row built from the member's humidor/wishlist/ratings; tapping a brand opens its page.
+
 # Wiring the app to Supabase — migration log
 
 This tracks moving per-user data from the localStorage demo to Supabase, one
