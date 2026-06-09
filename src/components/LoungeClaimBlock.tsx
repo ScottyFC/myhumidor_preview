@@ -39,7 +39,7 @@ export function LoungeClaimBlock({
   }
 
   // Unclaimed listing → claim flow, gated to retailer accounts.
-  const isRetailer = session?.type === 'lounge';
+  const isRetailer = session?.type === 'retailer';
   if (!isRetailer) {
     return (
       <div className="rounded-xl border-[0.5px] border-ember-400/20 bg-char/40 p-6">
@@ -52,10 +52,10 @@ export function LoungeClaimBlock({
           regular member account. Create one to claim this listing and manage it.
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Link href={`/register?type=lounge&claim=${encodeURIComponent(slug)}`} className="btn-primary text-xs">
+          <Link href={`/register?type=retailer&claim=${encodeURIComponent(slug)}`} className="btn-primary text-xs">
             Create a retailer account
           </Link>
-          {session && session.type !== 'lounge' && (
+          {session && session.type !== 'retailer' && (
             <span className="text-xs text-smoke-400">You’re signed in as a member — claiming needs a retailer account.</span>
           )}
         </div>

@@ -99,7 +99,7 @@ export default function ProfilePage() {
         <Avatar profile={profile} size={112} />
 
         <div className="min-w-0 flex-1">
-          {session?.type === 'lounge' ? (
+          {session?.type === 'retailer' ? (
             <div className="eyebrow mb-1">Lounge account</div>
           ) : (
             <div className="eyebrow mb-1">Member</div>
@@ -122,7 +122,7 @@ export default function ProfilePage() {
           {profile.bio && <p className="mt-2 max-w-xl text-sm text-smoke-200">{profile.bio}</p>}
           {session && <FollowStats userId={session.uuid} />}
           {session && <ProfileSocialLinks userId={session.uuid} />}
-          {session && session.type === 'lounge' && (
+          {session && session.type === 'retailer' && (
             <div className="mt-2 font-mono text-[11px] text-smoke-500">{session.publicId}</div>
           )}
           {session && <AdminOnlyId id={session.publicId} label="User UUID" />}
@@ -147,7 +147,7 @@ export default function ProfilePage() {
       )}
 
       <div className="mt-8">
-        {session?.type === 'lounge' ? (
+        {session?.type === 'retailer' ? (
           <LoungeBusinessPanel state={profile.state || undefined} selfId={session.uuid} />
         ) : (
           <>

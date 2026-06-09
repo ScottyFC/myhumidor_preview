@@ -210,7 +210,7 @@ export function onProfileChange(cb: () => void): () => void {
 /** Look up any member's public profile by handle (for /u/[handle]). Supabase only. */
 export async function fetchProfileByHandle(
   handle: string
-): Promise<{ userId: string; publicId: string; type: 'consumer' | 'lounge'; profile: ProfileFields } | null> {
+): Promise<{ userId: string; publicId: string; type: 'consumer' | 'retailer'; profile: ProfileFields } | null> {
   if (!isSupabaseConfigured) return null;
   try {
     const { data, error } = await supabaseBrowser()
@@ -222,7 +222,7 @@ export async function fetchProfileByHandle(
     return {
       userId: data.id,
       publicId: data.public_id,
-      type: (data.account_type as 'consumer' | 'lounge') ?? 'consumer',
+      type: (data.account_type === 'consumer' ? 'consumer' : 'retailer'),
       profile: {
         handle: data.handle ?? handle,
         displayName: data.display_name ?? 'Member',

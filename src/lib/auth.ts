@@ -101,7 +101,7 @@ function demoSession(input: {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function sessionFromUser(user: any): Session {
   const meta = user.user_metadata ?? {};
-  const type: AccountType = meta.account_type === 'lounge' ? 'lounge' : 'consumer';
+  const type: AccountType = (meta.account_type === 'retailer' || meta.account_type === 'lounge') ? 'retailer' : 'consumer';
   return {
     uuid: user.id,
     publicId: publicIdFromUuid(user.id, type),
@@ -190,7 +190,7 @@ export async function signInOAuth(provider: 'google' | 'apple', type: AccountTyp
         type,
         provider,
         email: `you@${provider}.com`,
-        displayName: type === 'lounge' ? 'Your Lounge' : 'You',
+        displayName: type === 'retailer' ? 'Your Lounge' : 'You',
       })
     );
     return {};

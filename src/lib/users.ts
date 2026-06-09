@@ -6,7 +6,7 @@ export interface UserHit {
   handle: string;
   displayName: string;
   avatarUrl?: string;
-  accountType: 'consumer' | 'lounge';
+  accountType: 'consumer' | 'retailer';
 }
 
 /** Search members by handle or display name. Supabase only (profiles are public). */
@@ -28,7 +28,7 @@ export async function searchUsers(query: string, limit = 12): Promise<UserHit[]>
       handle: p.handle,
       displayName: p.display_name ?? p.handle,
       avatarUrl: p.avatar_url ?? undefined,
-      accountType: (p.account_type as 'consumer' | 'lounge') ?? 'consumer',
+      accountType: (p.account_type === 'consumer' ? 'consumer' : 'retailer'),
     }));
   } catch {
     return [];

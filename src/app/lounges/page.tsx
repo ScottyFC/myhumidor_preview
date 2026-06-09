@@ -67,11 +67,11 @@ export default function LoungesPage() {
         <div>
           <div className="font-display text-lg">Own or manage a lounge?</div>
           <div className="text-sm text-smoke-400">
-            Get the verified check, a free TV stick, and earn credits from viewership.
+            Create a retailer account to claim your lounge or submit a new one for review.
           </div>
         </div>
-        <Link href="/lounges/join" className="btn-primary shrink-0">
-          Become a verified lounge <ArrowRight size={14} strokeWidth={1.5} />
+        <Link href="/register?type=retailer" className="btn-primary shrink-0">
+          Create a retailer account <ArrowRight size={14} strokeWidth={1.5} />
         </Link>
       </div>
     </div>

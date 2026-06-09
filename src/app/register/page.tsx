@@ -37,14 +37,14 @@ export default function RegisterPage() {
     const q = new URLSearchParams(window.location.search);
     if (q.get('error')) { setLinkError(true); setMode('signin'); }
     // Retailer signup deep-links (claim/submit flows) preselect the retailer tab.
-    if (q.get('type') === 'lounge') { setType('lounge'); setMode('signup'); }
+    if (q.get('type') === 'retailer' || q.get('type') === 'lounge') { setType('retailer'); setMode('signup'); }
     const claim = q.get('claim');
-    if (claim) { setClaimSlug(claim); setType('lounge'); setMode('signup'); }
+    if (claim) { setClaimSlug(claim); setType('retailer'); setMode('signup'); }
   }, []);
 
   function finish() {
     if (claimSlug) { router.push(`/lounges/${claimSlug}`); return; }
-    router.push(type === 'lounge' ? '/dashboard' : '/humidor');
+    router.push(type === 'retailer' ? '/dashboard' : '/humidor');
   }
 
   async function manual() {
@@ -55,7 +55,7 @@ export default function RegisterPage() {
       if (password.length < 8) return setError('Password must be at least 8 characters.');
       if (password !== confirm) return setError('Passwords don’t match.');
       if (type === 'consumer' && !displayName.trim()) return setError('Choose a display name.');
-      if (type === 'lounge' && !loungeName.trim()) return setError('Enter your lounge name.');
+      if (type === 'retailer' && !loungeName.trim()) return setError('Enter your lounge name.');
       if (!agreed) return setError('Please agree to the terms to create an account.');
     }
     setBusy('password');
@@ -66,8 +66,8 @@ export default function RegisterPage() {
         email: email.trim(),
         password,
         displayName:
-          type === 'lounge' ? loungeName.trim() || 'Your Lounge' : displayName.trim() || 'You',
-        loungeName: type === 'lounge' ? loungeName.trim() : undefined,
+          type === 'retailer' ? loungeName.trim() || 'Your Lounge' : displayName.trim() || 'You',
+        loungeName: type === 'retailer' ? loungeName.trim() : undefined,
         city: city.trim() || undefined,
         state: state.trim() || undefined,
       });
@@ -135,8 +135,8 @@ export default function RegisterPage() {
             sub="Rate, collect, discover"
           />
           <TypeCard
-            active={type === 'lounge'}
-            onClick={() => setType('lounge')}
+            active={type === 'retailer'}
+            onClick={() => setType('retailer')}
             icon={<Store size={18} strokeWidth={1.5} />}
             title="Retailer"
             sub="Manage inventory & posts"
@@ -149,7 +149,7 @@ export default function RegisterPage() {
         {mode === 'signup' && type === 'consumer' && (
           <Input label="Display name" value={displayName} onChange={setDisplayName} placeholder="Your name" />
         )}
-        {mode === 'signup' && type === 'lounge' && (
+        {mode === 'signup' && type === 'retailer' && (
           <>
             <p className="rounded-md border-[0.5px] border-ember-400/20 bg-ember-400/5 px-3 py-2 text-xs text-smoke-200">
               A retailer account is for businesses — it’s separate from a member account, doesn’t appear on the members
@@ -196,7 +196,7 @@ export default function RegisterPage() {
         >
           {busy === 'password' ? <Loader2 size={16} className="animate-spin" /> : <Check size={15} strokeWidth={2} />}
           {mode === 'signup'
-            ? type === 'lounge'
+            ? type === 'retailer'
               ? 'Create lounge account'
               : 'Create account'
             : 'Sign in'}

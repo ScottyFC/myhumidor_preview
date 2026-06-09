@@ -33,7 +33,7 @@ create extension if not exists "postgis"; -- for geo queries on lounges
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   public_id text unique not null,
-  account_type text not null default 'consumer' check (account_type in ('consumer','lounge')),
+  account_type text not null default 'consumer' check (account_type in ('consumer','retailer')),
   handle text unique not null,
   display_name text not null,
   avatar_url text,

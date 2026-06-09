@@ -73,7 +73,7 @@ export interface RecentMember {
   handle: string;
   displayName: string;
   avatarUrl?: string;
-  accountType: 'consumer' | 'lounge';
+  accountType: 'consumer' | 'retailer';
 }
 export interface RecentLounge {
   slug: string;
@@ -112,7 +112,7 @@ export async function recentMembers(limit = 8): Promise<RecentMember[]> {
       handle: p.handle,
       displayName: p.display_name ?? p.handle,
       avatarUrl: p.avatar_url ?? undefined,
-      accountType: (p.account_type as 'consumer' | 'lounge') ?? 'consumer',
+      accountType: (p.account_type === 'consumer' ? 'consumer' : 'retailer'),
     }));
   } catch {
     return [];

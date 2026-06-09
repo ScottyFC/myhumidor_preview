@@ -41,7 +41,7 @@ export function Nav() {
 
   useEffect(() => onAdminsChange(() => bumpAdmin((n) => n + 1)), []);
 
-  const isLounge = session?.type === 'lounge';
+  const isLounge = session?.type === 'retailer';
 
   useEffect(() => {
     if (!isLounge) { setLoungeSlug(null); setLoungeDone(false); return; }
@@ -140,7 +140,7 @@ export function Nav() {
                   <span className="hidden text-xs sm:inline">
                     <span className="text-paper">{session.displayName}</span>
                     <span className="ml-1.5 rounded bg-ember-400/15 px-1 py-0.5 text-[9px] uppercase tracking-wider text-ember-100">
-                      {session.type === 'lounge' ? 'Lounge' : 'Member'}
+                      {session.type === 'retailer' ? 'Retailer' : 'Member'}
                     </span>
                   </span>
                   <ChevronDown size={13} strokeWidth={1.5} className="text-smoke-400" />
@@ -186,7 +186,7 @@ export function Nav() {
                         Notification Settings
                       </MenuItem>
                       <button
-                        onClick={() => { setMenuOpen(false); signOut(); }}
+                        onClick={() => { setMenuOpen(false); signOut(); window.location.href = '/'; }}
                         className="flex w-full items-center gap-2.5 border-t border-ember-400/10 px-4 py-2.5 text-left text-sm text-smoke-300 hover:bg-ember-400/10 hover:text-paper"
                       >
                         <LogOut size={14} strokeWidth={1.5} /> Sign out

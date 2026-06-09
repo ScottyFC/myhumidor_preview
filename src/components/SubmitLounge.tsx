@@ -16,7 +16,7 @@ export function SubmitLounge() {
   const [owns, setOwns] = useState(false);
   const [f, setF] = useState({ name: '', address: '', city: '', state: '', phone: '', website: '', notes: '' });
 
-  useEffect(() => subscribeAuth((s) => setIsRetailer(s?.type === 'lounge')), []);
+  useEffect(() => subscribeAuth((s) => setIsRetailer(s?.type === 'retailer')), []);
 
   function set(k: keyof typeof f, v: string) {
     setF((prev) => ({ ...prev, [k]: v }));
@@ -80,7 +80,7 @@ export function SubmitLounge() {
         <p className="mb-3 rounded-md border-[0.5px] border-ember-400/20 bg-ember-400/5 p-3 text-sm text-smoke-200">
           Submitting a lounge requires a <span className="text-ember-100">retailer account</span> (separate from a member
           account).{' '}
-          <Link href="/register?type=lounge" className="text-ember-100 underline-offset-2 hover:underline">
+          <Link href="/register?type=retailer" className="text-ember-100 underline-offset-2 hover:underline">
             Create a retailer account
           </Link>{' '}
           to submit one for review. Once approved, you can verify it from your dashboard.

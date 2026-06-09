@@ -22,11 +22,11 @@
  * This is the Stripe model (cus_… / acct_…): a typed string key, not a bare UUID.
  */
 
-export type AccountType = 'consumer' | 'lounge';
+export type AccountType = 'consumer' | 'retailer';
 
 export const TYPE_TAG: Record<AccountType, string> = {
   consumer: 'USER',
-  lounge: 'LNGE',
+  retailer: 'LNGE',
 };
 
 export function tagFor(type: AccountType): string {
@@ -50,11 +50,11 @@ export function generateAccountId(type: AccountType): { uuid: string; publicId: 
 /** Read the account type back out of a public ID's first 4 characters. */
 export function accountTypeFromPublicId(publicId: string): AccountType | null {
   const tag = publicId.slice(0, 4);
-  if (tag === TYPE_TAG.lounge) return 'lounge';
+  if (tag === TYPE_TAG.retailer) return 'retailer';
   if (tag === TYPE_TAG.consumer) return 'consumer';
   return null;
 }
 
 export function isLoungeId(publicId: string): boolean {
-  return publicId.slice(0, 4) === TYPE_TAG.lounge;
+  return publicId.slice(0, 4) === TYPE_TAG.retailer;
 }

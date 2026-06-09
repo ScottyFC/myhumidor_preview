@@ -336,7 +336,7 @@ function PeopleResults({ users, loading }: { users: UserHit[]; loading: boolean 
             <div className="min-w-0">
               <div className="flex items-center gap-1 truncate font-medium hover:text-ember-100">
                 {u.displayName}
-                {u.accountType === 'lounge' && (
+                {u.accountType === 'retailer' && (
                   <BadgeCheck size={13} strokeWidth={1.5} className="shrink-0 text-ember-400" />
                 )}
               </div>

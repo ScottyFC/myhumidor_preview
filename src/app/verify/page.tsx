@@ -19,7 +19,7 @@ export default function VerifyPage() {
   const [done, setDone] = useState(false);
   const [err, setErr] = useState('');
 
-  useEffect(() => subscribeAuth((s) => { setSignedIn(!!s); setIsLounge(s?.type === 'lounge'); }), []);
+  useEffect(() => subscribeAuth((s) => { setSignedIn(!!s); setIsLounge(s?.type === 'retailer'); }), []);
   useEffect(() => {
     getMyLounges().then((ls) => {
       setMine(ls);

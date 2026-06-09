@@ -9,7 +9,7 @@ import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const type = searchParams.get('type'); // 'consumer' | 'lounge'
+  const type = searchParams.get('type'); // 'consumer' | 'retailer'
 
   if (!isSupabaseConfigured || !code) {
     return NextResponse.redirect(`${origin}/register`);
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       .from('profiles')
       .update({
         account_type: type,
-        role: type === 'lounge' ? 'lounge_owner' : 'consumer',
+        role: (type === 'retailer' || type === 'lounge') ? 'lounge_owner' : 'consumer',
       })
       .eq('id', data.user.id);
   }
