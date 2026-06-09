@@ -3,6 +3,7 @@
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
 import { geocodeAddress } from './geocode';
+import { ensureProfile } from './profile';
 import { subscribeTable } from './realtime';
 import { logEvent } from './audit';
 
@@ -163,6 +164,7 @@ export async function submitLounge(
       fire();
       return { ok: false, error: 'You appear to be signed out. Please sign in and try again.' };
     }
+    await ensureProfile();
     const { data, error } = await supabaseBrowser()
       .from('lounge_submissions')
       .insert({
@@ -217,6 +219,8 @@ export async function requestVerification(f: {
     } catch { /* ignore */ }
   }
   if (!uid) return { ok: false, error: 'You appear to be signed out. Please sign in and try again.' };
+  // Make sure the profiles row exists so submitted_by's FK is satisfied.
+  await ensureProfile();
   const { error } = await supabaseBrowser().from('lounge_submissions').insert({
     submitted_by: uid,
     name: f.name,

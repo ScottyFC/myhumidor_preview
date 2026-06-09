@@ -1,3 +1,14 @@
+## Phase 26 — Fix: lounge_submissions_submitted_by_fkey violation on verify
+
+**Cause:** the account had no `public.profiles` row, so `submitted_by` (FK → profiles) failed. The signup trigger never created one for it (created before `account_type` allowed `retailer`, or the trigger wasn't installed), and there was no policy letting a user create their own profile.
+
+**Run `supabase/migrations/phase26.sql`** — this is required to unstick existing accounts. It:
+1. Adds a `users insert own profile` policy (`auth.uid() = id`).
+2. **Backfills a profile for every `auth.users` row that's missing one** — this immediately fixes the stuck retailer account.
+3. Re-asserts the `handle_new_user` trigger + `on_auth_user_created` trigger so future signups always get a profile.
+
+**Code:** all three submission paths (`requestVerification`, `submitLounge`, `submitClaim`) now call a client `ensureProfile()` first, which self-creates the profile row if it's missing (works once the phase26 policy is in place) — a safety net so this can't recur for new accounts.
+
 ## Phase 25 — Why the import didn't show + verify geocoding + retailer UX
 
 **Why the cigars/lounges never appeared:** the import only went into the static catalog JSON, which is bundled at **build time** — it shows only after a Vercel **redeploy**. This phase also seeds them into the database so they show on DB-backed surfaces too. To make them appear: **redeploy the app** AND run `supabase/migrations/phase25.sql`.

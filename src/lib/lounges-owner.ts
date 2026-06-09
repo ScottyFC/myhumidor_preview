@@ -2,6 +2,7 @@
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
+import { ensureProfile } from './profile';
 import { subscribeTable } from './realtime';
 import { logEvent } from './audit';
 
@@ -54,6 +55,7 @@ export async function submitClaim(input: {
   if (!isSupabaseConfigured || !userId) return false;
   try {
     const sb = supabaseBrowser();
+    await ensureProfile();
     const { data: l } = await sb.from('lounges').select('id').eq('slug', input.loungeSlug).single();
     const { error } = await sb.from('lounge_claims').insert({
       lounge_id: l?.id ?? null,

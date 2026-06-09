@@ -237,3 +237,51 @@ export async function fetchProfileByHandle(
     return null;
   }
 }
+
+/**
+ * Make sure the signed-in user has a public.profiles row. New accounts get one
+ * from the handle_new_user trigger, but if that ever failed to fire (e.g. an
+ * account created before the account_type constraint allowed 'retailer'), this
+ * self-heals client-side so submissions don't hit a foreign-key error on
+ * lounge_submissions.submitted_by. Requires the "users insert own profile"
+ * policy (phase26).
+ */
+export async function ensureProfile(): Promise<boolean> {
+  if (!isSupabaseConfigured) return true;
+  try {
+    const sb = supabaseBrowser();
+    const { data: u } = await sb.auth.getUser();
+    const user = u.user;
+    if (!user) return false;
+
+    const { data: existing } = await sb.from('profiles').select('id').eq('id', user.id).maybeSingle();
+    if (existing) return true;
+
+    const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+    const at =
+      meta.account_type === 'retailer' || meta.account_type === 'lounge' ? 'retailer' : 'consumer';
+    const base = (user.email?.split('@')[0] || 'member').toLowerCase().replace(/[^a-z0-9_]/g, '') || 'member';
+    const display =
+      (meta.display_name as string) || (meta.lounge_name as string) || base || 'You';
+
+    const { error } = await sb.from('profiles').upsert(
+      {
+        id: user.id,
+        public_id: 'USER-' + user.id.replace(/-/g, ''),
+        handle: `${base}${Math.floor(1000 + Math.random() * 9000)}`,
+        display_name: display,
+        role: 'consumer',
+        account_type: at,
+      },
+      { onConflict: 'id' }
+    );
+    if (error) {
+      console.error('[ensureProfile] failed:', error.message);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('[ensureProfile] error:', e);
+    return false;
+  }
+}
