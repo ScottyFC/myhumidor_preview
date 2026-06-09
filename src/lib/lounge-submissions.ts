@@ -178,7 +178,10 @@ export async function submitLounge(
       console.error('[lounge-sub] insert failed:', error.message);
       cache = cache.filter((x) => x.id !== sub.id);
       fire();
-      return { ok: false, error: error.message };
+      const friendly = /submitted_by_fkey|foreign key/i.test(error.message)
+        ? 'Your account profile isn’t fully set up yet. Please sign out and back in, then try again.'
+        : error.message;
+      return { ok: false, error: friendly };
     }
     if (data) {
       cache = [rowTo(data as Row), ...cache.filter((x) => x.id !== sub.id)];
