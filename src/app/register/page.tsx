@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>('signin');
   const [type, setType] = useState<AccountType>('consumer');
+  const [claimSlug, setClaimSlug] = useState<string | null>(null);
   const [busy, setBusy] = useState<AuthProvider | null>(null);
 
   // manual fields
@@ -32,13 +33,17 @@ export default function RegisterPage() {
 
   // Surfaced when a confirmation link is expired/already used (callback redirect).
   useEffect(() => {
-    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('error')) {
-      setLinkError(true);
-      setMode('signin');
-    }
+    if (typeof window === 'undefined') return;
+    const q = new URLSearchParams(window.location.search);
+    if (q.get('error')) { setLinkError(true); setMode('signin'); }
+    // Retailer signup deep-links (claim/submit flows) preselect the retailer tab.
+    if (q.get('type') === 'lounge') { setType('lounge'); setMode('signup'); }
+    const claim = q.get('claim');
+    if (claim) { setClaimSlug(claim); setType('lounge'); setMode('signup'); }
   }, []);
 
   function finish() {
+    if (claimSlug) { router.push(`/lounges/${claimSlug}`); return; }
     router.push(type === 'lounge' ? '/dashboard' : '/humidor');
   }
 
@@ -146,7 +151,11 @@ export default function RegisterPage() {
         )}
         {mode === 'signup' && type === 'lounge' && (
           <>
-            <Input label="Lounge name" value={loungeName} onChange={setLoungeName} placeholder="Corona Cigar Co." />
+            <p className="rounded-md border-[0.5px] border-ember-400/20 bg-ember-400/5 px-3 py-2 text-xs text-smoke-200">
+              A retailer account is for businesses — it’s separate from a member account, doesn’t appear on the members
+              list, and is required to claim or submit a lounge.
+            </p>
+            <Input label="Lounge name" value={loungeName} onChange={setLoungeName} placeholder="Your lounge’s name" />
             <div className="grid grid-cols-2 gap-3">
               <Input label="City" value={city} onChange={setCity} placeholder="Tampa" />
               <Input label="State" value={state} onChange={setState} placeholder="FL" />

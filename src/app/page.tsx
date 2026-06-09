@@ -179,46 +179,6 @@ export default async function HomePage() {
       <Rule />
 
       {/* ─── LOUNGE PROGRAM PITCH ──────────────────────────────────────── */}
-      <section className="grid gap-8 py-16 lg:grid-cols-2">
-        <div>
-          <div className="eyebrow mb-3 flex items-center gap-2">
-            <Tv size={14} strokeWidth={1.5} className="text-ember-400" />
-            For lounges &amp; shops
-          </div>
-          <h2 className="font-display text-4xl leading-tight tracking-tightest">
-            Become a <span className="italic text-ember-400">verified</span> CigarTV partner.
-          </h2>
-          <p className="mt-4 text-smoke-200">
-            A free TV stick streaming the live CigarTV channel. Measurable foot traffic. The verified
-            check on every map your customers use. No upfront cost.
-          </p>
-          <Link href="/lounges/join" className="btn-primary mt-6">
-            The Lounge Program <ArrowRight size={14} strokeWidth={1.5} />
-          </Link>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-          {lounges.slice(0, 3).map((l) => (
-            <Link
-              key={l.id}
-              href={`/lounges/${l.slug}`}
-              className="group rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-4 transition hover:border-ember-400/40"
-            >
-              <div className="flex items-center gap-1.5">
-                <MapPin size={11} strokeWidth={1.5} className="text-ember-400" />
-                <span className="eyebrow">lounge</span>
-              </div>
-              <div className="font-display mt-1 text-base font-medium group-hover:text-ember-100">{l.name}</div>
-              <div className="mt-1 text-xs text-smoke-400">{[l.city, l.state].filter(Boolean).join(', ')}</div>
-              <div className="mt-2 inline-flex items-center gap-1 text-xs text-ember-100">
-                View profile <ArrowRight size={11} strokeWidth={1.5} />
-              </div>
-              <div className="mt-2 inline-flex items-center gap-1 text-xs text-ember-100">
-                View profile <ArrowRight size={11} strokeWidth={1.5} />
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

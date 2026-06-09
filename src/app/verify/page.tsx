@@ -50,8 +50,7 @@ export default function VerifyPage() {
           <Check className="mx-auto text-ember-400" size={36} strokeWidth={1.5} />
           <h1 className="font-display mt-3 text-3xl tracking-tightest">Submitted for review</h1>
           <p className="mx-auto mt-2 max-w-md text-sm text-smoke-200">
-            Our team will review your business details and verify — and, where eligible, certify — your lounge.
-            You’ll see the verified badge on your lounge page once approved.
+            Our team will review your business details and verify your lounge. You’ll see the verified badge on your lounge page once approved. Certification is available any time on our paid tiers.
           </p>
           <div className="mt-5 flex justify-center gap-3">
             <Link href="/dashboard" className="btn-primary">Back to dashboard</Link>
@@ -65,12 +64,11 @@ export default function VerifyPage() {
     <div className="mx-auto max-w-2xl px-6 pt-10">
       <div className="mb-2 inline-flex items-center gap-2 text-ember-400">
         <ShieldCheck size={18} strokeWidth={1.5} />
-        <span className="eyebrow">Verify &amp; certify</span>
+        <span className="eyebrow">Verify your lounge</span>
       </div>
       <h1 className="font-display text-4xl tracking-tightest">Verify your lounge</h1>
       <p className="mt-2 max-w-xl text-sm text-smoke-200">
-        Submit details we can verify against public records. Once approved, your lounge shows a verified badge,
-        unlocks instant cigar approvals, and becomes eligible for certification.
+        Submit details we can verify against public records. Once approved, your lounge is Verified (free) — it shows the verified badge and unlocks instant cigar approvals. Certification (the paid tier) adds priority placement and the certified badge.
       </p>
 
       {signedIn && !isLounge && (

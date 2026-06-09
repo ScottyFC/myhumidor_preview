@@ -165,14 +165,14 @@ export default function ProfilePage() {
 }
 
 function LoungeBusinessPanel({ state, selfId }: { state?: string; selfId: string }) {
-  const [done, setDone] = useState(false);
-  const [slug, setSlug] = useState<string | null>(null);
+  const [verified, setVerified] = useState(false);
+  const [certified, setCertified] = useState(false);
   useEffect(() => {
     let off = false;
     getMyLounges().then((ls) => {
       if (off) return;
-      setDone(!!(ls[0]?.verified && ls[0]?.certified));
-      setSlug(ls[0]?.slug ?? null);
+      setVerified(!!ls[0]?.verified);
+      setCertified(!!ls[0]?.certified);
     });
     return () => { off = true; };
   }, []);
@@ -186,18 +186,18 @@ function LoungeBusinessPanel({ state, selfId }: { state?: string; selfId: string
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Link href="/dashboard" className="btn-primary text-xs">Open dashboard</Link>
-          {done ? (
+          {!verified && <Link href="/verify" className="btn-ghost text-xs">Verify lounge</Link>}
+          {verified && (
             <span className="inline-flex items-center gap-1.5 text-xs text-ember-100">
-              <BadgeCheck size={14} strokeWidth={1.5} className="text-ember-400" /> Verified &amp; certified
+              <BadgeCheck size={14} strokeWidth={1.5} className="text-ember-400" />
+              {certified ? 'Verified & certified' : 'Verified'}
             </span>
-          ) : (
-            <Link href="/verify" className="btn-ghost text-xs">Verify &amp; certify</Link>
           )}
         </div>
-        {done && slug && (
+        {verified && !certified && (
           <p className="mt-3 text-xs text-smoke-400">
-            Not your lounge, or claimed by someone else?{' '}
-            <Link href={`/lounges/${slug}`} className="text-ember-100 underline">Submit a change request</Link>.
+            Want the certified badge and priority placement?{' '}
+            <Link href="/dashboard?upgrade=certified" className="text-ember-100 underline">Upgrade to a paid tier</Link>.
           </p>
         )}
       </div>

@@ -9,14 +9,14 @@ import Link from 'next/link';
 
 export function SubmitLounge() {
   const [open, setOpen] = useState(false);
-  const [signedIn, setSignedIn] = useState(false);
+  const [isRetailer, setIsRetailer] = useState(false);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState('');
   const [owns, setOwns] = useState(false);
   const [f, setF] = useState({ name: '', address: '', city: '', state: '', phone: '', website: '', notes: '' });
 
-  useEffect(() => subscribeAuth((s) => setSignedIn(!!s)), []);
+  useEffect(() => subscribeAuth((s) => setIsRetailer(s?.type === 'lounge')), []);
 
   function set(k: keyof typeof f, v: string) {
     setF((prev) => ({ ...prev, [k]: v }));
@@ -24,8 +24,8 @@ export function SubmitLounge() {
 
   async function submit() {
     if (!f.name.trim()) return;
-    if (!signedIn) {
-      setErr('Please sign in first — submissions are tied to your account.');
+    if (!isRetailer) {
+      setErr('Submitting a lounge requires a retailer account.');
       return;
     }
     setBusy(true);
@@ -76,14 +76,18 @@ export function SubmitLounge() {
   return (
     <div className="rounded-xl border-[0.5px] border-ember-400/20 bg-char/50 p-6">
       <div className="eyebrow mb-3">Submit your lounge</div>
-      {!signedIn ? (
-        <p className="mb-3 rounded-md border-[0.5px] border-ember-400/20 bg-char/60 p-3 text-sm text-smoke-200">
-          Please <Link href="/register?next=/lounges" className="text-ember-100 underline-offset-2 hover:underline">sign in</Link> to
-          submit a lounge — submissions are tied to your account so we can verify and (if you own it) hand it to you.
+      {!isRetailer ? (
+        <p className="mb-3 rounded-md border-[0.5px] border-ember-400/20 bg-ember-400/5 p-3 text-sm text-smoke-200">
+          Submitting a lounge requires a <span className="text-ember-100">retailer account</span> (separate from a member
+          account).{' '}
+          <Link href="/register?type=lounge" className="text-ember-100 underline-offset-2 hover:underline">
+            Create a retailer account
+          </Link>{' '}
+          to submit one for review. Once approved, you can verify it from your dashboard.
         </p>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Lounge name" v={f.name} onChange={(v) => set('name', v)} placeholder="Corona Cigar Co." full />
+        <Field label="Lounge name" v={f.name} onChange={(v) => set('name', v)} placeholder="Your lounge’s name" full />
         <Field label="Address" v={f.address} onChange={(v) => set('address', v)} placeholder="123 Main St" full />
         <Field label="City" v={f.city} onChange={(v) => set('city', v)} placeholder="Tampa" />
         <Field label="State" v={f.state} onChange={(v) => set('state', v)} placeholder="FL" />
@@ -98,7 +102,7 @@ export function SubmitLounge() {
       <div className="mt-4 flex items-center gap-2">
         <button
           onClick={submit}
-          disabled={!f.name.trim() || busy || !signedIn}
+          disabled={!f.name.trim() || busy || !isRetailer}
           className="inline-flex items-center gap-2 rounded-md bg-ember-400 px-5 py-2 text-sm font-medium text-paper transition hover:bg-ember-600 disabled:opacity-60"
         >
           {busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} strokeWidth={1.5} />}

@@ -49,7 +49,7 @@ export function Nav() {
     getMyLounges().then((ls) => {
       if (off) return;
       setLoungeSlug(ls[0]?.slug ?? null);
-      setLoungeDone(!!(ls[0]?.verified && ls[0]?.certified));
+      setLoungeDone(!!ls[0]?.verified); // verification is the action; once verified, hide it
     });
     return () => { off = true; };
   }, [isLounge, session?.uuid]);
@@ -162,7 +162,7 @@ export function Nav() {
                           </MenuItem>
                           {!loungeDone && (
                             <MenuItem href="/verify" icon={<ShieldCheck size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
-                              Verify &amp; Certify
+                              Verify lounge
                             </MenuItem>
                           )}
                           <MenuItem href="/submit" icon={<Cigarette size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>

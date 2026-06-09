@@ -4,18 +4,17 @@ import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation } 
 import type { CatalogStore } from '@/types';
 import { findCatalogStoreBySlug } from '@/lib/catalog';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
-import { ClaimLounge } from '@/components/ClaimLounge';
 import { BrandTile } from '@/components/BrandTile';
 import { LoungeMenu } from '@/components/LoungeMenu';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
 import { LoungePosts } from '@/components/LoungePosts';
 import { LoungeOwnerComposer } from '@/components/LoungeOwnerComposer';
+import { LoungeClaimBlock } from '@/components/LoungeClaimBlock';
 import { LoungeBadgeCollect } from '@/components/LoungeBadgeCollect';
 import { CheckInFeed } from '@/components/CheckInFeed';
 import { LoungeSocialLinks } from '@/components/SocialLinks';
 import { LoungeFollow } from '@/components/LoungeFollow';
-import { ChangeRequest } from '@/components/ChangeRequest';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -149,14 +148,18 @@ export default async function LoungePage({ params }: PageProps) {
         </div>
       </section>
 
-      {/* Claim */}
+      {/* Claim / change request — gated by lounge state + retailer account */}
       <section className="border-b border-ember-400/15 py-8">
-        <ClaimLounge store={lounge} alreadyVerified={!!lounge.verified} />
+        <LoungeClaimBlock
+          slug={lounge.slug}
+          loungeId={lounge.id}
+          name={lounge.name}
+          verified={!!lounge.verified}
+          certified={!!lounge.certified}
+        />
       </section>
 
-      {/* Suggest a correction */}
       <section className="py-8">
-        <ChangeRequest targetType="lounge" targetId={lounge.slug} targetName={lounge.name} />
         <LoungeOwnerComposer slug={lounge.slug} loungeName={lounge.name} />
         <LoungePosts slug={lounge.slug} />
         <CheckInFeed loungeSlug={lounge.slug} title="Recent check-ins" />
