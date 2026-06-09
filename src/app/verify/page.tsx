@@ -6,6 +6,7 @@ import { ShieldCheck, Check, Loader2, Lock } from 'lucide-react';
 import { subscribeAuth } from '@/lib/auth';
 import { requestVerification } from '@/lib/lounge-submissions';
 import { getMyLounges, type MyLounge } from '@/lib/lounges-owner';
+import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 
 export default function VerifyPage() {
   const [signedIn, setSignedIn] = useState(false);
@@ -15,6 +16,7 @@ export default function VerifyPage() {
     name: '', address: '', city: '', state: '', phone: '', email: '',
     website: '', businessLicense: '', contactName: '', notes: '',
   });
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState('');
@@ -37,6 +39,7 @@ export default function VerifyPage() {
       name: f.name.trim(), address: f.address.trim(), city: f.city.trim(), state: f.state.trim(),
       phone: f.phone.trim(), email: f.email.trim(), website: f.website.trim(),
       businessLicense: f.businessLicense.trim(), contactName: f.contactName.trim(), notes: f.notes.trim(),
+      lat: coords?.lat, lng: coords?.lng,
     });
     setBusy(false);
     if (res.ok) setDone(true);
@@ -86,7 +89,21 @@ export default function VerifyPage() {
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field full label="Legal business name" v={f.name} onChange={(v) => set('name', v)} placeholder="Your lounge, LLC" />
-        <Field full label="Street address" v={f.address} onChange={(v) => set('address', v)} placeholder="123 Main St" />
+        <div className="sm:col-span-2">
+          <AddressAutocomplete
+            value={f.address}
+            onChange={(v) => { set('address', v); setCoords(null); }}
+            onPick={(s) => {
+              setF((p) => ({ ...p, address: s.address, city: s.city || p.city, state: s.state || p.state }));
+              setCoords({ lat: s.lat, lng: s.lng });
+            }}
+          />
+          {coords && (
+            <p className="mt-1 text-[11px] text-ember-100">
+              ✓ Location pinned — your lounge will appear on the map once approved.
+            </p>
+          )}
+        </div>
         <Field label="City" v={f.city} onChange={(v) => set('city', v)} placeholder="Tampa" />
         <Field label="State" v={f.state} onChange={(v) => set('state', v)} placeholder="FL" />
         <Field label="Phone" v={f.phone} onChange={(v) => set('phone', v)} placeholder="(813) 555-0100" />

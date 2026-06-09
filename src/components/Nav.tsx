@@ -55,7 +55,6 @@ export function Nav() {
   }, [isLounge, session?.uuid]);
 
   const TABS = isLounge ? LOUNGE_TABS : CONSUMER_TABS;
-  const myLoungeHref = loungeSlug ? `/lounges/${loungeSlug}` : '/lounges';
 
   // Humidor requires an account — send signed-out users to register.
   const tabHref = (href: string) =>
@@ -113,7 +112,7 @@ export function Nav() {
               )}
               {isLounge && (
                 <>
-                  <Link href={myLoungeHref} className="btn-ghost text-xs" title="View your lounge page">
+                  <Link href="/profile" className="btn-ghost text-xs" title="Your lounge profile">
                     <Store size={14} strokeWidth={1.5} />
                     <span className="hidden sm:inline">My Lounge</span>
                   </Link>
@@ -149,14 +148,8 @@ export function Nav() {
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
                     <div className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-lg border-[0.5px] border-ember-400/20 bg-char shadow-xl">
-                      <MenuItem href="/profile" icon={<User size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
-                        My Profile
-                      </MenuItem>
                       {isLounge ? (
                         <>
-                          <MenuItem href={myLoungeHref} icon={<Store size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
-                            My Lounge Page
-                          </MenuItem>
                           <MenuItem href="/dashboard" icon={<LayoutDashboard size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                             Dashboard
                           </MenuItem>
@@ -171,6 +164,9 @@ export function Nav() {
                         </>
                       ) : (
                         <>
+                          <MenuItem href="/profile" icon={<User size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                            My Profile
+                          </MenuItem>
                           <MenuItem href="/check-in" icon={<Flame size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                             Check in
                           </MenuItem>

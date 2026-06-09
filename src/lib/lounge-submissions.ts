@@ -26,6 +26,8 @@ export interface LoungeSubmission {
   loungeId?: string | null;
   claimsOwnership?: boolean;
   submittedBy?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 const KEY = 'myhumidor:lounge-submissions';
@@ -65,6 +67,8 @@ type Row = {
   business_license?: string | null;
   contact_name?: string | null;
   kind?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 };
 function rowTo(r: Row): LoungeSubmission {
   return {
@@ -76,9 +80,10 @@ function rowTo(r: Row): LoungeSubmission {
     businessLicense: r.business_license ?? undefined,
     contactName: r.contact_name ?? undefined,
     kind: (r.kind as 'new' | 'verify') ?? 'new',
+    lat: r.lat ?? null, lng: r.lng ?? null,
   };
 }
-const SELECT = 'id, name, address, city, state, phone, email, website, notes, status, created_at, reviewed_by, lounge_id, claims_ownership, submitted_by, business_license, contact_name, kind';
+const SELECT = 'id, name, address, city, state, phone, email, website, notes, status, created_at, reviewed_by, lounge_id, claims_ownership, submitted_by, business_license, contact_name, kind, lat, lng';
 
 async function hydrateRemote() {
   try {
@@ -199,6 +204,7 @@ export async function submitLounge(
 export async function requestVerification(f: {
   name: string; address?: string; city?: string; state?: string; phone?: string;
   email?: string; website?: string; businessLicense?: string; contactName?: string; notes?: string;
+  lat?: number; lng?: number;
 }): Promise<{ ok: boolean; error?: string }> {
   start();
   if (!isSupabaseConfigured) return { ok: true };
@@ -223,6 +229,8 @@ export async function requestVerification(f: {
     business_license: f.businessLicense || null,
     contact_name: f.contactName || null,
     notes: f.notes || null,
+    lat: f.lat ?? null,
+    lng: f.lng ?? null,
     claims_ownership: true,
     kind: 'verify',
   });
@@ -236,12 +244,12 @@ export async function requestVerification(f: {
 async function pushToLounges(sub: LoungeSubmission): Promise<string | null> {
   try {
     const slug = `${slugify(sub.name)}-${Math.random().toString(36).slice(2, 7)}`;
-    const coords = await geocodeAddress({
-      name: sub.name,
-      address: sub.address,
-      city: sub.city,
-      state: sub.state,
-    });
+    // Prefer coordinates captured at submission time (Mapbox autocomplete on the
+    // verify form); fall back to a server-side geocode if they weren't provided.
+    const coords =
+      sub.lat != null && sub.lng != null
+        ? { lat: sub.lat, lng: sub.lng }
+        : await geocodeAddress({ name: sub.name, address: sub.address, city: sub.city, state: sub.state });
     const owns = sub.claimsOwnership === true;
     const sb = supabaseBrowser();
     const { data, error } = await sb

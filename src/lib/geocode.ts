@@ -8,6 +8,41 @@ const MAPBOX_TOKEN =
   process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
   'pk.eyJ1Ijoic2plZmZlcnkiLCJhIjoiY21wcTMybnJkMGl6NDJxb2kwMHdveWc2eCJ9.7-_wuAUyICHe1qg5OOqAvg';
 
+export interface AddressSuggestion {
+  label: string; address: string; city: string; state: string; lat: number; lng: number;
+}
+
+/** Address autocomplete suggestions (Mapbox). Used by the verify form auto-fill. */
+export async function suggestAddresses(query: string): Promise<AddressSuggestion[]> {
+  const q = query.trim();
+  if (q.length < 3 || !MAPBOX_TOKEN) return [];
+  try {
+    const url =
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json` +
+      `?access_token=${MAPBOX_TOKEN}&autocomplete=true&country=us&limit=5&types=address,poi`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data?.features ?? []).map((f: Record<string, unknown>) => {
+      const ctx = (f.context as Array<{ id: string; text: string; short_code?: string }>) ?? [];
+      const place = ctx.find((c) => c.id?.startsWith('place'));
+      const region = ctx.find((c) => c.id?.startsWith('region'));
+      const num = f.address ? `${f.address} ` : '';
+      const center = (f.center as [number, number]) ?? [0, 0];
+      const stateCode = region?.short_code?.split('-')?.[1]?.toUpperCase() ?? region?.text ?? '';
+      return {
+        label: String(f.place_name ?? ''),
+        address: `${num}${String(f.text ?? '')}`.trim(),
+        city: place?.text ?? '',
+        state: stateCode,
+        lng: center[0], lat: center[1],
+      } as AddressSuggestion;
+    });
+  } catch {
+    return [];
+  }
+}
+
 export interface GeoParts {
   name?: string;
   address?: string;

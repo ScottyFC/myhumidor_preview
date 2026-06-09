@@ -1,3 +1,16 @@
+## Phase 25 — Why the import didn't show + verify geocoding + retailer UX
+
+**Why the cigars/lounges never appeared:** the import only went into the static catalog JSON, which is bundled at **build time** — it shows only after a Vercel **redeploy**. This phase also seeds them into the database so they show on DB-backed surfaces too. To make them appear: **redeploy the app** AND run `supabase/migrations/phase25.sql`.
+
+`phase25.sql` (idempotent — re-running skips rows already present by slug):
+- Makes `lounges.lat/lng` nullable so a lounge can be added before it's geocoded (the map skips coordinate-less rows).
+- Adds `lat/lng` (+ `kind`, `business_license`, `contact_name`, `claims_ownership`) to `lounge_submissions`, and re-asserts the admin SELECT/ALL policy so verifications reliably show in the admin queue.
+- Seeds the 300 boutique cigars into `catalog_cigars` and the USA lounges into `lounges`.
+
+**Verify flow:** the verify form now has a **Mapbox address autocomplete** — selecting a suggestion fills street/city/state and captures exact coordinates, which ride through `requestVerification` → on approval the lounge is created with those coordinates (falling back to a server geocode if none were captured). This fixes both "add an auto address fill" and the approval failing when coordinates were missing.
+
+**Retailer UX:** retailers have no humidor (`/humidor` redirects them to the dashboard); the top **My Lounge** button goes to their profile (`/profile`); "My Profile" and "My Lounge Page" were removed from the account dropdown.
+
 ## Catalog import — Top 300 boutique cigars + USA lounges
 
 Imported into the static catalog (`src/data/cigars.json`, `src/data/stores.json`) — no SQL needed; ships on the next deploy.

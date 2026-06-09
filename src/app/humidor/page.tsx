@@ -41,6 +41,8 @@ export default function HumidorPage() {
   useEffect(() => {
     return subscribeAuth((s: Session | null) => {
       if (s) {
+        // Retailers have no humidor — their inventory lives on the dashboard.
+        if (s.type === 'retailer') { router.replace('/dashboard'); return; }
         setAuthState('in');
         setDisplayName(s.displayName || 'Your');
       } else {
