@@ -13,15 +13,26 @@ function ago(iso: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-export function CheckInFeed({ loungeSlug, userId, title = 'Check-ins' }: { loungeSlug?: string; userId?: string; title?: string }) {
+export function CheckInFeed({ loungeSlug, userId, title = 'Check-ins', sinceDays }: { loungeSlug?: string; userId?: string; title?: string; sinceDays?: number }) {
   const [items, setItems] = useState<CheckIn[] | null>(null);
 
   useEffect(() => {
     let off = false;
-    const load = loungeSlug ? getCheckInsForSlug(loungeSlug) : userId ? getCheckInsForUser(userId) : Promise.resolve([]);
-    load.then((c) => !off && setItems(c));
-    return () => { off = true; };
-  }, [loungeSlug, userId]);
+    const fetchItems = () => {
+      const load = loungeSlug ? getCheckInsForSlug(loungeSlug) : userId ? getCheckInsForUser(userId) : Promise.resolve([]);
+      load.then((c) => {
+        if (off) return;
+        const filtered = sinceDays
+          ? c.filter((x) => Date.now() - new Date(x.createdAt).getTime() <= sinceDays * 86400000)
+          : c;
+        setItems(filtered);
+      });
+    };
+    fetchItems();
+    const onNew = () => fetchItems();
+    if (typeof window !== 'undefined') window.addEventListener('myhumidor:checkin', onNew);
+    return () => { off = true; if (typeof window !== 'undefined') window.removeEventListener('myhumidor:checkin', onNew); };
+  }, [loungeSlug, userId, sinceDays]);
 
   if (items === null || items.length === 0) return null;
 

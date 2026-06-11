@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Users, Clock, Zap, Wallet, BadgeCheck, Pencil, Check, Loader2 } from 'lucide-react';
+import { Users, Clock, Zap, Wallet, BadgeCheck, Pencil, Check, Loader2, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
 import { getMyLounges, type MyLounge } from '@/lib/lounges-owner';
 import {
   listDevices, recentLedger, streamStats7d, renameLounge,
@@ -96,6 +98,17 @@ export function LoungeDashboard() {
         {lounge && (lounge.city || lounge.state) && (
           <div className="mt-2 text-sm text-smoke-400">{[lounge.city, lounge.state].filter(Boolean).join(', ')}</div>
         )}
+
+        {/* Shop logo (customers see this on the shop page) + view shop link */}
+        {lounge?.slug && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <LoungeLogoEditor slug={lounge.slug} force />
+            <Link href={`/lounges/${lounge.slug}`} className="btn-ghost text-xs">
+              <ExternalLink size={14} strokeWidth={1.5} /> View shop page
+            </Link>
+          </div>
+        )}
+
         {!hasVenue && (
           <div className="mt-3 text-xs text-smoke-400">
             New lounge — you’re starting with {balance.toLocaleString()} credits. Verify your lounge to register TVs and start earning.

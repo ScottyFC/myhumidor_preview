@@ -112,10 +112,6 @@ export function Nav() {
               )}
               {isLounge && (
                 <>
-                  <Link href="/profile" className="btn-ghost text-xs" title="Your lounge profile">
-                    <Store size={14} strokeWidth={1.5} />
-                    <span className="hidden sm:inline">My Lounge</span>
-                  </Link>
                   {!loungeDone && (
                     <Link href="/verify" className="btn-ghost text-xs" title="Verify & certify your lounge">
                       <ShieldCheck size={14} strokeWidth={1.5} className="text-ember-400" />

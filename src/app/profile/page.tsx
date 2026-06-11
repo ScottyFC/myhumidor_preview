@@ -42,6 +42,8 @@ export default function ProfilePage() {
   useEffect(() => {
     return subscribeAuth((s) => {
       if (s) {
+        // Retailers have no profile — they use the dashboard + their shop page.
+        if (s.type === 'retailer') { router.replace('/dashboard'); return; }
         setSession(s);
         setAuthState('in');
       } else {

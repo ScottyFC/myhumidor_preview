@@ -13,6 +13,7 @@ import { LoungeOwnerComposer } from '@/components/LoungeOwnerComposer';
 import { LoungeClaimBlock } from '@/components/LoungeClaimBlock';
 import { LoungeBadgeCollect } from '@/components/LoungeBadgeCollect';
 import { CheckInFeed } from '@/components/CheckInFeed';
+import { LoungeCheckIn } from '@/components/LoungeCheckIn';
 import { LoungeSocialLinks } from '@/components/SocialLinks';
 import { LoungeFollow } from '@/components/LoungeFollow';
 
@@ -161,8 +162,11 @@ export default async function LoungePage({ params }: PageProps) {
 
       <section className="py-8">
         <LoungeOwnerComposer slug={lounge.slug} loungeName={lounge.name} />
+        <div className="mt-6">
+          <LoungeCheckIn slug={lounge.slug} name={lounge.name} lat={lounge.lat} lng={lounge.lng} />
+        </div>
         <LoungePosts slug={lounge.slug} />
-        <CheckInFeed loungeSlug={lounge.slug} title="Recent check-ins" />
+        <CheckInFeed loungeSlug={lounge.slug} title="Here now & this week" sinceDays={7} />
         <LoungeBadgeCollect slug={lounge.slug} />
       </section>
     </div>

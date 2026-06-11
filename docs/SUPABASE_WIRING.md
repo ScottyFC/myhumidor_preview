@@ -1,3 +1,14 @@
+## Retailer simplification + check-ins + shop logo + cigar-image fallback
+
+- **Retailers have no profile.** `/profile` redirects retailers to `/dashboard`, and the "My Lounge" toolbar button is removed. They use the dashboard + their public shop page (a "View shop page" link sits on the dashboard).
+- **Shop logo** uploads from the dashboard (the existing logo editor, now shown there with `force`); customers see it on the shop page (`lounges.image_url`).
+- **Geolocation check-in:** the lounge page shows a "Check in here" button that only enables when the visitor's GPS is within ~250m of the lounge's coordinates (lounges without coordinates can't verify presence). The lounge page now shows check-ins from **the last 7 days**.
+- **Cigar image fallback:** when a cigar has no artwork, the detail page tries the brand logo via `/api/brand-logo` and falls back to a branded monogram. The route uses the Google Custom Search JSON API when `GOOGLE_CSE_KEY` + `GOOGLE_CSE_CX` env vars are set; without them it returns nothing and the monogram shows. (Programmatic Google image search needs those API credentials — there's no key-free way to query Google images within terms of service.)
+
+### TV app
+- **Live feed hardening:** the player now allows cross-protocol redirects (the usual cause of HLS "won't load" on CDNs), sets the HLS mime type explicitly, uses a real User-Agent, and auto-retries transient live errors.
+- **Stay-signed-in:** on launch the app refreshes the stored session; a genuinely-expired/invalid session now drops to login instead of appearing signed-in but failing every call.
+- **Splash** runs ~3.4s over the site's char→ember wash, logos centered both axes and enlarged; **TV banner + launcher icon** set from the supplied artwork.
 ## Phase 26 — Fix: lounge_submissions_submitted_by_fkey violation on verify
 
 **Cause:** the account had no `public.profiles` row, so `submitted_by` (FK → profiles) failed. The signup trigger never created one for it (created before `account_type` allowed `retailer`, or the trigger wasn't installed), and there was no policy letting a user create their own profile.

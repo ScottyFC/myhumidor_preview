@@ -8,7 +8,7 @@ import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
 import { CigarCommunity } from '@/components/CigarCommunity';
 import { AddToCollection } from '@/components/AddToCollection';
-import { BrandTile } from '@/components/BrandTile';
+import { BrandLogo } from '@/components/BrandLogo';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { AdminCigarActions } from '@/components/AdminCigarActions';
 import { ChangeRequest } from '@/components/ChangeRequest';
@@ -93,8 +93,8 @@ export default async function CigarPage({ params }: PageProps) {
       <div className="grid gap-10 lg:grid-cols-12">
         {/* ─── Visual ─────────────────────────────────────────────────── */}
         <div className="lg:col-span-5">
-          <BrandTile
-            name={view.brand}
+          <BrandLogo
+            brand={view.brand}
             src={view.imageUrl}
             fit="contain"
             rounded="rounded-xl"
