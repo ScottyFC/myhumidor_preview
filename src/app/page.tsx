@@ -12,7 +12,6 @@ export const revalidate = 3600;
 
 export default async function HomePage() {
   const catalogCount = allCigars().length;
-  const heroTiles = featuredCigars(40).filter((c) => c.image_url).slice(0, 9);
   const loungeCount = Math.floor(allStores().length / 10) * 10;
   const allFeatured = featuredCigars(24);
   const featured = allFeatured.slice(0, 12);
@@ -33,8 +32,6 @@ export default async function HomePage() {
           className="pointer-events-none absolute -left-40 -top-24 h-[480px] w-[640px] rounded-full opacity-50 blur-3xl"
           style={{ background: 'radial-gradient(closest-side, rgba(240,195,85,0.14), rgba(58,36,23,0.10), transparent 70%)' }}
         />
-        <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_1fr]">
-        <div>
         <div className="eyebrow mb-3">Premium cigars, tracked.</div>
         <h1 className="font-display text-5xl leading-[0.95] tracking-tightest sm:text-6xl lg:text-7xl">
           <span className="italic text-ember-400">Rate</span> what you smoke.
@@ -71,29 +68,6 @@ export default async function HomePage() {
             </div>
           ))}
         </dl>
-        </div>
-
-        {/* Visual collage — real brand artwork from the catalog, drifting smoke */}
-        <div className="relative hidden lg:block" aria-hidden>
-          <div className="pointer-events-none absolute -inset-8 rounded-full opacity-60 blur-3xl"
-               style={{ background: 'radial-gradient(closest-side, rgba(240,195,85,0.12), transparent 70%)' }} />
-          <div className="relative grid grid-cols-3 gap-3">
-            {heroTiles.map((c, i) => (
-              <div key={c.uuid}
-                   className={`overflow-hidden rounded-xl ring-1 ring-ember-400/15 transition-transform duration-500 hover:scale-[1.04] ${i % 3 === 1 ? 'translate-y-5' : ''} ${i >= 6 ? 'opacity-80' : ''}`}>
-                <BrandTile name={c.brand} src={c.image_url} fit="cover" rounded="rounded-xl" className="aspect-square w-full text-xl" />
-              </div>
-            ))}
-          </div>
-          {/* drifting smoke wisp */}
-          <svg className="pointer-events-none absolute -top-12 left-1/3 h-40 w-24 animate-smoke opacity-25" viewBox="0 0 60 160" fill="none">
-            <path d="M30 160 C 10 120, 50 100, 30 60 C 15 30, 40 20, 32 0" stroke="url(#smk)" strokeWidth="6" strokeLinecap="round" />
-            <defs><linearGradient id="smk" x1="0" y1="160" x2="0" y2="0">
-              <stop offset="0" stopColor="#f0c355" stopOpacity="0.0" /><stop offset="0.4" stopColor="#f0c355" stopOpacity="0.5" /><stop offset="1" stopColor="#fff" stopOpacity="0.7" />
-            </linearGradient></defs>
-          </svg>
-        </div>
-        </div>
       </section>
 
       <Rule />

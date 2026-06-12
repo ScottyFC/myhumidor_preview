@@ -1,3 +1,8 @@
+## Tweak — hero collage removed, Aging Tracker on Humidor
+
+- Removed the brand-artwork collage from the homepage hero (back to the single-column headline with glow + stats strip; smoke animation CSS cleaned up).
+- The **Aging Tracker** now also renders on the Humidor page ("My collection" view, above the filters), tracking the same humidor items with the Aficionado gating it has on the profile.
+
 ## Phase 31 — Release-prep: auth gating, homepage life, lounge rotation, analytics
 
 **Run `supabase/migrations/phase31.sql`** and make sure `SUPABASE_SERVICE_KEY` is set in Vercel.

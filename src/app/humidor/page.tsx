@@ -7,6 +7,8 @@ import { Heart, Box, Trash2, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { Feed } from '@/components/Feed';
+import { AgingTracker } from '@/components/AgingTracker';
+import { subscribeAficionado } from '@/lib/aficionado';
 import {
   type CollectionItem,
   getCollection,
@@ -35,6 +37,7 @@ export default function HumidorPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [view, setView] = useState<'feed' | 'collection'>('feed');
   const [userItems, setUserItems] = useState<CollectionItem[]>([]);
+  const [member, setMember] = useState(false);
   const [authState, setAuthState] = useState<'checking' | 'in' | 'out'>('checking');
   const [displayName, setDisplayName] = useState('Your');
 
@@ -51,6 +54,8 @@ export default function HumidorPage() {
       }
     });
   }, [router]);
+
+  useEffect(() => subscribeAficionado(setMember), []);
 
   useEffect(() => {
     const sync = () => setUserItems(getCollection());
@@ -124,6 +129,9 @@ export default function HumidorPage() {
         <Feed />
       ) : (
         <>
+          <div className="mb-8">
+            <AgingTracker humidor={userItems.filter((i) => i.status === 'humidor')} member={member} />
+          </div>
           <div className="mb-6 flex flex-wrap items-center gap-2">
             {FILTERS.map((f) => (
               <button
