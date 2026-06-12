@@ -3,6 +3,7 @@ import { Tv, Lock, Package } from 'lucide-react';
 import { LiveStream } from '@/components/LiveStream';
 import { LoungeDashboard } from '@/components/LoungeDashboard';
 import { DeviceManager } from '@/components/DeviceManager';
+import { CertificationTiers } from '@/components/CertificationTiers';
 
 export const metadata = {
   title: 'Lounge Dashboard · MyHumidor by CigarTV',
@@ -26,6 +27,9 @@ export default function DashboardPage() {
           <Package size={15} strokeWidth={1.5} /> Manage inventory
         </Link>
       </div>
+
+      {/* Certification plans (Untappd-for-Business style) */}
+      <CertificationTiers />
 
       {/* Live channel */}
       <section className="mt-8">

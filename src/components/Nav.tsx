@@ -33,7 +33,7 @@ export function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [, bumpAdmin] = useState(0);
   const [loungeSlug, setLoungeSlug] = useState<string | null>(null);
-  const [loungeDone, setLoungeDone] = useState(false); // verified AND certified
+  const [loungeDone, setLoungeDone] = useState(false); // verified → hide the Verify entry points
 
   useEffect(() => {
     return subscribeAuth(setSession);

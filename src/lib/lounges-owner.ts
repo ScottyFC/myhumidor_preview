@@ -25,8 +25,11 @@ export interface MyLounge {
   credits: number;
   verified: boolean;
   certified: boolean;
+  certTier: CertTier;
   role: 'owner' | 'manager' | 'staff';
 }
+
+export type CertTier = 'none' | 'starter' | 'pro' | 'premier';
 
 export interface LoungeClaim {
   id: string;
@@ -173,7 +176,7 @@ export async function getMyLounges(): Promise<MyLounge[]> {
     const ids = (mems ?? []).map((m) => m.lounge_id);
     if (!ids.length) return [];
     const roleById = new Map((mems ?? []).map((m) => [m.lounge_id, m.role]));
-    const { data: lounges } = await sb.from('lounges').select('id, slug, name, city, state, credits, verified, certified').in('id', ids);
+    const { data: lounges } = await sb.from('lounges').select('id, slug, name, city, state, credits, verified, certified, cert_tier').in('id', ids);
     return (lounges ?? []).map((l) => ({
       loungeId: l.id,
       slug: l.slug,
@@ -183,9 +186,23 @@ export async function getMyLounges(): Promise<MyLounge[]> {
       credits: (l as { credits?: number }).credits ?? 1000,
       verified: (l as { verified?: boolean }).verified ?? false,
       certified: (l as { certified?: boolean }).certified ?? false,
+      certTier: ((l as { cert_tier?: string }).cert_tier as CertTier) ?? 'none',
       role: (roleById.get(l.id) as MyLounge['role']) ?? 'manager',
     }));
   } catch {
     return [];
+  }
+}
+
+
+/** Change the lounge's certification tier (dashboard). Server-checked membership. */
+export async function setCertTier(loungeId: string, tier: CertTier): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured) return { ok: false, error: 'Not connected.' };
+  try {
+    const { error } = await supabaseBrowser().rpc('set_cert_tier', { p_lounge: loungeId, p_tier: tier });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
   }
 }

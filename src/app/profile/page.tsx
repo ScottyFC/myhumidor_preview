@@ -98,7 +98,18 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
       <div className="flex flex-col gap-6 border-b border-ember-400/15 pb-8 sm:flex-row sm:items-end">
-        <Avatar profile={profile} size={112} />
+        <div className="relative shrink-0 self-start">
+          <div className="rounded-full bg-gradient-to-br from-ember-300 via-ember-600 to-leather p-[3px] shadow-[0_0_32px_rgba(240,195,85,0.22)]">
+            <div className="rounded-full bg-char p-[3px]">
+              <Avatar profile={profile} size={112} />
+            </div>
+          </div>
+          {profile.aficionado && (
+            <span className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-ember-400 text-paper ring-4 ring-char" title="Verified Aficionado">
+              <Crown size={15} strokeWidth={2} />
+            </span>
+          )}
+        </div>
 
         <div className="min-w-0 flex-1">
           {session?.type === 'retailer' ? (
@@ -130,14 +141,19 @@ export default function ProfilePage() {
           {session && <AdminOnlyId id={session.publicId} label="User UUID" />}
         </div>
 
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <button onClick={() => setEditing((v) => !v)} className="btn-ghost text-xs">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <button
+            onClick={() => setEditing((v) => !v)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-ember-400 px-4 py-1.5 text-xs font-medium text-paper shadow-[0_4px_16px_rgba(240,195,85,0.25)] transition hover:bg-ember-600"
+          >
             {editing ? 'Close' : 'Edit profile'}
           </button>
-          <ShareProfile handle={profile.handle} />
-          <Link href={`/u/${profile.handle}`} className="btn-ghost text-xs">
-            <Share2 size={13} strokeWidth={1.5} /> Public view
-          </Link>
+          <div className="flex overflow-hidden rounded-full border-[0.5px] border-ember-400/25 bg-char/60 [&>*]:border-0 [&>*]:rounded-none [&>*]:px-3.5 [&>*]:py-1.5">
+            <ShareProfile handle={profile.handle} />
+            <Link href={`/u/${profile.handle}`} className="btn-ghost border-l-[0.5px] !border-l-ember-400/20 text-xs">
+              <Share2 size={13} strokeWidth={1.5} /> Public view
+            </Link>
+          </div>
         </div>
       </div>
 

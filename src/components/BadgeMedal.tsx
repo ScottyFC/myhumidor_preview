@@ -1,7 +1,51 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Lock, Award } from 'lucide-react';
+import {
+  Lock, Award, Star, Flame, Crown, Gem, Globe2, Coffee, Leaf, Trophy, Archive,
+  MapPin, CalendarDays, Zap, Heart, Moon, Banknote, Layers, Compass, Cigarette,
+} from 'lucide-react';
+
+/**
+ * Themed iconography: each badge gets an icon matched to what it's actually
+ * about (rating, humidor, Cuban smokes, price milestones, check-ins…) instead
+ * of a generic medal — with a deterministic fallback so no two adjacent
+ * generated badges look identical.
+ */
+const ICON_RULES: Array<[RegExp, typeof Award]> = [
+  [/cuban|habana|forbidden/i, Globe2],
+  [/coffee|cafe|espresso|leche/i, Coffee],
+  [/100|perfect|flawless/i, Trophy],
+  [/humidor|stock|collect|log/i, Archive],
+  [/check.?in|lounge|visit/i, MapPin],
+  [/first|light|pour|novice/i, Flame],
+  [/anniversar|year|birthday|aged/i, CalendarDays],
+  [/\$|price|premium|unicorn|cost/i, Gem],
+  [/rate|review|score|tasting/i, Star],
+  [/streak|week|daily|chain/i, Zap],
+  [/wrapper|leaf|shade|maduro|connecticut/i, Leaf],
+  [/night|midnight|after.?hours/i, Moon],
+  [/spend|cash|big/i, Banknote],
+  [/box|bundle|set|trio|culebra/i, Layers],
+  [/explore|discover|world|travel|archer/i, Compass],
+  [/smoke|cigar/i, Cigarette],
+  [/king|royal|crown|aficionado/i, Crown],
+  [/love|favorite|heart/i, Heart],
+];
+const ICON_POOL = [Star, Flame, Gem, Compass, Leaf, Trophy, Zap, Moon, Layers, Heart];
+
+function iconFor(badge: BadgeDef): typeof Award {
+  const text = `${badge.name} ${badge.criteria ?? ''}`;
+  for (const [re, I] of ICON_RULES) if (re.test(text)) return I;
+  let h = 0;
+  for (let i = 0; i < badge.id.length; i++) h = (h * 31 + badge.id.charCodeAt(i)) | 0;
+  return ICON_POOL[Math.abs(h) % ICON_POOL.length];
+}
+
+const TIER_DOT: Record<string, string> = {
+  bronze: 'bg-amber-700', silver: 'bg-slate-300', gold: 'bg-amber-300',
+  rare: 'bg-fuchsia-400', lounge: 'bg-ember-400',
+};
 import { type BadgeDef, TIER_RING } from '@/lib/badges';
 import { cn } from '@/lib/utils';
 
@@ -52,9 +96,11 @@ export function BadgeMedal({ badge, earned, size = 124 }: { badge: BadgeDef; ear
               !earned && 'grayscale brightness-[0.5]'
             )}
           >
-            <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-char/90 text-center">
-              <Award size={size * 0.26} strokeWidth={1.25} className="text-ember-300" />
-              <span className="mt-1 px-2 text-[9px] font-medium uppercase tracking-wider text-smoke-200">{badge.tier}</span>
+            <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-full bg-char/90 text-center">
+              {/* inner glow tinted by the tier ring */}
+              <div className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-b from-white/[0.06] to-transparent" />
+              {(() => { const I = iconFor(badge); return <I size={size * 0.32} strokeWidth={1.25} className="text-ember-200 drop-shadow-[0_2px_8px_rgba(240,195,85,0.35)]" />; })()}
+              <span className={cn('mt-1.5 h-1.5 w-1.5 rounded-full', TIER_DOT[badge.tier] ?? 'bg-amber-700')} title={badge.tier} />
             </div>
           </div>
         )}

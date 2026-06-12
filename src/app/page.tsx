@@ -127,18 +127,24 @@ export default async function HomePage() {
             <Link
               key={l.id}
               href={`/lounges/${l.slug}`}
-              className="group w-60 shrink-0 rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4 transition hover:border-ember-400/40"
+              className="group relative w-64 shrink-0 overflow-hidden rounded-xl border-[0.5px] border-ember-400/15 bg-gradient-to-b from-char/70 to-char/30 p-4 transition-all duration-200 hover:-translate-y-1 hover:border-ember-400/45 hover:shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
             >
+              {/* ember accent line that wakes on hover */}
+              <span className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-ember-400/0 to-transparent transition-all duration-300 group-hover:via-ember-400/80" />
               <div className="flex items-center gap-3">
-                <BrandTile name={l.name} className="h-12 w-12 shrink-0 text-lg" rounded="rounded-lg" />
+                <BrandTile name={l.name} className="h-14 w-14 shrink-0 text-lg ring-1 ring-ember-400/15" rounded="rounded-xl" />
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1">
-                    <span className="truncate font-display text-base font-medium group-hover:text-ember-100">
-                      {l.name}
-                    </span>
-                    {l.verified && <BadgeCheck size={13} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
+                  <span className="block truncate font-display text-base font-medium group-hover:text-ember-100">
+                    {l.name}
+                  </span>
+                  <div className="mt-0.5 flex items-center gap-1.5 text-xs text-smoke-400">
+                    {[l.city, l.state].filter(Boolean).join(', ')}
                   </div>
-                  <div className="text-xs text-smoke-400">{[l.city, l.state].filter(Boolean).join(', ')}</div>
+                  {l.verified && (
+                    <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-ember-400/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-ember-100 ring-1 ring-ember-400/25">
+                      <BadgeCheck size={10} strokeWidth={2} /> Verified
+                    </span>
+                  )}
                 </div>
               </div>
             </Link>

@@ -4,6 +4,7 @@ import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
 import { TopCigarsSections } from '@/components/TopCigarsSections';
+import { CigarAgent } from '@/components/CigarAgent';
 
 export const metadata = {
   title: 'Cigars · MyHumidor by CigarTV',
@@ -14,6 +15,7 @@ export default function TopCigarsPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
+      <CigarAgent />
       <header className="mb-8">
         <div className="eyebrow mb-2">The catalog</div>
         <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">

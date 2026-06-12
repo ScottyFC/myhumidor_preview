@@ -39,7 +39,7 @@ export default function LoungesPage() {
           <Link
             key={l.id}
             href={`/lounges/${l.slug}`}
-            className="group flex items-start gap-4 rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4 transition hover:border-ember-400/40"
+            className="group relative flex items-start gap-4 overflow-hidden rounded-xl border-[0.5px] border-ember-400/15 bg-gradient-to-b from-char/70 to-char/30 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-ember-400/45 hover:shadow-[0_10px_28px_rgba(0,0,0,0.4)]"
           >
             <BrandTile name={l.name} src={l.image_url} className="h-12 w-12 shrink-0 text-lg" rounded="rounded-lg" />
             <div className="min-w-0 flex-1">
