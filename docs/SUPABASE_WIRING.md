@@ -1,3 +1,23 @@
+## Phase 29b — Bug fixes + endless carousels + watchable episodes
+
+- **Sign out fixed:** the handler navigated before the async `signOut()` resolved, cancelling it (you stayed logged in). Now it awaits sign-out (and a local-scope clear) before redirecting home.
+- **Verify entry points** now hide once a lounge is verified **or** certified (toolbar + dropdown), via `loungeDone = verified || certified`.
+- **Carousels loop endlessly:** `AutoScrollRow` renders a second identical copy when content overflows and wraps scroll by exactly one copy's width — seamless, no snap-back. Short rows render one copy and don't animate.
+- **Recently aired shows:** the homepage "Recently aired on CigarTV" section now renders MRSS episodes as watch cards — thumbnail + play button + runtime linking to the episode's `videoUrl`, with the featured cigar linked when tagged.
+
+### Removing the "Freecast Cigar Lounge" account (run in Supabase SQL editor)
+It's a database record, not static data, so it can't be removed from code. Safe cleanup:
+```sql
+-- find it first
+select id, slug, name from public.lounges where name ilike '%freecast%';
+-- remove the lounge + its links (adjust slug/name as needed)
+delete from public.lounge_members where lounge_id in (select id from public.lounges where name ilike '%freecast%');
+delete from public.inventory_items where lounge_id in (select id from public.lounges where name ilike '%freecast%');
+delete from public.lounge_submissions where name ilike '%freecast%';
+delete from public.lounges where name ilike '%freecast%';
+-- if it's also a retailer auth account, delete that user from Authentication → Users
+```
+
 ## Phase 29 — Modernization II, badge overhaul, Cigar Concierge, certification tiers
 
 **Run `supabase/migrations/phase29.sql`** — adds `lounges.cert_tier` ('none'|'starter'|'pro'|'premier'), moves legacy certified lounges to Starter, and adds the member-only `set_cert_tier` RPC that keeps `certified` in sync.

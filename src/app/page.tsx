@@ -161,8 +161,8 @@ export default async function HomePage() {
       {/* ─── THIS WEEK ON CIGARTV ─────────────────────────────────────────── */}
       <section className="py-12">
         <SectionHeader
-          title="This week on CigarTV"
-          subtitle="Latest episodes from the channel"
+          title="Recently aired on CigarTV"
+          subtitle="Tap to watch — straight from the channel"
           icon={<Tv size={14} strokeWidth={1.5} className="text-ember-400" />}
         />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

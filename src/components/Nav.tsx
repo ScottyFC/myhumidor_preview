@@ -49,7 +49,7 @@ export function Nav() {
     getMyLounges().then((ls) => {
       if (off) return;
       setLoungeSlug(ls[0]?.slug ?? null);
-      setLoungeDone(!!ls[0]?.verified); // verification is the action; once verified, hide it
+      setLoungeDone(!!(ls[0]?.verified || ls[0]?.certified)); // hide Verify once verified or certified
     });
     return () => { off = true; };
   }, [isLounge, session?.uuid]);
@@ -178,7 +178,7 @@ export function Nav() {
                         Notification Settings
                       </MenuItem>
                       <button
-                        onClick={() => { setMenuOpen(false); signOut(); window.location.href = '/'; }}
+                        onClick={async () => { setMenuOpen(false); await signOut(); window.location.href = '/'; }}
                         className="flex w-full items-center gap-2.5 border-t border-ember-400/10 px-4 py-2.5 text-left text-sm text-smoke-300 hover:bg-ember-400/10 hover:text-paper"
                       >
                         <LogOut size={14} strokeWidth={1.5} /> Sign out

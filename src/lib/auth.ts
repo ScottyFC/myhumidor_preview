@@ -209,6 +209,7 @@ export async function signOut() {
     return;
   }
   await supabaseBrowser().auth.signOut();
+  try { await supabaseBrowser().auth.signOut({ scope: 'local' }); } catch { /* ignore */ }
 }
 
 /** Re-send the signup confirmation email. */
