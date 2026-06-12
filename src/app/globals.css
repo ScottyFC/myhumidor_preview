@@ -133,3 +133,11 @@ input[type='range'].rating-slider::-moz-range-thumb {
 video {
   background: #000;
 }
+
+/* Drifting smoke wisp on the hero collage */
+@keyframes smoke-drift {
+  0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0.25; }
+  50%  { transform: translateY(-14px) translateX(6px) scale(1.05); opacity: 0.35; }
+  100% { transform: translateY(-28px) translateX(-4px) scale(1.1); opacity: 0; }
+}
+.animate-smoke { animation: smoke-drift 7s ease-in-out infinite; }

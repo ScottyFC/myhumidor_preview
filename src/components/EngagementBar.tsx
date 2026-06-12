@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuthGate } from '@/lib/use-auth-gate';
 import Link from 'next/link';
 import { Heart, MessageCircle, Send, Loader2 } from 'lucide-react';
 import {
@@ -21,6 +22,7 @@ export function EngagementBar({
 }: {
   type: TargetType; id: string; ownerId?: string; entityName?: string;
 }) {
+  const gate = useAuthGate();
   const [likes, setLikes] = useState(0);
   const [liked, setLiked] = useState(false);
   const [cCount, setCCount] = useState(0);
@@ -63,7 +65,7 @@ export function EngagementBar({
   return (
     <div className="mt-3 border-t border-ember-400/10 pt-2.5">
       <div className="flex items-center gap-4 text-sm">
-        <button onClick={onLike} className={`inline-flex items-center gap-1.5 transition ${liked ? 'text-ember-400' : 'text-smoke-400 hover:text-ember-100'}`}>
+        <button onClick={gate(onLike)} className={`inline-flex items-center gap-1.5 transition ${liked ? 'text-ember-400' : 'text-smoke-400 hover:text-ember-100'}`}>
           <Heart size={15} strokeWidth={1.5} className={liked ? 'fill-ember-400' : ''} /> {likes > 0 && <span className="tabular">{likes}</span>}
         </button>
         <button onClick={openComments} className="inline-flex items-center gap-1.5 text-smoke-400 transition hover:text-ember-100">
@@ -96,7 +98,7 @@ export function EngagementBar({
               placeholder="Add a comment…"
               className="w-full rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-3 py-1.5 text-sm text-paper placeholder:text-smoke-500 focus:border-ember-400 focus:outline-none"
             />
-            <button onClick={submit} disabled={busy || !text.trim()} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ember-400 text-paper hover:bg-ember-600 disabled:opacity-50">
+            <button onClick={gate(submit)} disabled={busy || !text.trim()} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-ember-400 text-paper hover:bg-ember-600 disabled:opacity-50">
               {busy ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} strokeWidth={1.5} />}
             </button>
           </div>

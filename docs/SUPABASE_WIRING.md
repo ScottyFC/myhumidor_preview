@@ -1,3 +1,12 @@
+## Phase 31 — Release-prep: auth gating, homepage life, lounge rotation, analytics
+
+**Run `supabase/migrations/phase31.sql`** and make sure `SUPABASE_SERVICE_KEY` is set in Vercel.
+
+- **Auth gating sweep:** browsing stays open, but *doing* now requires an account everywhere, like a real social site. New `useAuthGate()` hook redirects signed-out users to `/register?next=<here>` at the moment of action. Applied to: humidor/wishlist saves (AddToCollection), follows, ratings, likes + comments (EngagementBar), and change requests. Already-gated flows (check-in page, lounge check-in, posts, submissions, claims) unchanged.
+- **Homepage:** "Recently aired on CigarTV" removed (feature parked until the data is amended). Hero is now a two-column layout — headline left, a living collage of real brand artwork from the catalog right, with a drifting smoke wisp and ember glow; collage hides on mobile.
+- **Lounges page rotation:** the directory reshuffles every 4 hours (seeded so SSR/client agree; `revalidate = 3600`) — every lounge gets time on top. Credit-**boosted** lounges are pinned to the front of the list and exempt from rotation.
+- **Analytics backbone:** `page_events` table captures views and time-on-page with coarse location (Vercel geo headers — country/region/city, **no IP stored**), device/OS/browser (UA-parsed server-side), the entity viewed (cigar/lounge/brand slug), referrer, and session id. Writes go only through `/api/track` with the service key (no public insert path); admins-only read. Client beacon (`Analytics` in the layout) logs a view per route change and a leave-with-duration via sendBeacon on hide/navigation. Aggregate views power the new **Admin → Analytics** tab: top cigars/lounges/brands by views & minutes, most-visited pages with avg time, sessions by location, and device/browser/OS breakdown (30-day window).
+
 ## Phase 30 — Privada cigar batch (1,062 added)
 
 Imported `Cigars_-_Privada.csv` (already in catalog_cigars shape) into both the static catalog and the DB.

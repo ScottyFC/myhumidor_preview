@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuthGate } from '@/lib/use-auth-gate';
 import { Box, Heart, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function AddToCollection({ seed, variant = 'icons', className }: Props) {
+  const gate = useAuthGate();
   const [status, setStatus] = useState<CollectionStatus | null>(null);
 
   useEffect(() => {
@@ -25,9 +27,9 @@ export function AddToCollection({ seed, variant = 'icons', className }: Props) {
     return onCollectionChange(() => setStatus(getStatus(seed.cigarId)));
   }, [seed.cigarId]);
 
-  function click(target: CollectionStatus) {
+  const click = gate(function click(target: CollectionStatus) {
     setStatus(toggleStatus(seed, target));
-  }
+  });
 
   if (variant === 'full') {
     return (

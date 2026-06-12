@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BadgeCheck, MapPin, ArrowRight } from 'lucide-react';
-import { browseLounges, catalogStats } from '@/lib/catalog';
+import { rotatingLounges, catalogStats } from '@/lib/catalog';
+import { boostedLounges } from '@/lib/featured-server';
 import { BrandTile } from '@/components/BrandTile';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
 import { SubmitLounge } from '@/components/SubmitLounge';
@@ -10,8 +11,13 @@ export const metadata = {
   title: 'Lounges · MyHumidor by CigarTV',
 };
 
-export default function LoungesPage() {
-  const lounges = browseLounges(60);
+export const revalidate = 3600; // rotation window refresh
+
+export default async function LoungesPage() {
+  // Boosting pins a lounge to the front; everyone else rides the 4-hour rotation.
+  const boosted = await boostedLounges(6);
+  const seen = new Set(boosted.map((b) => b.slug));
+  const lounges = [...boosted, ...rotatingLounges(80).filter((l) => !seen.has(l.slug))].slice(0, 60);
   const { stores } = catalogStats();
 
   return (

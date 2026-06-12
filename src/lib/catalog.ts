@@ -147,6 +147,29 @@ export function browseLounges(limit = 50): CatalogStore[] {
   return allStores().slice(0, limit);
 }
 
+/**
+ * Lounges in a rotation that reshuffles every few hours, so the directory
+ * doesn't ossify — every lounge gets time on top. Deterministic within each
+ * window (seeded by the 4-hour bucket) so SSR and client agree.
+ */
+export function rotatingLounges(limit = 60, windowHours = 4): CatalogStore[] {
+  const seed = Math.floor(Date.now() / (windowHours * 3600_000));
+  const arr = [...allStores()];
+  // Mulberry32 — tiny seeded PRNG; stable across server renders in a window.
+  let a = seed >>> 0;
+  const rand = () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.slice(0, limit);
+}
+
 export interface NearbyStore extends CatalogStore {
   distanceMi: number;
 }

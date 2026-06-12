@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuthGate } from '@/lib/use-auth-gate';
 import { Star, Check } from 'lucide-react';
 import { computeOverall, cn } from '@/lib/utils';
 import { getRating, setRating } from '@/lib/ratings';
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function RatingForm({ seed }: Props) {
+  const gate = useAuthGate();
   const [flavor, setFlavor] = useState(0);
   const [burn, setBurn] = useState(0);
   const [appearance, setAppearance] = useState(0);
@@ -137,7 +139,7 @@ export function RatingForm({ seed }: Props) {
         </div>
         <button
           disabled={!allRated}
-          onClick={submit}
+          onClick={gate(submit)}
           className={cn(
             'rounded-md px-5 py-2 text-sm font-medium transition',
             allRated

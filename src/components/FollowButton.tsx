@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuthGate } from '@/lib/use-auth-gate';
 import { UserPlus, UserCheck } from 'lucide-react';
 import { isFollowing, toggleFollow, onFollowingChange } from '@/lib/follows';
 import { cn } from '@/lib/utils';
 
 export function FollowButton({ handle, size = 'md' }: { handle: string; size?: 'sm' | 'md' }) {
+  const gate = useAuthGate();
   const [following, setFollowing] = useState(false);
 
   useEffect(() => {
@@ -17,7 +19,7 @@ export function FollowButton({ handle, size = 'md' }: { handle: string; size?: '
 
   return (
     <button
-      onClick={() => setFollowing(toggleFollow(handle))}
+      onClick={gate(() => setFollowing(toggleFollow(handle)))}
       aria-pressed={following}
       className={cn(
         'inline-flex items-center gap-1.5 rounded-md font-medium transition',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuthGate } from '@/lib/use-auth-gate';
 import { Flag, Check, Loader2, Send } from 'lucide-react';
 import { addChangeRequest } from '@/lib/change-requests';
 import { cn } from '@/lib/utils';
@@ -14,6 +15,7 @@ export function ChangeRequest({
   targetId: string;
   targetName: string;
 }) {
+  const gate = useAuthGate();
   const [open, setOpen] = useState(false);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
@@ -65,7 +67,7 @@ export function ChangeRequest({
       />
       <div className="mt-3 flex items-center gap-2">
         <button
-          onClick={submit}
+          onClick={gate(submit)}
           disabled={!msg.trim() || busy}
           className={cn(
             'inline-flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium transition',
