@@ -1,3 +1,12 @@
+## Phase 30 — Privada cigar batch (1,062 added)
+
+Imported `Cigars_-_Privada.csv` (already in catalog_cigars shape) into both the static catalog and the DB.
+- **1,062 added**, 2 exact brand+name+size duplicates skipped.
+- **Slugs made unique by appending vitola** where a line repeats across sizes (e.g. La Validación Connecticut → Gran Robusto / Gran Toro / Toro each get their own page). Catalog is now 100% unique slugs (25,136 total).
+- **Mojibake repaired** (the export had Mac-Roman double-encoding: "Validaci√≥n" → "Validación", "√önico" → "Único", plus hand-fixes for Toraño / Patrón / Pequeños / Brûlée).
+- **359 auto flavor-tagged** via the brand/line map (Liga Privada, Aganorsa, AJ Fernandez, etc.).
+- **`supabase/migrations/phase30.sql`** seeds the same rows into `catalog_cigars` (preserves the CSV UUIDs, idempotent — `where not exists` by slug). Run it, and redeploy so the static catalog ships too.
+
 ## Phase 29b — Bug fixes + endless carousels + watchable episodes
 
 - **Sign out fixed:** the handler navigated before the async `signOut()` resolved, cancelling it (you stayed logged in). Now it awaits sign-out (and a local-scope clear) before redirecting home.
