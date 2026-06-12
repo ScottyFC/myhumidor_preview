@@ -9,6 +9,7 @@ import { RatingForm } from '@/components/RatingForm';
 import { CigarCommunity } from '@/components/CigarCommunity';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandLogo } from '@/components/BrandLogo';
+import { StockNearYou } from '@/components/StockNearYou';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { AdminCigarActions } from '@/components/AdminCigarActions';
 import { ChangeRequest } from '@/components/ChangeRequest';
@@ -175,6 +176,8 @@ export default async function CigarPage({ params }: PageProps) {
       <div className="mt-6">
         <ChangeRequest targetType="cigar" targetId={slug} targetName={`${view.brand} ${view.headline}`} />
       </div>
+
+      <StockNearYou slug={slug} />
 
       {/* ─── Nearby in stock ──────────────────────────────────────────── */}
       <div className="mt-12">

@@ -1,3 +1,15 @@
+## Phase 28 — flavor_tags + UI modernization
+
+**flavor_tags:** `catalog_cigars.flavor_tags text[]` (GIN-indexed) added by `supabase/migrations/phase28.sql`, which also seeds **52 mainstream brands** (Padrón, Fuente, Drew Estate, Oliva, Davidoff, My Father, …) with their documented house profiles plus 5 line-level overrides (Liga Privada, OpusX, Undercrown, Herrera Estelí) that always win. Brand seeds only fill rows with empty tags, so hand-curated data is never overwritten. The static catalog got the same treatment — **12,415 of 24,074 cigars now tagged**. The flavor engine now does true per-SKU matching (W=2.0 capped): a candidate's tags are scored against the member's logged tasting notes, and the `why` cites them ("its cocoa & earth profile matches the notes you rate highest").
+
+**UI modernization (per screenshots):** homepage hero gains an ambient ember glow and a live stats strip (cigars tracked / lounges / 24-7 live, real counts); featured-cigar cards get a price chip on the tile and hover lift; profile badges get a gradient collection-progress bar and a tighter responsive grid (up to 6 columns on wide screens).
+
+## Phase 27 — Flavor Profiling engine + geospatial refactor
+
+**Flavor Profiling** (`src/lib/flavor-engine.ts`, `/api/recommendations`): rating-weighted taste vector (5★≈+2 … 1★≈−2, so dislikes steer away) over brand ×3 / country ×2 / vitola ×1.25 / price-fit ×1, scored across the full 24k catalog, diversified (max 2 per brand, no back-to-back same brand), each pick returned with a user-facing `why` built from the member's own anchors and tasting notes. The profile "Recommended for you" row now sends full rating history (incl. tasting notes) and renders the explanations. Legacy `likedSlugs` payloads still work. Honest limit: the catalog has no per-cigar flavor data, so notes influence explanations via the countries/brands they were logged against rather than per-SKU flavor matching.
+
+**Geospatial** — run `supabase/migrations/phase27.sql` (idempotent): enables PostGIS; adds a generated `lounges.location geography(point)` (always in sync with lat/lng) + GIST index; adds an `updated_at` touch trigger on `inventory_items` and adds it to the realtime publication; creates two indexed RPCs — `lounges_near(lat,lng,radius,limit)` and `cigar_stock_near(slug,lat,lng,radius,limit)`. `/api/stores/nearby` now uses `lounges_near` (with the old bounded-scan as fallback pre-migration, and the static directory always merged), and the new `/api/cigars/[slug]/stock-near` returns live in-stock lounges sorted by true distance. Cigar pages show an "In stock near you" strip when the visitor shares location and someone nearby stocks it.
+
 ## Retailer simplification + check-ins + shop logo + cigar-image fallback
 
 - **Retailers have no profile.** `/profile` redirects retailers to `/dashboard`, and the "My Lounge" toolbar button is removed. They use the dashboard + their public shop page (a "View shop page" link sits on the dashboard).

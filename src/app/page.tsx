@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, MapPin, Tv, Flame, BadgeCheck } from 'lucide-react';
 import { fetchEpisodes, recentEpisodes } from '@/lib/mrss';
-import { featuredCigars, featuredLounges } from '@/lib/catalog';
+import { featuredCigars, featuredLounges, allCigars, allStores } from '@/lib/catalog';
 import { boostedLounges } from '@/lib/featured-server';
 import { RecentEpisode } from '@/components/RecentEpisode';
 import { AddToCollection } from '@/components/AddToCollection';
@@ -15,6 +15,8 @@ export const revalidate = 3600;
 export default async function HomePage() {
   const episodes = await fetchEpisodes();
   const recent = recentEpisodes(episodes, 6);
+  const catalogCount = allCigars().length;
+  const loungeCount = Math.floor(allStores().length / 10) * 10;
   const allFeatured = featuredCigars(24);
   const featured = allFeatured.slice(0, 12);
   const browse = allFeatured.slice(12, 17);
@@ -27,7 +29,13 @@ export default async function HomePage() {
   return (
     <div className="mx-auto max-w-7xl px-6 pt-8">
       {/* ─── HERO ──────────────────────────────────────────────────────────── */}
-      <section className="py-12 lg:py-16 animate-fade-up">
+      <section className="relative py-12 lg:py-16 animate-fade-up">
+        {/* Ambient ember glow — pure CSS, sits behind the headline */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-40 -top-24 h-[480px] w-[640px] rounded-full opacity-50 blur-3xl"
+          style={{ background: 'radial-gradient(closest-side, rgba(240,195,85,0.14), rgba(58,36,23,0.10), transparent 70%)' }}
+        />
         <div className="eyebrow mb-3">Premium cigars, tracked.</div>
         <h1 className="font-display text-5xl leading-[0.95] tracking-tightest sm:text-6xl lg:text-7xl">
           <span className="italic text-ember-400">Rate</span> what you smoke.
@@ -49,6 +57,21 @@ export default async function HomePage() {
             Open your humidor
           </Link>
         </div>
+
+        {/* Live catalog stats — real numbers, computed at build/request time */}
+        <dl className="mt-10 grid max-w-xl grid-cols-3 gap-px overflow-hidden rounded-xl border-[0.5px] border-ember-400/15 bg-ember-400/10">
+          {[
+            { v: `${Math.floor(catalogCount / 1000)}k+`, l: 'Cigars tracked' },
+            { v: `${loungeCount}+`, l: 'Lounges & shops' },
+            { v: '24/7', l: 'CigarTV live' },
+          ].map((st) => (
+            <div key={st.l} className="bg-char/80 px-4 py-3 text-center">
+              <dt className="sr-only">{st.l}</dt>
+              <dd className="font-display text-xl tabular text-ember-100 sm:text-2xl">{st.v}</dd>
+              <dd className="mt-0.5 text-[10px] uppercase tracking-wider text-smoke-400">{st.l}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <Rule />
@@ -66,20 +89,24 @@ export default async function HomePage() {
             <Link
               key={c.uuid}
               href={`/cigars/${c.slug}`}
-              className="group w-44 shrink-0"
+              className="group w-44 shrink-0 transition-transform duration-200 hover:-translate-y-1"
             >
-              <BrandTile
-                name={c.brand}
-                src={c.image_url}
-                fit="contain"
-                rounded="rounded-xl"
-                className="aspect-[4/5] w-full text-4xl transition group-hover:ring-1 group-hover:ring-ember-400/40"
-              />
-              <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100">{c.name}</div>
-              <div className="truncate text-xs text-smoke-400">
-                {c.brand} · {c.size}
-                {c.price != null && <span className="text-smoke-200"> · {`$${c.price}`}</span>}
+              <div className="relative">
+                <BrandTile
+                  name={c.brand}
+                  src={c.image_url}
+                  fit="contain"
+                  rounded="rounded-xl"
+                  className="aspect-[4/5] w-full text-4xl transition group-hover:ring-1 group-hover:ring-ember-400/50"
+                />
+                {c.price != null && (
+                  <span className="absolute bottom-2 right-2 rounded-md bg-char/90 px-1.5 py-0.5 font-display text-xs tabular text-ember-100 ring-1 ring-ember-400/20">
+                    ${c.price}
+                  </span>
+                )}
               </div>
+              <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100">{c.name}</div>
+              <div className="truncate text-xs text-smoke-400">{c.brand} · {c.size}</div>
             </Link>
           ))}
         </AutoScrollRow>

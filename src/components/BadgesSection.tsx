@@ -69,13 +69,20 @@ export function BadgesSection({
 
   return (
     <div className="mt-12">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between">
         <h2 className="font-display text-2xl tracking-tightest">Badges</h2>
         <span className="eyebrow">{earnedList.length} of {total} earned</span>
       </div>
+      {/* Collection progress */}
+      <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-char/80 ring-1 ring-ember-400/10">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-ember-600 to-ember-400 transition-all duration-700"
+          style={{ width: `${total ? Math.max(2, Math.round((earnedList.length / total) * 100)) : 0}%` }}
+        />
+      </div>
 
       <div className="relative overflow-hidden rounded-2xl border-[0.5px] border-ember-400/15 bg-char/30">
-        <div className="relative grid grid-cols-2 gap-x-4 gap-y-7 p-6 sm:grid-cols-3 md:grid-cols-4">
+        <div className="relative grid grid-cols-2 gap-x-3 gap-y-6 p-5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {display.map((b) => (
             <div key={b.id} className="flex flex-col items-center">
               <BadgeMedal badge={b} earned={earned.has(b.id)} />

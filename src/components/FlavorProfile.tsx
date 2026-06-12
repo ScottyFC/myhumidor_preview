@@ -10,7 +10,8 @@ import type { UserRating } from '@/lib/ratings';
 
 interface Rec {
   slug: string; name: string; brand: string; country: string | null;
-  size: string; price: number | null; image_url?: string;
+  size: string; price: number | null; image_url?: string | null;
+  why?: string;
 }
 
 export function FlavorProfile({
@@ -22,14 +23,14 @@ export function FlavorProfile({
 
   useEffect(() => {
     if (!member) return;
-    const likedSlugs = ratings.filter((r) => r.overall >= 4).map((r) => r.slug);
+    const hist = ratings.map((r) => ({ slug: r.slug, overall: r.overall, tastingNotes: r.tastingNotes ?? [] }));
     const ownedSlugs = [...humidor, ...wishlist].map((c) => c.slug);
-    if (likedSlugs.length === 0) { setRecs([]); return; }
+    if (hist.length === 0) { setRecs([]); return; }
     let off = false;
     fetch('/api/recommendations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ likedSlugs, ownedSlugs }),
+      body: JSON.stringify({ ratings: hist, ownedSlugs }),
     })
       .then((r) => r.json())
       .then((d) => !off && setRecs(d.items ?? []))
@@ -74,6 +75,7 @@ export function FlavorProfile({
                   className="aspect-[4/5] w-full text-4xl transition group-hover:ring-1 group-hover:ring-ember-400/40" />
                 <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100">{c.name}</div>
                 <div className="truncate text-xs text-smoke-400">{c.brand}{c.country ? ` · ${c.country}` : ''}</div>
+                {c.why && <div className="mt-1 line-clamp-3 text-[11px] leading-snug text-smoke-300">{c.why}</div>}
               </Link>
             ))}
           </AutoScrollRow>

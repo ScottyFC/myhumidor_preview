@@ -4,6 +4,7 @@ export interface CatalogCigar {
   brand: string;
   name: string;
   country: string;
+  flavor_tags?: string[];
   price: number | null;
   size: string;
   slug: string;
