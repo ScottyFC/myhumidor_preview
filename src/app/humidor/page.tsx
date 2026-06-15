@@ -17,7 +17,7 @@ import {
   toggleStatus,
 } from '@/lib/collection';
 
-type Filter = 'all' | 'humidor' | 'wishlist';
+type Filter = 'all' | 'humidor' | 'wishlist' | 'smoked';
 
 // Display model for the user's saved collection.
 interface Row {
@@ -26,7 +26,7 @@ interface Row {
   brand: string;
   name: string;
   size: string;
-  status: 'humidor' | 'wishlist';
+  status: 'humidor' | 'wishlist' | 'smoked';
   quantity?: number;
   yourRating?: number;
   removable: boolean;
@@ -75,13 +75,15 @@ export default function HumidorPage() {
 
   const humidorRows = rows.filter((r) => r.status === 'humidor');
   const wishlistRows = rows.filter((r) => r.status === 'wishlist');
+  const smokedRows = rows.filter((r) => r.status === 'smoked');
   const visible =
-    filter === 'all' ? rows : filter === 'humidor' ? humidorRows : wishlistRows;
+    filter === 'all' ? rows : filter === 'humidor' ? humidorRows : filter === 'wishlist' ? wishlistRows : smokedRows;
 
   const FILTERS: { id: Filter; label: string; count: number }[] = [
     { id: 'all', label: 'All', count: rows.length },
     { id: 'humidor', label: 'Humidor', count: humidorRows.length },
     { id: 'wishlist', label: 'Wishlist', count: wishlistRows.length },
+    { id: 'smoked', label: 'Smoked', count: smokedRows.length },
   ];
 
   if (authState !== 'in') {
@@ -103,6 +105,9 @@ export default function HumidorPage() {
           </span>
           <span>
             <span className="font-display text-lg text-paper">{wishlistRows.length}</span> wishlisted
+          </span>
+          <span>
+            <span className="font-display text-lg text-paper">{smokedRows.length}</span> smoked
           </span>
         </div>
       </header>

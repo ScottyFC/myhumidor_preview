@@ -1,3 +1,14 @@
+## Phase 32 — Smoking vs keeping, review photos + check-in, cigar-page sections, admin archive
+
+**Run `supabase/migrations/phase32.sql`** (humidor_entries status adds 'smoked'; ratings gain photo_url + lounge_slug; adds admin-checked `set_brand_image` RPC). Photos use the existing `avatars` storage bucket (paths `rating-photos/` and `brand-art/`).
+
+- **Smoking vs humidor split:** adding to humidor = saving (unchanged). **Rating a cigar now means you smoked it** — on submit it's moved to a new **Smoked** list (out of humidor), for both humidor cigars and one-off reviews. `markSmoked()` force-sets status='smoked'. Humidor page gains a Smoked filter + count; the "in humidor" stat excludes smoked.
+- **Optional lounge check-in on a review:** the rating form has a lounge search ("Smoking at a lounge?") that's fully skippable; on submit, a selected lounge fires `createCheckIn`.
+- **Review photos + "Photos of This Cigar":** ratings can include a photo (uploaded to storage); each cigar page shows an endless auto-scrolling carousel of all member photos for that cigar (`fetchRatingPhotos` → `CigarPhotos`), rendering nothing until one exists.
+- **More from {Brand} + Cigars similar to this:** two endless carousels on every cigar page. `moreFromBrand` = same brand; `similarCigars` = tag-overlap (×3) + same country (×2) + price proximity, other brands only, max 1 per brand.
+- **Admin brand artwork on the cigar page:** admin-only uploader under the cigar image; uploads art and applies it to that cigar + every same-brand catalog cigar lacking an image via `set_brand_image`.
+- **Admin submission archive:** decided cigar submissions older than 7 days drop out of "Recently decided" into a collapsible **Archive** (uses `reviewed_at`, now selected; falls back to `created_at`).
+
 ## Tweak — hero collage removed, Aging Tracker on Humidor
 
 - Removed the brand-artwork collage from the homepage hero (back to the single-column headline with glow + stats strip; smoke animation CSS cleaned up).

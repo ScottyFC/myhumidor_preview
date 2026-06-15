@@ -129,6 +129,7 @@ export default function AdminPage() {
 function CigarQueue() {
   const [subs, setSubs] = useState<Submission[]>([]);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [showArchive, setShowArchive] = useState(false);
   const [err, setErr] = useState('');
   useEffect(() => {
     const sync = () => setSubs(getSubmissions());
@@ -144,6 +145,13 @@ function CigarQueue() {
 
   const pending = subs.filter((s) => s.status === 'pending');
   const decided = subs.filter((s) => s.status !== 'pending');
+  // Decided + older than 7 days → archived (out of the working list).
+  const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+  const decidedAt = (s: Submission) => new Date(s.reviewedAt ?? s.createdAt).getTime();
+  const recentDecided = decided.filter((s) => Date.now() - decidedAt(s) <= SEVEN_DAYS);
+  const archived = decided
+    .filter((s) => Date.now() - decidedAt(s) > SEVEN_DAYS)
+    .sort((a, b) => decidedAt(b) - decidedAt(a));
 
   if (subs.length === 0) {
     return <Empty label="No cigar submissions yet. User-submitted cigars land here for review." />;
@@ -182,9 +190,9 @@ function CigarQueue() {
           ))
         )}
       </Section>
-      {decided.length > 0 && (
+      {recentDecided.length > 0 && (
         <Section title="Recently decided">
-          {decided.slice(0, 12).map((s) => (
+          {recentDecided.slice(0, 12).map((s) => (
             <Row
               key={s.id}
               title={`${s.brand} ${s.name}`}
@@ -202,6 +210,31 @@ function CigarQueue() {
             </Row>
           ))}
         </Section>
+      )}
+
+      {archived.length > 0 && (
+        <div>
+          <button
+            onClick={() => setShowArchive((v) => !v)}
+            className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-smoke-400 transition hover:text-paper"
+          >
+            <ChevronDown size={14} strokeWidth={1.5} className={cn('transition', showArchive && 'rotate-180')} />
+            Archive · {archived.length} decided &gt; 7 days ago
+          </button>
+          {showArchive && (
+            <div className="mt-3 space-y-2 border-l-[0.5px] border-ember-400/15 pl-4">
+              {archived.map((s) => (
+                <Row
+                  key={s.id}
+                  title={`${s.brand} ${s.name}`}
+                  sub={`${s.size} · ${s.status}${s.reviewedAt ? ` · ${new Date(s.reviewedAt).toLocaleDateString()}` : ''}`}
+                >
+                  <StatusPill status={s.status as 'approved' | 'rejected'} />
+                </Row>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

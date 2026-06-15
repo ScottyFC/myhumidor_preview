@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, MapPin } from 'lucide-react';
 import { getCigarSocial } from '@/lib/mock-data';
-import { findCatalogCigarBySlug, featuredLounges } from '@/lib/catalog';
+import { findCatalogCigarBySlug, featuredLounges, moreFromBrand, similarCigars } from '@/lib/catalog';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
@@ -10,6 +10,9 @@ import { CigarCommunity } from '@/components/CigarCommunity';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandLogo } from '@/components/BrandLogo';
 import { StockNearYou } from '@/components/StockNearYou';
+import { CigarPhotos } from '@/components/CigarPhotos';
+import { CigarImageUpload } from '@/components/CigarImageUpload';
+import { CigarRow } from '@/components/CigarRow';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { AdminCigarActions } from '@/components/AdminCigarActions';
 import { ChangeRequest } from '@/components/ChangeRequest';
@@ -81,6 +84,8 @@ export default async function CigarPage({ params }: PageProps) {
 
   const nearby = featuredLounges(3);
   const social = getCigarSocial(view.id);
+  const brandMore = moreFromBrand(slug, 12);
+  const similar = similarCigars(slug, 12);
 
   return (
     <div className="mx-auto max-w-5xl px-6 pt-6">
@@ -101,6 +106,7 @@ export default async function CigarPage({ params }: PageProps) {
             rounded="rounded-xl"
             className="aspect-[4/5] w-full text-6xl"
           />
+          <CigarImageUpload slug={slug} brand={view.brand} />
         </div>
 
         {/* ─── Header + Aggregates ───────────────────────────────────── */}
@@ -176,6 +182,18 @@ export default async function CigarPage({ params }: PageProps) {
       <div className="mt-6">
         <ChangeRequest targetType="cigar" targetId={slug} targetName={`${view.brand} ${view.headline}`} />
       </div>
+
+      <CigarPhotos slug={slug} />
+
+      <CigarRow
+        title={`More from ${view.brand}`}
+        cigars={brandMore}
+      />
+
+      <CigarRow
+        title="Cigars similar to this"
+        cigars={similar}
+      />
 
       <StockNearYou slug={slug} />
 

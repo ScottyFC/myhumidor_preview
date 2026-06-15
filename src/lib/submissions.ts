@@ -25,6 +25,7 @@ export interface Submission {
   notes?: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+  reviewedAt?: string;
   reviewedBy?: string | null;
   reviewerName?: string;
   catalogId?: string | null;
@@ -81,11 +82,12 @@ function rowTo(r: Row): Submission {
     notes: r.notes ?? undefined,
     status: r.status,
     createdAt: r.created_at ?? new Date().toISOString(),
+    reviewedAt: (r as { reviewed_at?: string }).reviewed_at ?? undefined,
     reviewedBy: r.reviewed_by,
     catalogId: r.catalog_id,
   };
 }
-const SELECT = 'id, brand, name, country, size, price, photo_url, notes, status, created_at, reviewed_by, catalog_id';
+const SELECT = 'id, brand, name, country, size, price, photo_url, notes, status, created_at, reviewed_at, reviewed_by, catalog_id';
 
 async function hydrateRemote() {
   try {

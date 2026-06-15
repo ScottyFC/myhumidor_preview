@@ -65,6 +65,53 @@ export function findCatalogCigarBySlug(slug: string): CatalogCigar | undefined {
   return allCigars().find((c) => c.slug === slug);
 }
 
+/** Other cigars from the same brand (excludes the current one). */
+export function moreFromBrand(slug: string, limit = 12): CatalogCigar[] {
+  const cur = findCatalogCigarBySlug(slug);
+  if (!cur) return [];
+  const bk = brandSlug(cur.brand);
+  return allCigars().filter((c) => c.slug !== slug && brandSlug(c.brand) === bk).slice(0, limit);
+}
+
+/**
+ * Cigars similar to this one — same country and/or overlapping flavor_tags,
+ * from *other* brands, scored by tag overlap then country, price proximity as a
+ * tiebreaker. Falls back to same-country when the cigar has no tags.
+ */
+export function similarCigars(slug: string, limit = 12): CatalogCigar[] {
+  const cur = findCatalogCigarBySlug(slug);
+  if (!cur) return [];
+  const bk = brandSlug(cur.brand);
+  const tags = new Set((cur.flavor_tags ?? []).map((t) => t.toLowerCase()));
+  const country = (cur.country ?? '').toLowerCase();
+  const price = typeof cur.price === 'number' ? cur.price : null;
+
+  const scored: Array<{ c: CatalogCigar; s: number }> = [];
+  for (const c of allCigars()) {
+    if (c.slug === slug || brandSlug(c.brand) === bk) continue;
+    let s = 0;
+    if (tags.size) {
+      const overlap = (c.flavor_tags ?? []).filter((t) => tags.has(t.toLowerCase())).length;
+      s += overlap * 3;
+    }
+    if (country && (c.country ?? '').toLowerCase() === country) s += 2;
+    if (price != null && typeof c.price === 'number') s += Math.max(0, 1 - Math.abs(c.price - price) / Math.max(price, 1));
+    if (s > 0.5) scored.push({ c, s });
+  }
+  scored.sort((a, b) => b.s - a.s);
+
+  // diversify: max 1 per brand
+  const out: CatalogCigar[] = [];
+  const seen = new Set<string>();
+  for (const { c } of scored) {
+    const k = brandSlug(c.brand);
+    if (seen.has(k)) continue;
+    seen.add(k); out.push(c);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
 /** Stable slug for a brand name (used by /brands/[slug]). */
 export function brandSlug(brand: string): string {
   return (brand || '')

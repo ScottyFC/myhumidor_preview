@@ -13,7 +13,7 @@
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
 
-export type CollectionStatus = 'humidor' | 'wishlist';
+export type CollectionStatus = 'humidor' | 'wishlist' | 'smoked';
 
 export interface CollectionItem {
   cigarId: string;
@@ -155,6 +155,19 @@ export function toggleStatus(seed: CollectionSeed, status: CollectionStatus): Co
   fire();
   persistUpsert(seed, status);
   return status;
+}
+
+/**
+ * Rating a cigar means the user is/was smoking it — move it to the "Smoked"
+ * list (out of humidor/wishlist). Works for cigars already saved and for
+ * one-off reviews of cigars that were never in the collection.
+ */
+export function markSmoked(seed: CollectionSeed) {
+  start();
+  cache = [{ ...seed, status: 'smoked', addedAt: new Date().toISOString() }, ...cache.filter((i) => i.cigarId !== seed.cigarId)];
+  fire();
+  persistUpsert(seed, 'smoked');
+  return 'smoked' as CollectionStatus;
 }
 
 export function remove(cigarId: string) {

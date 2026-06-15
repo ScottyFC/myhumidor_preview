@@ -24,6 +24,8 @@ export interface UserRating {
   overall: number;
   notes?: string;
   tastingNotes?: string[];
+  photoUrl?: string;
+  loungeSlug?: string;
   createdAt: string;
 }
 
@@ -68,6 +70,8 @@ type Row = {
   overall: number;
   notes: string | null;
   tasting_notes: string[] | null;
+  photo_url?: string | null;
+  lounge_slug?: string | null;
   created_at: string | null;
 };
 
@@ -85,12 +89,14 @@ function rowToRating(r: Row): UserRating {
     overall: Number(r.overall),
     notes: r.notes ?? undefined,
     tastingNotes: r.tasting_notes ?? [],
+    photoUrl: (r as { photo_url?: string }).photo_url ?? undefined,
+    loungeSlug: (r as { lounge_slug?: string }).lounge_slug ?? undefined,
     createdAt: r.created_at ?? new Date().toISOString(),
   };
 }
 
 const SELECT =
-  'id, cigar_id, slug, brand, name, size, flavor_score, burn_score, appearance_score, overall, notes, tasting_notes, created_at';
+  'id, cigar_id, slug, brand, name, size, flavor_score, burn_score, appearance_score, overall, notes, tasting_notes, photo_url, lounge_slug, created_at';
 
 async function hydrateRemote() {
   try {
@@ -128,6 +134,8 @@ function persist(rating: UserRating) {
         overall: rating.overall,
         notes: rating.notes ?? null,
         tasting_notes: rating.tastingNotes ?? [],
+        photo_url: rating.photoUrl ?? null,
+        lounge_slug: rating.loungeSlug ?? null,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id,cigar_id' }
@@ -201,4 +209,37 @@ export async function fetchRatingsFor(userId: string): Promise<UserRating[]> {
   } catch {
     return [];
   }
+}
+
+
+/** Photos uploaded with ratings of a given cigar (newest first) — for the
+ *  "Photos of This Cigar" carousel. Returns [] when Supabase isn't configured. */
+export async function fetchRatingPhotos(slug: string): Promise<Array<{ url: string; handle?: string }>> {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data, error } = await supabaseBrowser()
+      .from('ratings')
+      .select('photo_url, created_at')
+      .eq('slug', slug)
+      .not('photo_url', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(30);
+    if (error) return [];
+    return (data ?? []).map((r) => ({ url: (r as { photo_url: string }).photo_url }));
+  } catch {
+    return [];
+  }
+}
+
+/** Upload a review photo to storage, return its public URL. */
+export async function uploadRatingPhoto(dataUrl: string): Promise<string | null> {
+  if (!isSupabaseConfigured || !dataUrl.startsWith('data:')) return null;
+  try {
+    const sb = supabaseBrowser();
+    const blob = await (await fetch(dataUrl)).blob();
+    const path = `rating-photos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const { error } = await sb.storage.from('avatars').upload(path, blob, { contentType: blob.type || 'image/jpeg', upsert: true });
+    if (error) { console.error('[ratings] photo upload failed:', error.message); return null; }
+    return sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+  } catch { return null; }
 }
