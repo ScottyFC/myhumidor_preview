@@ -96,7 +96,7 @@ export function promoteAdmin(publicId: string) {
       .from('profiles')
       .update({ role: 'super_admin' })
       .eq('public_id', id)
-      .then(({ error }) => error && console.error('[admin] promote failed:', error.message));
+      .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[admin] promote failed:', r.error.message) } });
     logEvent({ action: 'admin.promoted', entityType: 'profile', entityId: id });
   }
   fire();
@@ -115,7 +115,7 @@ export function revokeAdmin(publicId: string) {
       .from('profiles')
       .update({ role: 'consumer' })
       .eq('public_id', publicId)
-      .then(({ error }) => error && console.error('[admin] revoke failed:', error.message));
+      .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[admin] revoke failed:', r.error.message) } });
     logEvent({ action: 'admin.revoked', entityType: 'profile', entityId: publicId });
   }
   fire();

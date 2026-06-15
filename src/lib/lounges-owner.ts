@@ -104,7 +104,7 @@ export async function getClaims(): Promise<LoungeClaim[]> {
       .from('lounge_claims')
       .select(CLAIM_SELECT)
       .order('created_at', { ascending: false });
-    return (data ?? []).map((r) => claimRowTo(r as ClaimRow));
+    return ((data ?? []) as SbRow[]).map((r) => claimRowTo(r as ClaimRow));
   } catch {
     return [];
   }
@@ -173,11 +173,11 @@ export async function getMyLounges(): Promise<MyLounge[]> {
   try {
     const sb = supabaseBrowser();
     const { data: mems } = await sb.from('lounge_members').select('lounge_id, role').eq('user_id', userId);
-    const ids = (mems ?? []).map((m) => m.lounge_id);
+    const ids = ((mems ?? []) as SbRow[]).map((m) => m.lounge_id);
     if (!ids.length) return [];
-    const roleById = new Map((mems ?? []).map((m) => [m.lounge_id, m.role]));
+    const roleById = new Map(((mems ?? []) as SbRow[]).map((m) => [m.lounge_id, m.role]));
     const { data: lounges } = await sb.from('lounges').select('id, slug, name, city, state, credits, verified, certified, cert_tier').in('id', ids);
-    return (lounges ?? []).map((l) => ({
+    return ((lounges ?? []) as SbRow[]).map((l) => ({
       loungeId: l.id,
       slug: l.slug,
       name: l.name,

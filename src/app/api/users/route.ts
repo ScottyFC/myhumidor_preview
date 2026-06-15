@@ -21,7 +21,7 @@ export async function GET(request: Request) {
       .or(`handle.ilike.${like},display_name.ilike.${like}`)
       .limit(limit);
     if (error) return NextResponse.json({ items: [] });
-    const items = (data ?? []).map((p: Record<string, unknown>) => ({
+    const items = ((data ?? []) as SbRow[]).map((p: Record<string, unknown>) => ({
       handle: p.handle,
       displayName: p.display_name,
       city: p.city ?? null,

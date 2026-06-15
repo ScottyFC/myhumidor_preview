@@ -23,8 +23,28 @@ export const SUPABASE_KEY =
 export const isSupabaseConfigured =
   /^https:\/\/.+\.supabase\./.test(SUPABASE_URL) && !!SUPABASE_KEY;
 
+/**
+ * One browser client for the whole tab. Creating a new client per call (the old
+ * behavior) spun up multiple GoTrueClient instances that all fought over the
+ * same Web Locks entry — the cause of the humidor hanging on a token refresh
+ * when a tab regained focus. We also swap the default `navigatorLock` for a
+ * pass-through lock: in a single-tab SPA the Web Locks coordination buys us
+ * nothing and is what was deadlocking, so we just run the critical section.
+ */
+let browserClient: ReturnType<typeof createBrowserClient> | null = null;
+
 export function supabaseBrowser() {
-  return createBrowserClient(SUPABASE_URL, SUPABASE_KEY);
+  if (browserClient) return browserClient;
+  browserClient = createBrowserClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      // Pass-through lock — no navigator LockManager, no cross-tab deadlock.
+      lock: async (_name, _acquireTimeout, fn) => fn(),
+    },
+  });
+  return browserClient;
 }
 
 export async function supabaseServer() {

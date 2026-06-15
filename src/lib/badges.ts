@@ -34,7 +34,7 @@ export async function listBadges(): Promise<BadgeDef[]> {
   try {
     const { data, error } = await supabaseBrowser().from('badges').select(SELECT);
     if (error) { console.error('[badges] list failed:', error.message); return []; }
-    return (data ?? []).map((r) => rowTo(r as Row));
+    return ((data ?? []) as Row[]).map((r) => rowTo(r));
   } catch { return []; }
 }
 
@@ -42,7 +42,7 @@ export async function listLoungeBadges(loungeId: string): Promise<BadgeDef[]> {
   if (!isSupabaseConfigured || !loungeId) return [];
   try {
     const { data } = await supabaseBrowser().from('badges').select(SELECT).eq('lounge_id', loungeId);
-    return (data ?? []).map((r) => rowTo(r as Row));
+    return ((data ?? []) as Row[]).map((r) => rowTo(r));
   } catch { return []; }
 }
 
@@ -50,7 +50,7 @@ export async function earnedBadgeIds(userId: string): Promise<Set<string>> {
   if (!isSupabaseConfigured || !userId) return new Set();
   try {
     const { data } = await supabaseBrowser().from('user_badges').select('badge_id').eq('user_id', userId);
-    return new Set((data ?? []).map((r) => r.badge_id as string));
+    return new Set(((data ?? []) as SbRow[]).map((r) => r.badge_id as string));
   } catch { return new Set(); }
 }
 

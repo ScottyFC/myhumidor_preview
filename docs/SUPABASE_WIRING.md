@@ -1,3 +1,11 @@
+## Supabase client upgrade + deadlock fix
+
+- **Upgraded** `@supabase/ssr` 0.5 → 0.12 and `@supabase/supabase-js` 2.45 → 2.108.
+- **Root-cause fix for the humidor hang:** `supabaseBrowser()` was creating a *new* client on every call, so many GoTrueClient instances contended for the same Web Locks entry — the deadlock that froze the humidor on tab refocus. It's now a **singleton** (one client per tab) and uses a **pass-through auth lock** (`lock: async (_n,_t,fn) => fn()`) instead of the default `navigatorLock`, removing the cross-tab lock contention entirely. The 6-second timeout/Reload fallback on the humidor page stays as a belt-and-braces safety net.
+- The newer supabase-js types stopped inferring `data` from queries; resolved across the data layer with a shared loose row type (`SbRow` in `src/types/sb-row.d.ts`) cast onto query results, with concrete shapes where objects are built into domain types. Build is fully green (types + lint + all routes).
+
+**Live profile reads (user search autocomplete):** needs `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` only — it reads the public `profiles` table under the existing `"profiles are public" for select using (true)` RLS policy. No service key required.
+
 ## Fixes — humidor loading, aging-tracker scope, user autocomplete, profile highlight
 
 - **Humidor stuck-loading fixed:** the page waited on `subscribeAuth` with no escape, so a stalled `getSession()` (token refresh deadlocking on tab refocus) left the spinner forever. Now auth resolution has a 6s timeout that surfaces a "taking longer than usual… Reload" button instead of hanging, and the subscription is cleaned up properly.

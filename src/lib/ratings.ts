@@ -108,7 +108,7 @@ async function hydrateRemote() {
       console.error('[ratings] load failed:', error.message);
       return;
     }
-    cache = (data ?? []).map((r) => rowToRating(r as Row));
+    cache = ((data ?? []) as Row[]).map((r) => rowToRating(r));
     fire();
   } catch (e) {
     console.error('[ratings] load error:', e);
@@ -140,7 +140,7 @@ function persist(rating: UserRating) {
       },
       { onConflict: 'user_id,cigar_id' }
     )
-    .then(({ error }) => error && console.error('[ratings] save failed:', error.message));
+    .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[ratings] save failed:', r.error.message) } });
 }
 
 /* ── init (lazy, once) ───────────────────────────────────────────────────── */
@@ -205,7 +205,7 @@ export async function fetchRatingsFor(userId: string): Promise<UserRating[]> {
       console.error('[ratings] fetchFor failed:', error.message);
       return [];
     }
-    return (data ?? []).map((r) => rowToRating(r as Row));
+    return ((data ?? []) as Row[]).map((r) => rowToRating(r));
   } catch {
     return [];
   }
@@ -225,7 +225,7 @@ export async function fetchRatingPhotos(slug: string): Promise<Array<{ url: stri
       .order('created_at', { ascending: false })
       .limit(30);
     if (error) return [];
-    return (data ?? []).map((r) => ({ url: (r as { photo_url: string }).photo_url }));
+    return ((data ?? []) as SbRow[]).map((r) => ({ url: (r as { photo_url: string }).photo_url }));
   } catch {
     return [];
   }

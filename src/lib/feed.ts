@@ -52,7 +52,7 @@ export async function fetchFeed(): Promise<FeedPost[]> {
     // 1. Ratings from people you follow.
     if (session?.uuid) {
       const { data: follows } = await sb.from('follows').select('followee_id').eq('follower_id', session.uuid);
-      const ids = (follows ?? []).map((f) => f.followee_id);
+      const ids = ((follows ?? []) as SbRow[]).map((f) => f.followee_id);
       if (ids.length) {
         const [{ data: ratings }, { data: profs }] = await Promise.all([
           sb
@@ -63,7 +63,7 @@ export async function fetchFeed(): Promise<FeedPost[]> {
             .limit(20),
           sb.from('profiles').select('id, handle, display_name').in('id', ids),
         ]);
-        const who = new Map((profs ?? []).map((p) => [p.id, p]));
+        const who = new Map(((profs ?? []) as SbRow[]).map((p) => [p.id, p]));
         for (const r of ratings ?? []) {
           const p = who.get(r.user_id);
           posts.push({
@@ -116,11 +116,12 @@ export async function fetchFeed(): Promise<FeedPost[]> {
       .order('promoted', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(20);
-    if (lps && lps.length) {
-      const loungeIds = Array.from(new Set(lps.map((l) => l.lounge_id)));
+    const lpsRows = (lps ?? []) as SbRow[];
+    if (lpsRows.length) {
+      const loungeIds = Array.from(new Set(lpsRows.map((l) => l.lounge_id)));
       const { data: lounges } = await sb.from('lounges').select('id, name, slug, verified').in('id', loungeIds);
-      const byId = new Map((lounges ?? []).map((l) => [l.id, l]));
-      for (const lp of lps) {
+      const byId = new Map(((lounges ?? []) as SbRow[]).map((l) => [l.id, l]));
+      for (const lp of lpsRows) {
         const l = byId.get(lp.lounge_id);
         posts.push({
           id: `lp_${lp.id}`,

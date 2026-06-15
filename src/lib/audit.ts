@@ -53,7 +53,7 @@ export function logEvent(input: LogInput) {
       lounge_id: input.loungeId ?? null,
       meta: input.meta ?? null,
     })
-    .then(({ error }) => error && console.error('[audit] log failed:', error.message));
+    .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[audit] log failed:', r.error.message) } });
 }
 
 type Row = {
@@ -83,7 +83,7 @@ export async function getEvents(limit = 100): Promise<AuditEvent[]> {
       console.error('[audit] read failed:', error.message);
       return [];
     }
-    return (data ?? []).map((r) => rowTo(r as Row));
+    return ((data ?? []) as Row[]).map((r) => rowTo(r));
   } catch {
     return [];
   }
@@ -102,7 +102,7 @@ export async function getLoungeEvents(loungeId: string, limit = 60): Promise<Aud
       console.error('[audit] lounge read failed:', error.message);
       return [];
     }
-    return (data ?? []).map((r) => rowTo(r as Row));
+    return ((data ?? []) as Row[]).map((r) => rowTo(r));
   } catch {
     return [];
   }

@@ -65,7 +65,7 @@ async function hydrateRemote() {
       console.error('[collection] load failed:', error.message);
       return;
     }
-    cache = (data ?? []).map((r) => ({
+    cache = ((data ?? []) as Array<{ cigar_id: string; status: string; brand: string; name: string; size: string; slug: string; created_at: string }>).map((r) => ({
       cigarId: r.cigar_id,
       status: r.status as CollectionStatus,
       brand: r.brand ?? '',
@@ -97,7 +97,7 @@ function persistUpsert(seed: CollectionSeed, status: CollectionStatus) {
       },
       { onConflict: 'user_id,cigar_id' }
     )
-    .then(({ error }) => error && console.error('[collection] save failed:', error.message));
+    .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[collection] save failed:', r.error.message) } });
 }
 
 function persistRemove(cigarId: string) {
@@ -108,7 +108,7 @@ function persistRemove(cigarId: string) {
     .delete()
     .eq('user_id', userId)
     .eq('cigar_id', cigarId)
-    .then(({ error }) => error && console.error('[collection] delete failed:', error.message));
+    .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[collection] delete failed:', r.error.message) } });
 }
 
 /* ── init (lazy, once) ───────────────────────────────────────────────────── */
@@ -201,7 +201,7 @@ export async function fetchCollectionFor(otherUserId: string): Promise<Collectio
       console.error('[collection] fetchFor failed:', error.message);
       return [];
     }
-    return (data ?? []).map((r) => ({
+    return ((data ?? []) as Array<{ cigar_id: string; status: string; brand: string; name: string; size: string; slug: string; created_at: string }>).map((r) => ({
       cigarId: r.cigar_id,
       status: r.status as CollectionStatus,
       brand: r.brand ?? '',

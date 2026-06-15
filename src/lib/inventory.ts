@@ -59,7 +59,7 @@ export async function getInventory(slug: string, localId?: string): Promise<Inve
       console.error('[inventory] load failed:', error.message);
       return [];
     }
-    return (data ?? []).map((r) => rowTo(r as Row));
+    return ((data ?? []) as Row[]).map((r) => rowTo(r));
   }
   return localRead(invKey(localId ?? slug));
 }
@@ -77,7 +77,7 @@ export async function getPublishedMenu(slug: string, localId?: string): Promise<
       console.error('[inventory] published load failed:', error.message);
       return [];
     }
-    return (data ?? []).map((r) => rowTo(r as Row));
+    return ((data ?? []) as Row[]).map((r) => rowTo(r));
   }
   return localRead(pubKey(localId ?? slug));
 }

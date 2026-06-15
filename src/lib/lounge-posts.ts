@@ -60,7 +60,7 @@ export async function getPostsForLounge(loungeId: string, limit = 20): Promise<L
       console.error('[posts] load failed:', error.message);
       return [];
     }
-    return (data ?? []).map((r) => rowTo(r as Row));
+    return ((data ?? []) as Row[]).map((r) => rowTo(r));
   } catch {
     return [];
   }

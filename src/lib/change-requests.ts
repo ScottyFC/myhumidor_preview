@@ -70,11 +70,14 @@ async function hydrateRemote() {
       console.error('[change-req] load failed:', error.message);
       return;
     }
-    const rows = (data ?? []).map((r) => rowTo(r as Row));
+    const rows = ((data ?? []) as Row[]).map((r) => rowTo(r));
     const ids = Array.from(new Set(rows.map((r) => r.reviewedBy).filter(Boolean))) as string[];
     if (ids.length) {
       const { data: profs } = await sb.from('profiles').select('id, handle, display_name').in('id', ids);
-      const who = new Map((profs ?? []).map((p) => [p.id, p.display_name || p.handle]));
+      const who = new Map<string, string>(
+        ((profs ?? []) as Array<{ id: string; handle: string; display_name: string }>)
+          .map((p) => [p.id, p.display_name || p.handle] as [string, string])
+      );
       rows.forEach((r) => {
         if (r.reviewedBy) r.reviewerName = who.get(r.reviewedBy) ?? undefined;
       });
@@ -115,7 +118,7 @@ export function addChangeRequest(cr: Omit<ChangeRequest, 'id' | 'createdAt' | 's
         target_name: cr.targetName,
         message: cr.message,
       })
-      .then(({ error }) => error && console.error('[change-req] insert failed:', error.message));
+      .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[change-req] insert failed:', r.error.message) } });
   } else {
     saveLocal();
   }
@@ -138,7 +141,8 @@ export function setChangeRequestStatus(id: string, status: 'resolved' | 'dismiss
       .from('change_requests')
       .update({ status, reviewed_by: userId, reviewed_at: new Date().toISOString() })
       .eq('id', id)
-      .then(({ error }) => {
+      .then((r: { error: { message: string } | null }) => {
+        const error = r.error;
         if (error) console.error('[change-req] update failed:', error.message);
         else {
           if (cr && status !== 'open') {

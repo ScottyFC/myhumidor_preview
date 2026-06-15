@@ -11,7 +11,7 @@ export function BoostLounge({ slug }: { slug: string }) {
   useEffect(() => {
     if (!isSupabaseConfigured) return;
     supabaseBrowser().from('lounges').select('boost_until').eq('slug', slug).single()
-      .then(({ data }) => setUntil(data?.boost_until ?? null));
+      .then(({ data }: { data: { boost_until?: string | null } | null }) => setUntil(data?.boost_until ?? null));
   }, [slug]);
 
   const active = until ? new Date(until).getTime() > Date.now() : false;

@@ -62,7 +62,7 @@ export async function followerIdsForLounge(loungeId: string, limit = 500): Promi
   if (!isSupabaseConfigured || !loungeId) return [];
   try {
     const { data } = await supabaseBrowser().from('lounge_follows').select('user_id').eq('lounge_id', loungeId).limit(limit);
-    return (data ?? []).map((r) => r.user_id as string);
+    return ((data ?? []) as SbRow[]).map((r) => r.user_id as string);
   } catch {
     return [];
   }
@@ -72,7 +72,7 @@ export async function getFollowedLoungeIds(uid: string): Promise<string[]> {
   if (!isSupabaseConfigured || !uid) return [];
   try {
     const { data } = await supabaseBrowser().from('lounge_follows').select('lounge_id').eq('user_id', uid);
-    return (data ?? []).map((r) => r.lounge_id as string);
+    return ((data ?? []) as SbRow[]).map((r) => r.lounge_id as string);
   } catch {
     return [];
   }
@@ -85,7 +85,7 @@ export async function notifyLoungeFollowers(loungeId: string, loungeName: string
   let allowed = ids;
   try {
     const { data } = await supabaseBrowser().from('profiles').select('id, notify_lounges').in('id', ids);
-    if (data) allowed = data.filter((p) => p.notify_lounges !== false).map((p) => p.id as string);
+    if (data) allowed = (data as SbRow[]).filter((p) => p.notify_lounges !== false).map((p) => p.id as string);
   } catch {
     /* fall back to notifying all */
   }

@@ -20,7 +20,7 @@ export async function searchCatalogCigarsRemote(query: string, limit = 24): Prom
       console.error('[db] cigar search failed:', error.message);
       return [];
     }
-    return (data ?? []).map((c) => ({
+    return ((data ?? []) as Array<{ id: string; brand: string; name: string; country: string | null; price: number | null; size: string | null; slug: string; image_url: string | null }>).map((c) => ({
       uuid: c.id,
       brand: c.brand,
       name: c.name,
@@ -92,7 +92,7 @@ export async function recentCigars(limit = 8): Promise<RecentCigar[]> {
       .select('id, brand, name, size, slug, image_url, created_at')
       .order('created_at', { ascending: false })
       .limit(limit);
-    return (data ?? []).map((c) => ({
+    return ((data ?? []) as SbRow[]).map((c) => ({
       uuid: c.id, brand: c.brand, name: c.name, size: c.size ?? '', slug: c.slug, image_url: c.image_url ?? null,
     }));
   } catch {
@@ -108,7 +108,7 @@ export async function recentMembers(limit = 8): Promise<RecentMember[]> {
       .select('handle, display_name, avatar_url, account_type, created_at')
       .order('created_at', { ascending: false })
       .limit(limit);
-    return (data ?? []).map((p) => ({
+    return ((data ?? []) as SbRow[]).map((p) => ({
       handle: p.handle,
       displayName: p.display_name ?? p.handle,
       avatarUrl: p.avatar_url ?? undefined,
@@ -127,7 +127,7 @@ export async function recentLounges(limit = 8): Promise<RecentLounge[]> {
       .select('slug, name, city, state, certified, image_url, created_at')
       .order('created_at', { ascending: false })
       .limit(limit);
-    return (data ?? []).map((l) => ({
+    return ((data ?? []) as SbRow[]).map((l) => ({
       slug: l.slug, name: l.name, city: l.city ?? '', state: l.state ?? '', certified: l.certified ?? false, image_url: l.image_url ?? null,
     }));
   } catch {

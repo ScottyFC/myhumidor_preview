@@ -100,12 +100,12 @@ async function hydrateRemote() {
       console.error('[submissions] load failed:', error.message);
       return;
     }
-    const rows = (data ?? []).map((r) => rowTo(r as Row));
+    const rows = ((data ?? []) as Row[]).map((r) => rowTo(r));
     // resolve reviewer names for the "decided by" note
     const ids = Array.from(new Set(rows.map((r) => r.reviewedBy).filter(Boolean))) as string[];
     if (ids.length) {
       const { data: profs } = await sb.from('profiles').select('id, handle, display_name').in('id', ids);
-      const who = new Map((profs ?? []).map((p) => [p.id, p.display_name || p.handle]));
+      const who = new Map(((profs ?? []) as SbRow[]).map((p) => [p.id, p.display_name || p.handle]));
       rows.forEach((r) => {
         if (r.reviewedBy) r.reviewerName = who.get(r.reviewedBy) ?? undefined;
       });
@@ -220,7 +220,7 @@ async function isVerifiedLoungeOperator(uid: string): Promise<boolean> {
       .from('lounge_members')
       .select('lounge_id, lounges!inner(verified)')
       .eq('user_id', uid);
-    return (data ?? []).some((r) => (r as { lounges?: { verified?: boolean } }).lounges?.verified);
+    return ((data ?? []) as SbRow[]).some((r) => (r as { lounges?: { verified?: boolean } }).lounges?.verified);
   } catch {
     return false;
   }
@@ -269,7 +269,7 @@ export async function submitCigar(input: {
       .from('cigar_submissions')
       .select('id, submitted_by, status')
       .eq('slug', slug).eq('status', 'pending');
-    const duplicatePending = (pendingRows ?? []).some((r) => r.submitted_by !== userId);
+    const duplicatePending = ((pendingRows ?? []) as SbRow[]).some((r) => r.submitted_by !== userId);
 
     const verified = await isVerifiedLoungeOperator(userId);
     const criteriaMet = !!(input.brand && input.name && input.country && input.size);

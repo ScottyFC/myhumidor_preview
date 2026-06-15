@@ -17,7 +17,7 @@ export async function boostedLounges(limit = 6): Promise<CatalogStore[]> {
       .order('boost_until', { ascending: false })
       .limit(limit);
     if (error || !data) return [];
-    return data.map((l) => ({
+    return (data as SbRow[]).map((l) => ({
       id: l.id,
       slug: l.slug,
       name: l.name,

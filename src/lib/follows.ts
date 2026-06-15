@@ -46,14 +46,14 @@ async function hydrateRemote() {
       console.error('[follows] load failed:', error.message);
       return;
     }
-    const ids = (rows ?? []).map((r) => r.followee_id);
+    const ids = ((rows ?? []) as SbRow[]).map((r) => r.followee_id);
     if (ids.length === 0) {
       cache = [];
       fire();
       return;
     }
     const { data: profs } = await sb.from('profiles').select('handle').in('id', ids);
-    cache = (profs ?? []).map((p) => p.handle).filter(Boolean);
+    cache = ((profs ?? []) as SbRow[]).map((p) => p.handle).filter(Boolean);
     fire();
   } catch (e) {
     console.error('[follows] load error:', e);
@@ -165,10 +165,10 @@ export async function fetchFollowList(targetUserId: string, kind: 'followers' | 
     const col = kind === 'followers' ? 'followee_id' : 'follower_id';
     const pick = kind === 'followers' ? 'follower_id' : 'followee_id';
     const { data: rows } = await sb.from('follows').select(pick).eq(col, targetUserId).limit(limit);
-    const ids = (rows ?? []).map((r) => (r as Record<string, string>)[pick]).filter(Boolean);
+    const ids = ((rows ?? []) as SbRow[]).map((r) => (r as Record<string, string>)[pick]).filter(Boolean);
     if (ids.length === 0) return [];
     const { data: profs } = await sb.from('profiles').select('handle, display_name, avatar_url').in('id', ids);
-    return (profs ?? []).map((p) => ({
+    return ((profs ?? []) as SbRow[]).map((p) => ({
       handle: p.handle,
       displayName: p.display_name ?? 'Member',
       avatarUrl: p.avatar_url ?? undefined,
@@ -186,7 +186,7 @@ export async function fetchSuggestedFollows(selfId: string, opts: { state?: stri
     const sb = supabaseBrowser();
     // Who self already follows (to exclude).
     const { data: f } = await sb.from('follows').select('followee_id').eq('follower_id', selfId);
-    const exclude = new Set([selfId, ...(f ?? []).map((r) => r.followee_id as string)]);
+    const exclude = new Set([selfId, ...((f ?? []) as SbRow[]).map((r) => r.followee_id as string)]);
 
     const pickFrom = (rows: { id: string; handle: string; display_name: string | null; avatar_url: string | null }[]) =>
       rows.filter((p) => p.id && !exclude.has(p.id) && p.handle);

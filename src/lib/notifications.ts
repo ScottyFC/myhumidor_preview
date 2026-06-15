@@ -74,7 +74,7 @@ export async function getNotifications(userId: string, limit = 30): Promise<AppN
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);
-    return (data ?? []).map((r) => rowTo(r as Row));
+    return ((data ?? []) as Row[]).map((r) => rowTo(r));
   } catch {
     return [];
   }

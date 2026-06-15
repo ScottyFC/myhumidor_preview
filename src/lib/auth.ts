@@ -133,8 +133,8 @@ export function subscribeAuth(cb: (s: Session | null) => void): () => void {
     };
   }
   const sb = supabaseBrowser();
-  sb.auth.getSession().then(({ data }) => cb(data.session ? sessionFromUser(data.session.user) : null));
-  const { data } = sb.auth.onAuthStateChange((_e, sess) =>
+  sb.auth.getSession().then((r: { data: { session: { user: unknown } | null } }) => cb(r.data.session ? sessionFromUser(r.data.session.user) : null));
+  const { data } = sb.auth.onAuthStateChange((_e: string, sess: { user: unknown } | null) =>
     cb(sess ? sessionFromUser(sess.user) : null)
   );
   return () => data.subscription.unsubscribe();
