@@ -14,6 +14,7 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 import { ProfileBody } from '@/components/ProfileBody';
 import { BadgesSection } from '@/components/BadgesSection';
 import { AgingTracker } from '@/components/AgingTracker';
+import { CollectionHighlight } from '@/components/CollectionHighlight';
 import { FlavorProfile } from '@/components/FlavorProfile';
 import { FollowStats } from '@/components/FollowStats';
 import { ProfileSocialLinks, SocialLinksEditor } from '@/components/SocialLinks';
@@ -94,6 +95,7 @@ export default function ProfilePage() {
 
   const humidor = collection.filter((c) => c.status === 'humidor');
   const wishlist = collection.filter((c) => c.status === 'wishlist');
+  const smoked = collection.filter((c) => c.status === 'smoked');
 
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
@@ -169,6 +171,7 @@ export default function ProfilePage() {
           <LoungeBusinessPanel state={profile.state || undefined} selfId={session.uuid} />
         ) : (
           <>
+            {session && <CollectionHighlight humidor={humidor} smoked={smoked} self />}
             {session && <BadgesSection userId={session.uuid} self humidor={humidor} ratings={ratings} />}
             {session && <ActivityFeed userId={session.uuid} ratings={ratings} title="Your activity" />}
             <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self />

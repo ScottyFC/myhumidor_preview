@@ -1,3 +1,12 @@
+## Fixes — humidor loading, aging-tracker scope, user autocomplete, profile highlight
+
+- **Humidor stuck-loading fixed:** the page waited on `subscribeAuth` with no escape, so a stalled `getSession()` (token refresh deadlocking on tab refocus) left the spinner forever. Now auth resolution has a 6s timeout that surfaces a "taking longer than usual… Reload" button instead of hanging, and the subscription is cleaned up properly.
+- **Aging Tracker = humidor only:** the component now filters to `status === 'humidor'` internally, so wishlist and already-smoked cigars can never appear (both call sites already passed humidor-only, this guarantees it).
+- **User autocomplete in the toolbar:** new `/api/users` (matches handle or display name over the public `profiles` table); the search dropdown now lists matching members first (with @handle, location, Aficionado tag) linking to `/u/{handle}`.
+- **Profile collection highlight:** a new top-of-profile strip shows "In the humidor" and "Smoked" with counts + thumbnail rows, on both the owner profile and the public `/u/{handle}` view.
+
+(No new migration — uses existing tables.)
+
 ## Phase 32 — Smoking vs keeping, review photos + check-in, cigar-page sections, admin archive
 
 **Run `supabase/migrations/phase32.sql`** (humidor_entries status adds 'smoked'; ratings gain photo_url + lounge_slug; adds admin-checked `set_brand_image` RPC). Photos use the existing `avatars` storage bucket (paths `rating-photos/` and `brand-art/`).

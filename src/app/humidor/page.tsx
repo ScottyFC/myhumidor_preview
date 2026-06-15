@@ -39,10 +39,14 @@ export default function HumidorPage() {
   const [userItems, setUserItems] = useState<CollectionItem[]>([]);
   const [member, setMember] = useState(false);
   const [authState, setAuthState] = useState<'checking' | 'in' | 'out'>('checking');
+  const [slowAuth, setSlowAuth] = useState(false);
   const [displayName, setDisplayName] = useState('Your');
 
   useEffect(() => {
-    return subscribeAuth((s: Session | null) => {
+    let settled = false;
+    const unsub = subscribeAuth((s: Session | null) => {
+      settled = true;
+      setSlowAuth(false);
       if (s) {
         // Retailers have no humidor — their inventory lives on the dashboard.
         if (s.type === 'retailer') { router.replace('/dashboard'); return; }
@@ -53,6 +57,10 @@ export default function HumidorPage() {
         router.replace('/register?next=/humidor');
       }
     });
+    // If auth resolution stalls (token refresh can deadlock on tab refocus),
+    // don't spin forever — surface a retry after 6s instead of hanging.
+    const t = setTimeout(() => { if (!settled) setSlowAuth(true); }, 6000);
+    return () => { clearTimeout(t); unsub(); };
   }, [router]);
 
   useEffect(() => subscribeAficionado(setMember), []);
@@ -89,7 +97,16 @@ export default function HumidorPage() {
   if (authState !== 'in') {
     return (
       <div className="mx-auto max-w-5xl px-6 pt-20 text-center text-smoke-400">
-        <Loader2 className="mx-auto animate-spin text-ember-400" size={24} />
+        {slowAuth ? (
+          <div className="space-y-4">
+            <p className="text-sm">This is taking longer than usual to load your humidor.</p>
+            <button onClick={() => window.location.reload()} className="btn-primary text-sm">
+              Reload
+            </button>
+          </div>
+        ) : (
+          <Loader2 className="mx-auto animate-spin text-ember-400" size={24} />
+        )}
       </div>
     );
   }

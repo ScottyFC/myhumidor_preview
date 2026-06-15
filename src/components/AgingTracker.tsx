@@ -47,7 +47,10 @@ export function AgingTracker({ humidor, member }: { humidor: CollectionItem[]; m
     );
   }
 
+  // Only cigars actually kept in the humidor age here — never wishlist or
+  // already-smoked entries, regardless of what the caller passes in.
   const rows = [...humidor]
+    .filter((c) => c.status === 'humidor')
     .map((c) => ({ c, m: monthsSince(c.addedAt) }))
     .sort((a, b) => b.m - a.m);
 

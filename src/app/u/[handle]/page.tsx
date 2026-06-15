@@ -10,6 +10,7 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 import { getCollection, fetchCollectionFor, type CollectionItem } from '@/lib/collection';
 import { getRatings, fetchRatingsFor, type UserRating } from '@/lib/ratings';
 import { ProfileBody } from '@/components/ProfileBody';
+import { CollectionHighlight } from '@/components/CollectionHighlight';
 import { BadgesSection } from '@/components/BadgesSection';
 import { Avatar } from '@/components/Avatar';
 import { FollowButton } from '@/components/FollowButton';
@@ -104,6 +105,7 @@ export default function PublicProfilePage() {
 
   const humidor = collection.filter((c) => c.status === 'humidor');
   const wishlist = collection.filter((c) => c.status === 'wishlist');
+  const smoked = collection.filter((c) => c.status === 'smoked');
 
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
@@ -149,6 +151,7 @@ export default function PublicProfilePage() {
           </div>
         ) : (
           <>
+            <CollectionHighlight humidor={humidor} smoked={smoked} />
             {viewedId && <BadgesSection userId={viewedId} self={isSelf} humidor={humidor} ratings={ratings} />}
             {viewedId && <ActivityFeed userId={viewedId} ratings={ratings} title="Activity" />}
             <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self={false} />

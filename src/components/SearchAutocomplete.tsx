@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Loader2, Store, Cigarette, ArrowRight } from 'lucide-react';
+import { Search, Loader2, Store, Cigarette, ArrowRight, User } from 'lucide-react';
 import type { CatalogCigar, CatalogStore } from '@/types';
 import { cn, formatUSD } from '@/lib/utils';
 import { searchCatalogCigarsRemote } from '@/lib/db';
 
 interface Suggestion {
-  type: 'cigar' | 'store' | 'all';
+  type: 'cigar' | 'store' | 'user' | 'all';
   href: string;
   label: string;
   sub?: string;
@@ -36,9 +36,10 @@ export function SearchAutocomplete({ className }: { className?: string }) {
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const [c, s, dbCigars] = await Promise.all([
+        const [c, s, u, dbCigars] = await Promise.all([
           fetch(`/api/cigars?q=${encodeURIComponent(query)}&limit=6`).then((r) => r.json()),
           fetch(`/api/stores?q=${encodeURIComponent(query)}&limit=4`).then((r) => r.json()),
+          fetch(`/api/users?q=${encodeURIComponent(query)}&limit=4`).then((r) => r.json()),
           searchCatalogCigarsRemote(query, 6),
         ]);
         if (id !== reqId.current) return;
@@ -57,12 +58,18 @@ export function SearchAutocomplete({ className }: { className?: string }) {
           label: x.name,
           sub: [x.city, x.state].filter(Boolean).join(', '),
         }));
+        const users: Suggestion[] = (u.items ?? []).map((x: { handle: string; displayName: string; city?: string | null; state?: string | null; aficionado?: boolean }) => ({
+          type: 'user' as const,
+          href: `/u/${x.handle}`,
+          label: x.displayName + (x.aficionado ? ' · Aficionado' : ''),
+          sub: '@' + x.handle + ([x.city, x.state].filter(Boolean).length ? ' · ' + [x.city, x.state].filter(Boolean).join(', ') : ''),
+        }));
         const all: Suggestion = {
           type: 'all',
           href: `/search?q=${encodeURIComponent(query)}`,
           label: `See all results for “${query}”`,
         };
-        setSuggestions([...cigars, ...stores, all]);
+        setSuggestions([...users, ...cigars, ...stores, all]);
         setHighlight(-1);
       } finally {
         if (id === reqId.current) setLoading(false);
@@ -146,6 +153,7 @@ export function SearchAutocomplete({ className }: { className?: string }) {
               >
                 {s.type === 'cigar' && <Cigarette size={14} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
                 {s.type === 'store' && <Store size={14} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
+                {s.type === 'user' && <User size={14} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
                 {s.type === 'all' && <ArrowRight size={14} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
                 <span className="min-w-0 flex-1">
                   <span className={cn('block truncate text-sm', s.type === 'all' ? 'text-ember-100' : 'text-paper')}>
