@@ -1,3 +1,7 @@
+## Humidor removal confirmation dialog
+
+Added an "Are you sure you want to remove this cigar from your humidor?" confirm dialog on the humidor page. The Remove (trash) button now opens a modal naming the cigar; confirming calls the same removal path, which deletes by the humidor_entries **primary key** (phase61 `remove_humidor_entry_by_id`). The diagnostic query confirmed entries are correctly owned (`user_id = profiles.id = auth.uid()`), so the by-id delete should match — the dialog is a UX layer, not the fix for the delete itself.
+
 ## Phase 61 — Delete humidor entry by primary key + diagnostic
 
 **Run `supabase/migrations/phase61.sql`.** Even a `(auth.uid(), cigar_id)`-scoped SECURITY DEFINER delete kept matching 0 rows, so removal now targets the row's own **primary key**. `humidor_entries.id` is now selected into the collection cache (`entryId`); `remove` deletes via `remove_humidor_entry_by_id(p_id)`, falling back to the cigar_id RPC then a direct delete. The RPCs now **return the deleted row count**, and the client logs loudly when a delete matches 0 rows (instead of failing silently).

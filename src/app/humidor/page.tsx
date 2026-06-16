@@ -41,6 +41,7 @@ export default function HumidorPage() {
   const [authState, setAuthState] = useState<'checking' | 'in' | 'out'>('checking');
   const [slowAuth, setSlowAuth] = useState(false);
   const [displayName, setDisplayName] = useState('Your');
+  const [pendingRemove, setPendingRemove] = useState<Row | null>(null);
 
   useEffect(() => {
     let settled = false;
@@ -186,17 +187,48 @@ export default function HumidorPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {visible.map((r) => (
-                <Row key={r.cigarId} row={r} />
+                <Row key={r.cigarId} row={r} onRemove={setPendingRemove} />
               ))}
             </div>
           )}
         </>
       )}
+
+      {pendingRemove && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-char/80 px-6 backdrop-blur-sm"
+          onClick={() => setPendingRemove(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border-[0.5px] border-ember-400/20 bg-ink p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="font-display text-lg text-paper">Remove from humidor?</h2>
+            <p className="mt-2 text-sm text-smoke-300">
+              Are you sure you want to remove <span className="text-ember-100">{pendingRemove.brand} {pendingRemove.name}</span> from your humidor? This can&apos;t be undone.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setPendingRemove(null)}
+                className="rounded-md border-[0.5px] border-ember-400/20 px-4 py-2 text-sm text-smoke-200 transition hover:text-paper"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { removeFromCollection(pendingRemove.cigarId); setPendingRemove(null); }}
+                className="inline-flex items-center gap-1.5 rounded-md bg-red-500/90 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-500"
+              >
+                <Trash2 size={14} strokeWidth={1.5} /> Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function Row({ row }: { row: Row }) {
+function Row({ row, onRemove }: { row: Row; onRemove: (row: Row) => void }) {
   return (
     <div className="group flex gap-4 rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-4">
       <Link href={`/cigars/${row.slug}`} className="flex min-w-0 flex-1 gap-4">
@@ -246,7 +278,7 @@ function Row({ row }: { row: Row }) {
               </button>
             )}
             <button
-              onClick={() => removeFromCollection(row.cigarId)}
+              onClick={() => onRemove(row)}
               title="Remove"
               aria-label="Remove"
               className="flex h-7 w-7 items-center justify-center rounded-md border-[0.5px] border-ember-400/20 text-smoke-400 transition hover:border-red-400/50 hover:text-red-400"
