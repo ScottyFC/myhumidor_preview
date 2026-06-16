@@ -6,6 +6,7 @@ import { findCatalogCigarBySlug, featuredLounges, moreFromBrand, similarCigars }
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
+import { MyCigarRatings } from '@/components/MyCigarRatings';
 import { CigarCommunity } from '@/components/CigarCommunity';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandLogo } from '@/components/BrandLogo';
@@ -168,6 +169,7 @@ export default async function CigarPage({ params }: PageProps) {
 
       {/* ─── Rating Form ──────────────────────────────────────────────── */}
       <div className="mt-12">
+        <MyCigarRatings cigarId={view.id} slug={slug} />
         <RatingForm
           seed={{ cigarId: view.id, slug, brand: view.brand, name: view.headline, size: view.vitola }}
         />

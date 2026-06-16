@@ -1,3 +1,10 @@
+## Phase 59 — Append-only ratings + profile collection fix
+
+**Run `supabase/migrations/phase59.sql`** (drops the `unique(user_id,cigar_id)` constraint on `ratings`).
+
+- **Ratings are now append-only.** Users can **add** or **remove** a rating, never amend it. Rating the same cigar again later is a brand-new rating (its own row + id). `persist` switched from `upsert(onConflict:user_id,cigar_id)` to `insert` with a client-generated `id`; added `removeRating(id)` / `persistDelete`. The rating form no longer pre-fills an existing rating, and a new **"Your rating(s)"** block on each cigar page lists the user's ratings with a Remove (trash) button. Each rating still moves the cigar to "Smoked".
+- **Removed-from-humidor cigars lingering on the profile — fixed.** The profile was re-fetching the collection from the DB on every change, which raced the in-flight delete and read the row back. The own-profile now reads the **live local store** (`getCollection`/`getRatings`) — optimistic + realtime-synced — so removals disappear immediately. (The public `/u/[handle]` view still fetches other members' data from the DB, which is correct.)
+
 ## Fix — pages still hanging + collection not updating live
 
 **Hanging humidor/admin (root cause):** every component called `subscribeAuth`, and each one registered its *own* `onAuthStateChange` on the shared client **and** raced a `getSession()` promise. On the single shared client that meant many awaited callbacks per auth event plus a per-page getSession that could stall under lock contention — pages sat on "checking".

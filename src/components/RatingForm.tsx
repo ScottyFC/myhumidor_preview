@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuthGate } from '@/lib/use-auth-gate';
 import { Star, Check, ImagePlus, X, MapPin, Loader2 } from 'lucide-react';
 import { computeOverall, cn } from '@/lib/utils';
-import { getRating, setRating, uploadRatingPhoto } from '@/lib/ratings';
+import { setRating, uploadRatingPhoto } from '@/lib/ratings';
 import { markSmoked } from '@/lib/collection';
 import { createCheckIn } from '@/lib/checkins';
 
@@ -41,17 +41,8 @@ export function RatingForm({ seed }: Props) {
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Prefill if the user has already rated this cigar.
-  useEffect(() => {
-    const existing = getRating(seed.cigarId);
-    if (existing) {
-      setFlavor(existing.flavor);
-      setBurn(existing.burn);
-      setAppearance(existing.appearance);
-      setNotes(existing.notes ?? '');
-      setSelectedNotes(new Set(existing.tastingNotes ?? []));
-    }
-  }, [seed.cigarId]);
+  // Ratings are append-only — the form never pre-fills an existing rating.
+  // Rating a cigar again later creates a brand-new rating.
 
   const allRated = flavor > 0 && burn > 0 && appearance > 0;
   const overall = allRated ? computeOverall(flavor, burn, appearance) : 0;

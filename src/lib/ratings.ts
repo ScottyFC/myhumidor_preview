@@ -118,29 +118,40 @@ async function hydrateRemote() {
 function persist(rating: UserRating) {
   if (!isSupabaseConfigured) return saveLocal();
   if (!userId) return;
+  // Append-only: every rating is its own row (re-rating a cigar later is a new
+  // rating, never an edit). id is generated client-side so the optimistic row
+  // and a later delete reference the same primary key.
   supabaseBrowser()
     .from('ratings')
-    .upsert(
-      {
-        user_id: userId,
-        cigar_id: rating.cigarId,
-        slug: rating.slug,
-        brand: rating.brand,
-        name: rating.name,
-        size: rating.size,
-        flavor_score: rating.flavor,
-        burn_score: rating.burn,
-        appearance_score: rating.appearance,
-        overall: rating.overall,
-        notes: rating.notes ?? null,
-        tasting_notes: rating.tastingNotes ?? [],
-        photo_url: rating.photoUrl ?? null,
-        lounge_slug: rating.loungeSlug ?? null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id,cigar_id' }
-    )
+    .insert({
+      id: rating.id,
+      user_id: userId,
+      cigar_id: rating.cigarId,
+      slug: rating.slug,
+      brand: rating.brand,
+      name: rating.name,
+      size: rating.size,
+      flavor_score: rating.flavor,
+      burn_score: rating.burn,
+      appearance_score: rating.appearance,
+      overall: rating.overall,
+      notes: rating.notes ?? null,
+      tasting_notes: rating.tastingNotes ?? [],
+      photo_url: rating.photoUrl ?? null,
+      lounge_slug: rating.loungeSlug ?? null,
+    })
     .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[ratings] save failed:', r.error.message) } });
+}
+
+function persistDelete(id: string) {
+  if (!isSupabaseConfigured) return saveLocal();
+  if (!userId) return;
+  supabaseBrowser()
+    .from('ratings')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId)
+    .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[ratings] delete failed:', r.error.message) } });
 }
 
 /* ── init (lazy, once) ───────────────────────────────────────────────────── */
@@ -171,14 +182,35 @@ export function getRatings(): UserRating[] {
 export function getRating(cigarId: string): UserRating | null {
   start();
   if (!isSupabaseConfigured && cache.length === 0) cache = loadLocal();
+  // Most recent rating for this cigar (used for "you've rated this" displays).
   return cache.find((r) => r.cigarId === cigarId) ?? null;
 }
 
+/** Add a NEW rating (append-only — never edits an existing one). */
 export function setRating(rating: UserRating) {
   start();
-  cache = [rating, ...cache.filter((r) => r.cigarId !== rating.cigarId)];
+  const withId: UserRating = { ...rating, id: rating.id ?? newRatingId() };
+  cache = [withId, ...cache];
   fire();
-  persist(rating);
+  persist(withId);
+}
+
+/** Remove one of the user's ratings by id. */
+export function removeRating(id: string) {
+  start();
+  cache = cache.filter((r) => r.id !== id);
+  fire();
+  persistDelete(id);
+}
+
+function newRatingId(): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  } catch { /* fall through */ }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
 }
 
 export function onRatingsChange(cb: () => void): () => void {

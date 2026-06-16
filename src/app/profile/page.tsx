@@ -8,9 +8,8 @@ import { subscribeAuth, type Session } from '@/lib/auth';
 import { getMyLounges } from '@/lib/lounges-owner';
 import { isAdmin, isBootstrapAdmin, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
 import { getProfile, saveProfile, onProfileChange, handleFromName, type ProfileFields } from '@/lib/profile';
-import { getCollection, fetchCollectionFor, onCollectionChange, type CollectionItem } from '@/lib/collection';
-import { getRatings, fetchRatingsFor, onRatingsChange, type UserRating } from '@/lib/ratings';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { getCollection, onCollectionChange, type CollectionItem } from '@/lib/collection';
+import { getRatings, onRatingsChange, type UserRating } from '@/lib/ratings';
 import { ProfileBody } from '@/components/ProfileBody';
 import { BadgesSection } from '@/components/BadgesSection';
 import { AgingTracker } from '@/components/AgingTracker';
@@ -65,24 +64,14 @@ export default function ProfilePage() {
   // public profile (/u/handle) — so the two pages always show identical data.
   useEffect(() => {
     if (!session) return;
-    let off = false;
-    const load = async () => {
-      const [coll, rts] = await Promise.all([
-        fetchCollectionFor(session.uuid),
-        fetchRatingsFor(session.uuid),
-      ]);
-      if (off) return;
-      setCollection(coll.length || isSupabaseConfigured ? coll : getCollection());
-      setRatings(rts.length || isSupabaseConfigured ? rts : getRatings());
-    };
+    // Own profile reads the live local store (optimistic + realtime-synced), so a
+    // removed humidor cigar or deleted rating disappears immediately instead of
+    // racing a DB re-fetch that could read the row back before the delete commits.
+    const load = () => { setCollection(getCollection()); setRatings(getRatings()); };
     load();
     const u2 = onCollectionChange(load);
     const u3 = onRatingsChange(load);
-    return () => {
-      off = true;
-      u2();
-      u3();
-    };
+    return () => { u2(); u3(); };
   }, [session]);
 
   if (authState !== 'in' || !profile) {
