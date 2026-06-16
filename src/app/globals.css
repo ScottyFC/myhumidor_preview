@@ -134,3 +134,30 @@ video {
   background: #000;
 }
 
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Native app shell (Capacitor). `.native-app` is added to <html> only when
+   running inside the iOS/Android wrapper, so the browser site is untouched.
+   Inside the app: hide the website header/footer, show the app top bar +
+   bottom tab bar, and respect device safe areas (notch / home indicator).
+   ───────────────────────────────────────────────────────────────────────── */
+.native-only { display: none; }
+
+.native-app .web-chrome { display: none !important; }
+.native-app .native-only { display: flex; }
+
+/* App bars sit above the device safe areas. */
+.native-topbar { padding-top: env(safe-area-inset-top); }
+.native-tabbar { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Make room for the fixed top bar (56px) and bottom tab bar (~64px). */
+.native-app main {
+  padding-top: calc(env(safe-area-inset-top) + 56px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 72px) !important;
+}
+
+/* App-like feel: no tap-highlight flash, no rubber-band overscroll, no
+   accidental text selection on chrome, smoother momentum scrolling. */
+.native-app, .native-app * { -webkit-tap-highlight-color: transparent; }
+.native-app body { overscroll-behavior-y: none; }
+.native-app button, .native-app a { -webkit-touch-callout: none; }

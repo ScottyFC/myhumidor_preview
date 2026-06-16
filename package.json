@@ -10,11 +10,11 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:types": "npx supabase gen types typescript --project-id daxizltupchiijrdrtep --schema public > src/types/database.types.ts",
-    "cap:sync": "cap sync",
-    "cap:ios": "cap sync ios && cap open ios",
-    "cap:android": "cap sync android && cap open android",
-    "cap:add:ios": "cap add ios",
-    "cap:add:android": "cap add android"
+    "cap:sync": "npx cap sync",
+    "cap:ios": "npx cap sync ios && npx cap open ios",
+    "cap:android": "npx cap sync android && npx cap open android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:add:android": "npx cap add android"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",

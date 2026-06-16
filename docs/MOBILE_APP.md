@@ -22,10 +22,23 @@ deep links (see `src/components/NativeShell.tsx`).
 > These **cannot** be done in the build sandbox: iOS requires macOS + Xcode, and
 > Android requires Android Studio + the Android SDK. Run them on your Mac.
 
+> Run these one line at a time — and do **not** paste the `#` comments, because
+> zsh (the macOS default shell) does not treat `#` as a comment when typed
+> interactively and will pass it to the command.
+
 ```bash
-npm install                 # pulls Capacitor + plugins
-npm run cap:add:ios         # creates ./ios   (macOS only)
-npm run cap:add:android     # creates ./android
+npm install
+```
+```bash
+npx cap --version
+```
+(should print `8.4.0`; if not, `npm install` didn't finish)
+
+```bash
+npm run cap:add:ios
+```
+```bash
+npm run cap:add:android
 ```
 
 ### App icons & splash
@@ -64,6 +77,20 @@ CAP_SERVER_URL=http://<your-LAN-ip>:3000 npm run cap:sync && npm run cap:ios
   `apple-app-site-association`) and an Android App Links `assetlinks.json` so
   `https://www.myhumidor.shop/...` opens the app.
 
+## Troubleshooting
+
+**`npm error could not determine executable to run`** — this means the Capacitor
+CLI (`cap`) isn't installed yet. The `cap` binary only exists after dependencies
+are installed. Run `npm install` **first**, then the `cap` commands:
+
+```bash
+cd myhumidor
+npm install          # installs @capacitor/cli → node_modules/.bin/cap
+npm run cap:add:ios  # now works (macOS only)
+```
+Don't run a bare `npx cap …` before `npm install` — with no local CLI, npx can't
+resolve a package called `cap` and prints exactly that error.
+
 ## Honest risks / recommended before iOS submission
 - **Apple Guideline 4.2 ("minimum functionality").** A pure URL wrapper can be
   rejected. We already add native splash/status-bar/back/deep-links; the strongest
@@ -74,3 +101,22 @@ CAP_SERVER_URL=http://<your-LAN-ip>:3000 npm run cap:sync && npm run cap:ios
   for v1; a later step could bundle an offline shell.
 - The native projects (`ios/`, `android/`) are **not** in this zip — generate them
   with the `cap:add:*` commands above.
+
+## Native UI (app shell vs website)
+
+The app must not look like a website, so inside the Capacitor shell we swap the
+web chrome for native chrome — **only** when running in the app (`<html>` gets a
+`.native-app` class from `NativeShell`); the browser site is unchanged.
+
+- The website **top nav and footer are hidden** in the app (`.web-chrome`).
+- A slim **native top bar** (`MobileTopBar`) shows the wordmark, a contextual
+  back chevron on detail pages, and the notification bell.
+- A **bottom tab bar** (`MobileTabBar`) is the primary navigation: Home, Search,
+  Humidor (or Inventory for lounges), Lounges, Profile — with active states.
+- Safe-area insets (notch / home indicator), no tap-highlight flash, no
+  rubber-band overscroll — see the `.native-app` rules in `globals.css`.
+
+**Because the app loads the hosted site, this UI ships by deploying to Vercel —
+no native rebuild needed.** Deploy, and the already-installed apps pick up the
+new chrome on next launch. Only re-run `cap sync` / rebuild when native config,
+icons, or plugins change.

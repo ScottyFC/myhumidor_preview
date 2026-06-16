@@ -17,6 +17,11 @@ export function NativeShell() {
       const { Capacitor } = await import('@capacitor/core');
       if (cancelled || !Capacitor.isNativePlatform()) return;
 
+      // Flag the native shell so CSS can swap web chrome (header/footer) for the
+      // app's top bar + bottom tab bar and apply safe-area insets.
+      document.documentElement.classList.add('native-app');
+      document.documentElement.classList.add(`native-${Capacitor.getPlatform()}`);
+
       // Status bar: light text on our dark UI.
       try {
         const { StatusBar, Style } = await import('@capacitor/status-bar');
