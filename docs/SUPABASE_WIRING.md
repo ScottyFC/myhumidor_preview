@@ -1,3 +1,22 @@
+## Phase 61 — Delete humidor entry by primary key + diagnostic
+
+**Run `supabase/migrations/phase61.sql`.** Even a `(auth.uid(), cigar_id)`-scoped SECURITY DEFINER delete kept matching 0 rows, so removal now targets the row's own **primary key**. `humidor_entries.id` is now selected into the collection cache (`entryId`); `remove` deletes via `remove_humidor_entry_by_id(p_id)`, falling back to the cigar_id RPC then a direct delete. The RPCs now **return the deleted row count**, and the client logs loudly when a delete matches 0 rows (instead of failing silently).
+
+A confirmation dialog would NOT fix this — the delete reaches the DB and matches nothing; the dialog only changes the UX before the same call.
+
+### Diagnostic — why a delete matches 0 rows
+If cigars still persist after running phase61, the stored `user_id` likely isn't your `auth.uid()` (rows written under a different id). Run this in the Supabase SQL editor to see the actual rows (note: `auth.uid()` is null in the SQL editor, so we join to profiles instead):
+
+```sql
+select he.id, he.user_id, he.cigar_id, he.status, p.handle, p.public_id
+from public.humidor_entries he
+join public.profiles p on p.id = he.user_id
+order by he.created_at desc
+limit 20;
+```
+
+Compare `he.user_id` to your own `profiles.id`. If they differ, the entries were written under the wrong id and the fix is to correct how `user_id` is set on insert (it should be `auth.uid()`), then re-point existing rows. Send me the (anonymised) output and I'll pinpoint it.
+
 ## Phase 60 — Humidor removal via SECURITY DEFINER RPC + profile humidor link
 
 **Run `supabase/migrations/phase60.sql`.** The direct DELETE was matching 0 rows on the live DB (cigar reappeared on refresh) — the live RLS delete policy wasn't actually permitting it. phase60 adds `remove_humidor_entry(p_cigar_id uuid)` (SECURITY DEFINER — deletes `where user_id = auth.uid()` regardless of policy config) and also (re)asserts a `for delete using (auth.uid() = user_id)` policy. `persistRemove` now calls the RPC, falling back to a direct delete if the RPC isn't present. Added the RPC signature to `database.types.ts`.

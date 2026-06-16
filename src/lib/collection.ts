@@ -18,6 +18,7 @@ export type CollectionStatus = 'humidor' | 'wishlist' | 'smoked';
 
 export interface CollectionItem {
   cigarId: string;
+  entryId?: string; // humidor_entries primary key (for precise deletes)
   slug: string;
   brand: string;
   name: string;
@@ -60,14 +61,15 @@ async function hydrateRemote() {
   try {
     const { data, error } = await supabaseBrowser()
       .from('humidor_entries')
-      .select('cigar_id, status, brand, name, size, slug, created_at')
+      .select('id, cigar_id, status, brand, name, size, slug, created_at')
       .order('created_at', { ascending: false });
     if (error) {
       console.error('[collection] load failed:', error.message);
       return;
     }
-    cache = ((data ?? []) as Array<{ cigar_id: string; status: string; brand: string; name: string; size: string; slug: string; created_at: string }>).map((r) => ({
+    cache = ((data ?? []) as Array<{ id: string; cigar_id: string; status: string; brand: string; name: string; size: string; slug: string; created_at: string }>).map((r) => ({
       cigarId: r.cigar_id,
+      entryId: r.id,
       status: r.status as CollectionStatus,
       brand: r.brand ?? '',
       name: r.name ?? '',
@@ -102,20 +104,33 @@ function persistUpsert(seed: CollectionSeed, status: CollectionStatus) {
     .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[collection] save failed:', r.error.message) } });
 }
 
-function persistRemove(cigarId: string) {
+function persistRemove(cigarId: string, entryId?: string) {
   if (!isSupabaseConfigured) return saveLocal();
   const sb = supabaseBrowser();
-  // Primary: SECURITY DEFINER RPC deletes the current user's row regardless of
-  // RLS policy config (a direct delete was matching 0 rows on the live DB, so
-  // the cigar came back on refresh). Fall back to a direct delete if the RPC
-  // isn't present yet (migration not run).
-  sb.rpc('remove_humidor_entry', { p_cigar_id: cigarId }).then((r: { error: { message: string } | null }) => {
-    if (r.error) {
-      console.error('[collection] remove rpc failed, trying direct delete:', r.error.message);
-      sb.from('humidor_entries').delete().eq('cigar_id', cigarId)
-        .then((d: { error: { message: string } | null }) => { if (d.error) console.error('[collection] delete failed:', d.error.message); });
-    }
-  });
+
+  // Prefer deleting by the row's primary key — removes any ambiguity about
+  // cigar_id matching. The RPC returns the number of rows actually deleted; if
+  // it's 0 the row wasn't owned/found, so we log loudly AND try cigar_id paths.
+  const byCigar = () => {
+    sb.rpc('remove_humidor_entry', { p_cigar_id: cigarId }).then((r: { data: number | null; error: { message: string } | null }) => {
+      if (r.error) {
+        console.error('[collection] remove rpc failed, trying direct delete:', r.error.message);
+        sb.from('humidor_entries').delete().eq('cigar_id', cigarId)
+          .then((d: { error: { message: string } | null }) => { if (d.error) console.error('[collection] direct delete failed:', d.error.message); });
+      } else if ((r.data ?? 0) === 0) {
+        console.error(`[collection] delete matched 0 rows for cigar_id=${cigarId} — the stored row's user_id may not match auth.uid(). Run the diagnostic query in docs/SUPABASE_WIRING.md.`);
+      }
+    });
+  };
+
+  if (entryId) {
+    sb.rpc('remove_humidor_entry_by_id', { p_id: entryId }).then((r: { data: number | null; error: { message: string } | null }) => {
+      if (r.error) { console.error('[collection] remove-by-id rpc failed, trying cigar_id:', r.error.message); byCigar(); }
+      else if ((r.data ?? 0) === 0) { console.error(`[collection] delete-by-id matched 0 rows for id=${entryId}; trying cigar_id.`); byCigar(); }
+    });
+  } else {
+    byCigar();
+  }
 }
 
 /* ── init (lazy, once) ───────────────────────────────────────────────────── */
@@ -159,7 +174,7 @@ export function toggleStatus(seed: CollectionSeed, status: CollectionStatus): Co
   if (existing && existing.status === status) {
     cache = cache.filter((i) => i.cigarId !== seed.cigarId);
     fire();
-    persistRemove(seed.cigarId);
+    persistRemove(seed.cigarId, existing?.entryId);
     return null;
   }
   cache = [{ ...seed, status, addedAt: new Date().toISOString() }, ...cache.filter((i) => i.cigarId !== seed.cigarId)];
@@ -183,9 +198,10 @@ export function markSmoked(seed: CollectionSeed) {
 
 export function remove(cigarId: string) {
   start();
+  const entryId = cache.find((i) => i.cigarId === cigarId)?.entryId;
   cache = cache.filter((i) => i.cigarId !== cigarId);
   fire();
-  persistRemove(cigarId);
+  persistRemove(cigarId, entryId);
 }
 
 export function onCollectionChange(cb: () => void): () => void {
@@ -205,15 +221,16 @@ export async function fetchCollectionFor(otherUserId: string): Promise<Collectio
   try {
     const { data, error } = await supabaseBrowser()
       .from('humidor_entries')
-      .select('cigar_id, status, brand, name, size, slug, created_at')
+      .select('id, cigar_id, status, brand, name, size, slug, created_at')
       .eq('user_id', otherUserId)
       .order('created_at', { ascending: false });
     if (error) {
       console.error('[collection] fetchFor failed:', error.message);
       return [];
     }
-    return ((data ?? []) as Array<{ cigar_id: string; status: string; brand: string; name: string; size: string; slug: string; created_at: string }>).map((r) => ({
+    return ((data ?? []) as Array<{ id: string; cigar_id: string; status: string; brand: string; name: string; size: string; slug: string; created_at: string }>).map((r) => ({
       cigarId: r.cigar_id,
+      entryId: r.id,
       status: r.status as CollectionStatus,
       brand: r.brand ?? '',
       name: r.name ?? '',

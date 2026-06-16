@@ -2487,6 +2487,10 @@ export type Database = {
         Args: { p_cigar_id: string }
         Returns: number
       }
+      remove_humidor_entry_by_id: {
+        Args: { p_id: string }
+        Returns: number
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       spend_credits: {
