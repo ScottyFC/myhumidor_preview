@@ -11,6 +11,7 @@
  */
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
+import { subscribeTable } from './realtime';
 import { subscribeAuth } from './auth';
 
 export type CollectionStatus = 'humidor' | 'wishlist' | 'smoked';
@@ -124,6 +125,10 @@ function start() {
         fire();
       }
     });
+    // Keep the collection live: any change to this user's humidor_entries (from
+    // this tab, another tab, or another device) re-hydrates so removals and
+    // additions reflect in real time everywhere.
+    subscribeTable('humidor_entries', () => { if (userId) hydrateRemote(); });
   } else {
     cache = loadLocal();
   }

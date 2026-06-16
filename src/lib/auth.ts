@@ -120,6 +120,31 @@ function sessionFromUser(user: any): Session {
 /* ─────────────────────────────── PUBLIC API ──────────────────────────────── */
 
 /** Subscribe to the current session. Fires immediately, then on every change. */
+/* ── Auth state: ONE client listener fans out to all subscribers ──────────────
+ * Previously every component registered its own onAuthStateChange on the shared
+ * client and also called getSession(), so a single client could carry a dozen
+ * awaited callbacks per auth event and each page raced a getSession() promise
+ * that could stall — pages hung on "checking". Now there's exactly one client
+ * listener; subscribers join a Set and, once the initial session has resolved,
+ * late subscribers get the current value synchronously (no getSession wait). */
+let authListeners = new Set<(s: Session | null) => void>();
+let currentSession: Session | null = null;
+let authResolved = false;
+let authWired = false;
+
+function wireAuthListener() {
+  if (authWired) return;
+  authWired = true;
+  const sb = supabaseBrowser();
+  // onAuthStateChange fires INITIAL_SESSION right after registration (reading
+  // from storage), so this resolves the initial state without a getSession call.
+  sb.auth.onAuthStateChange((_e: string, sess: { user: unknown } | null) => {
+    currentSession = sess ? sessionFromUser(sess.user) : null;
+    authResolved = true;
+    authListeners.forEach((cb) => { try { cb(currentSession); } catch { /* ignore */ } });
+  });
+}
+
 export function subscribeAuth(cb: (s: Session | null) => void): () => void {
   if (!isSupabaseConfigured) {
     if (typeof window === 'undefined') return () => {};
@@ -132,12 +157,13 @@ export function subscribeAuth(cb: (s: Session | null) => void): () => void {
       window.removeEventListener('storage', handler);
     };
   }
-  const sb = supabaseBrowser();
-  sb.auth.getSession().then((r: { data: { session: { user: unknown } | null } }) => cb(r.data.session ? sessionFromUser(r.data.session.user) : null));
-  const { data } = sb.auth.onAuthStateChange((_e: string, sess: { user: unknown } | null) =>
-    cb(sess ? sessionFromUser(sess.user) : null)
-  );
-  return () => data.subscription.unsubscribe();
+  wireAuthListener();
+  authListeners.add(cb);
+  // A subscriber that mounts after the initial resolution gets the current
+  // state immediately; before resolution it waits for the single listener so it
+  // never receives a premature null (which would bounce it to /register).
+  if (authResolved) cb(currentSession);
+  return () => { authListeners.delete(cb); };
 }
 
 export interface AuthResult {

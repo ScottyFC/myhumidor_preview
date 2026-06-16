@@ -1,3 +1,13 @@
+## Fix — pages still hanging + collection not updating live
+
+**Hanging humidor/admin (root cause):** every component called `subscribeAuth`, and each one registered its *own* `onAuthStateChange` on the shared client **and** raced a `getSession()` promise. On the single shared client that meant many awaited callbacks per auth event plus a per-page getSession that could stall under lock contention — pages sat on "checking".
+Fix: `subscribeAuth` now uses **one** client `onAuthStateChange` listener that fans out to a Set of subscribers. No per-subscriber getSession call (the listener's `INITIAL_SESSION` resolves the initial state). Late subscribers get the current session synchronously once resolved, and never receive a premature `null` (which had been bouncing pages to /register). The humidor 6s Reload fallback stays as a backstop.
+
+**Collection not updating in real time:** added a Supabase **realtime subscription on `humidor_entries`** (in `collection.ts` `start()`); any add/remove/move — from this tab, another tab, or another device — re-hydrates the cache and fires the change event, so the humidor list, counts, and Aging Tracker update live. The optimistic local update on remove/move is unchanged; this makes it authoritative and cross-session. (Requires `humidor_entries` in the `supabase_realtime` publication — see note below.)
+
+> If live updates don't appear, ensure realtime is enabled for the table:
+> `alter publication supabase_realtime add table public.humidor_entries;`
+
 ## Fix — admin reload loop + can't-log-out (auth lock)
 
 Root cause: the previous fix swapped the Supabase auth lock for a **fully pass-through** lock, which removed *all* serialisation of auth operations. That let `autoRefreshToken` race:
