@@ -1,3 +1,15 @@
+## Fix — removed items reappearing after refresh
+
+Symptom: removing a cigar (or rating) updated the UI instantly, but after a refresh it came back — i.e. the **DB delete never persisted**, so the next hydrate re-fetched the row.
+
+Root cause: the delete bailed on a null/stale module-level `userId` (`if (!userId) return;`) — the optimistic cache update + event still fired, so the UI looked correct, but no delete query was ever sent. (`getSession()` also returned `null` in Supabase mode, so there was no fallback.)
+
+Fixes:
+- `auth.getSession()` now returns the **resolved live session** in Supabase mode (was hard-coded null), giving a real synchronous user-id fallback.
+- `humidor_entries` and `ratings` deletes are now **RLS-scoped** — delete by `cigar_id` / rating `id` only and let the `auth.uid() = user_id` policy restrict to the user's own row, with no dependency on the module `userId`. Inserts/upserts resolve `userId ?? getSession()?.uuid` before writing.
+
+No new migration. (Relies on the existing "users manage own humidor/ratings" RLS policies, which already cover delete.)
+
 ## Phase 59 — Append-only ratings + profile collection fix
 
 **Run `supabase/migrations/phase59.sql`** (drops the `unique(user_id,cigar_id)` constraint on `ratings`).

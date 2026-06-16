@@ -12,7 +12,7 @@
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeTable } from './realtime';
-import { subscribeAuth } from './auth';
+import { subscribeAuth, getSession } from './auth';
 
 export type CollectionStatus = 'humidor' | 'wishlist' | 'smoked';
 
@@ -83,12 +83,13 @@ async function hydrateRemote() {
 
 function persistUpsert(seed: CollectionSeed, status: CollectionStatus) {
   if (!isSupabaseConfigured) return saveLocal();
-  if (!userId) return;
+  const uid = userId ?? getSession()?.uuid ?? null;
+  if (!uid) return;
   supabaseBrowser()
     .from('humidor_entries')
     .upsert(
       {
-        user_id: userId,
+        user_id: uid,
         cigar_id: seed.cigarId,
         status,
         brand: seed.brand,
@@ -103,11 +104,13 @@ function persistUpsert(seed: CollectionSeed, status: CollectionStatus) {
 
 function persistRemove(cigarId: string) {
   if (!isSupabaseConfigured) return saveLocal();
-  if (!userId) return;
+  // Delete by cigar_id only — the row-level security policy already scopes to
+  // the current user (auth.uid() = user_id), so this removes exactly this
+  // user's entry without depending on the module-level userId being populated
+  // (a race there was leaving the DB row behind, so it reappeared on refresh).
   supabaseBrowser()
     .from('humidor_entries')
     .delete()
-    .eq('user_id', userId)
     .eq('cigar_id', cigarId)
     .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[collection] delete failed:', r.error.message) } });
 }

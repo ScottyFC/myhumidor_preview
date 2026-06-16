@@ -254,5 +254,5 @@ export async function resendConfirmation(email: string): Promise<AuthResult> {
 
 /** Demo-only synchronous read (used as a fast first paint where needed). */
 export function getSession(): Session | null {
-  return isSupabaseConfigured ? null : demoGet();
+  return isSupabaseConfigured ? currentSession : demoGet();
 }

@@ -9,7 +9,7 @@
  */
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
-import { subscribeAuth } from './auth';
+import { subscribeAuth, getSession } from './auth';
 
 export interface UserRating {
   id?: string;
@@ -117,7 +117,8 @@ async function hydrateRemote() {
 
 function persist(rating: UserRating) {
   if (!isSupabaseConfigured) return saveLocal();
-  if (!userId) return;
+  const uid = userId ?? getSession()?.uuid ?? null;
+  if (!uid) return;
   // Append-only: every rating is its own row (re-rating a cigar later is a new
   // rating, never an edit). id is generated client-side so the optimistic row
   // and a later delete reference the same primary key.
@@ -125,7 +126,7 @@ function persist(rating: UserRating) {
     .from('ratings')
     .insert({
       id: rating.id,
-      user_id: userId,
+      user_id: uid,
       cigar_id: rating.cigarId,
       slug: rating.slug,
       brand: rating.brand,
@@ -145,12 +146,12 @@ function persist(rating: UserRating) {
 
 function persistDelete(id: string) {
   if (!isSupabaseConfigured) return saveLocal();
-  if (!userId) return;
+  // RLS scopes deletes to the current user, so deleting by id alone removes only
+  // the user's own rating — no dependency on the module userId being populated.
   supabaseBrowser()
     .from('ratings')
     .delete()
     .eq('id', id)
-    .eq('user_id', userId)
     .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[ratings] delete failed:', r.error.message) } });
 }
 
