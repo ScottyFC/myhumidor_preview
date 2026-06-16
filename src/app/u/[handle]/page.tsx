@@ -10,6 +10,7 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 import { getCollection, fetchCollectionFor, type CollectionItem } from '@/lib/collection';
 import { getRatings, fetchRatingsFor, type UserRating } from '@/lib/ratings';
 import { ProfileBody } from '@/components/ProfileBody';
+import { EliteBanner } from '@/components/EliteBanner';
 import { CollectionHighlight } from '@/components/CollectionHighlight';
 import { BadgesSection } from '@/components/BadgesSection';
 import { Avatar } from '@/components/Avatar';
@@ -109,6 +110,7 @@ export default function PublicProfilePage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
+      {profile.aficionado && <EliteBanner kind="aficionado" />}
       <div className="flex flex-col gap-6 border-b border-ember-400/15 pb-8 sm:flex-row sm:items-end">
         <Avatar profile={profile} size={112} />
         <div className="min-w-0 flex-1">

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation } from 'lucide-react';
+import { EliteBanner } from '@/components/EliteBanner';
 import type { CatalogStore } from '@/types';
 import { findCatalogStoreBySlug } from '@/lib/catalog';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
@@ -63,6 +64,7 @@ export default async function LoungePage({ params }: PageProps) {
       </Link>
 
       {/* Header */}
+      {lounge.certified && <EliteBanner kind="certified" />}
       <header className="border-b border-ember-400/15 pb-8">
         <div className="flex items-center gap-4">
           <BrandTile

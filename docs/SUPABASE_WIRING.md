@@ -1,3 +1,10 @@
+## Phase 62 — Admin verifies Aficionados + elevated profile banners
+
+**Run `supabase/migrations/phase62.sql`** (adds `set_aficionado(p_handle, p_on)` — SECURITY DEFINER, admin-only).
+
+- **Admin → Verify members tab:** new admin tab (crown icon) with a member search (reuses `/api/users`, which already returns `aficionado`). Each result shows current status with a **Verify as Aficionado** / **Revoke** toggle calling `set_aficionado`. Added the RPC to `database.types.ts`.
+- **Elevated top banners:** new `EliteBanner` component renders a distinctive gradient/glow strip at the top of a profile/lounge page. Shown for **Verified Aficionado** members (gold treatment, crown) on `/profile` and `/u/[handle]`, and for **Certified** lounges (teal-accented, badge-check) on `/lounges/[slug]`, so elevated accounts read as clearly special versus regular members and lounges.
+
 ## Humidor removal confirmation dialog
 
 Added an "Are you sure you want to remove this cigar from your humidor?" confirm dialog on the humidor page. The Remove (trash) button now opens a modal naming the cigar; confirming calls the same removal path, which deletes by the humidor_entries **primary key** (phase61 `remove_humidor_entry_by_id`). The diagnostic query confirmed entries are correctly owned (`user_id = profiles.id = auth.uid()`), so the by-id delete should match — the dialog is a UX layer, not the fix for the delete itself.

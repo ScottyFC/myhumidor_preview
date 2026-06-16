@@ -14,6 +14,7 @@ import { ProfileBody } from '@/components/ProfileBody';
 import { BadgesSection } from '@/components/BadgesSection';
 import { AgingTracker } from '@/components/AgingTracker';
 import { CollectionHighlight } from '@/components/CollectionHighlight';
+import { EliteBanner } from '@/components/EliteBanner';
 import { FlavorProfile } from '@/components/FlavorProfile';
 import { FollowStats } from '@/components/FollowStats';
 import { ProfileSocialLinks, SocialLinksEditor } from '@/components/SocialLinks';
@@ -88,6 +89,7 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
+      {profile.aficionado && <EliteBanner kind="aficionado" />}
       <div className="flex flex-col gap-6 border-b border-ember-400/15 pb-8 sm:flex-row sm:items-end">
         <div className="relative shrink-0 self-start">
           <div className="rounded-full bg-gradient-to-br from-ember-300 via-ember-600 to-leather p-[3px] shadow-[0_0_32px_rgba(240,195,85,0.22)]">
