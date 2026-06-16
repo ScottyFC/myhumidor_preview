@@ -1,3 +1,13 @@
+## Fix — public profile id mismatch (follows/socials/activity) + cigar reviews
+
+**Public profile sync:** follows (`follows.follower_id/followee_id`), profile socials (`profiles.id`), and check-ins (`check_ins.user_id`) are all keyed by the auth **uuid**, but `/u/[handle]` was passing `viewedId` (the **public_id**, `USER-…`) to `FollowStats`, `ProfileSocialLinks`, and `ActivityFeed` — so they came back empty. Now all uuid-keyed components receive `viewedUuid` (the real `profiles.id`); only `AdminOnlyId`, which *displays* the public id, keeps `viewedId`. Humidor/smoked already used the uuid via `fetchCollectionFor`. (Same root cause as the badges fix.)
+
+**Cigar pages — community reviews:** new `fetchCigarReviews(slug)` reads the public `ratings` table joined to `profiles` (handle, name, avatar, aficionado), and a `CigarReviews` component lists every member's review (score, F/B/A, tasting-note chips, written notes, photo, date, avg + count, "show all"). Added below "Photos of this cigar". No migration — relies on the existing `"ratings are public" for select` policy.
+
+## Fix — badges missing on public profile
+
+On `/u/[handle]`, `BadgesSection` was passed `viewedId`, which is the member's **public_id** (`USER-…`). But badges live in `user_badges` keyed by the auth **uuid**, so `earnedBadgeIds(publicId)` matched nothing and the badges case rendered empty (own `/profile` worked because it passes `session.uuid`). Added a `viewedUuid` state (the real `profiles.id` / `found.userId`, or `session.uuid` for self) and pass that to `BadgesSection`. `user_badges` already has a public-read RLS policy, so other members' earned badges now show. No migration.
+
 ## Phase 62 — Admin verifies Aficionados + elevated profile banners
 
 **Run `supabase/migrations/phase62.sql`** (adds `set_aficionado(p_handle, p_on)` — SECURITY DEFINER, admin-only).

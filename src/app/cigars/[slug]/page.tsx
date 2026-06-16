@@ -12,6 +12,7 @@ import { AddToCollection } from '@/components/AddToCollection';
 import { BrandLogo } from '@/components/BrandLogo';
 import { StockNearYou } from '@/components/StockNearYou';
 import { CigarPhotos } from '@/components/CigarPhotos';
+import { CigarReviews } from '@/components/CigarReviews';
 import { CigarImageUpload } from '@/components/CigarImageUpload';
 import { CigarRow } from '@/components/CigarRow';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
@@ -186,6 +187,8 @@ export default async function CigarPage({ params }: PageProps) {
       </div>
 
       <CigarPhotos slug={slug} />
+
+      <CigarReviews slug={slug} />
 
       <CigarRow
         title={`More from ${view.brand}`}

@@ -276,3 +276,52 @@ export async function uploadRatingPhoto(dataUrl: string): Promise<string | null>
     return sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
   } catch { return null; }
 }
+export interface CommunityReview {
+  id: string;
+  handle?: string;
+  displayName: string;
+  avatarUrl?: string;
+  aficionado: boolean;
+  overall: number;
+  flavor: number;
+  burn: number;
+  appearance: number;
+  notes?: string;
+  tastingNotes: string[];
+  photoUrl?: string;
+  createdAt: string;
+}
+
+/** All members' reviews of a cigar (by slug), newest first — for the cigar page. */
+export async function fetchCigarReviews(slug: string, limit = 50): Promise<CommunityReview[]> {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data, error } = await supabaseBrowser()
+      .from('ratings')
+      .select('id, overall, flavor_score, burn_score, appearance_score, notes, tasting_notes, photo_url, created_at, profiles(handle, display_name, avatar_url, aficionado)')
+      .eq('slug', slug)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) return [];
+    return ((data ?? []) as Array<Record<string, unknown>>).map((r) => {
+      const p = (r.profiles ?? {}) as Record<string, unknown>;
+      return {
+        id: String(r.id),
+        handle: (p.handle as string) ?? undefined,
+        displayName: (p.display_name as string) ?? 'Member',
+        avatarUrl: (p.avatar_url as string) ?? undefined,
+        aficionado: !!p.aficionado,
+        overall: Number(r.overall),
+        flavor: Number(r.flavor_score),
+        burn: Number(r.burn_score),
+        appearance: Number(r.appearance_score),
+        notes: (r.notes as string) ?? undefined,
+        tastingNotes: (r.tasting_notes as string[]) ?? [],
+        photoUrl: (r.photo_url as string) ?? undefined,
+        createdAt: (r.created_at as string) ?? new Date().toISOString(),
+      };
+    });
+  } catch {
+    return [];
+  }
+}

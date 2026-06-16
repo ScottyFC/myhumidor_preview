@@ -27,6 +27,7 @@ export default function PublicProfilePage() {
   const [loaded, setLoaded] = useState(false);
   const [isSelf, setIsSelf] = useState(false);
   const [viewedId, setViewedId] = useState<string | null>(null);
+  const [viewedUuid, setViewedUuid] = useState<string | null>(null); // auth uuid (for badges, etc.)
   const [viewedType, setViewedType] = useState<'consumer' | 'retailer'>('consumer');
   const [profile, setProfile] = useState<ProfileFields | null>(null);
   const [collection, setCollection] = useState<CollectionItem[]>([]);
@@ -46,6 +47,7 @@ export default function PublicProfilePage() {
         if (meIsTarget) {
           setProfile(me);
           setViewedId(getSession()?.publicId ?? null);
+          setViewedUuid(getSession()?.uuid ?? null);
           setCollection(getCollection());
           setRatings(getRatings());
         } else {
@@ -54,6 +56,7 @@ export default function PublicProfilePage() {
           if (found) {
             setProfile(found.profile);
             setViewedId(found.publicId);
+            setViewedUuid(found.userId);
             setViewedType(found.type === 'retailer' ? 'retailer' : 'consumer');
             const [coll, rts] = await Promise.all([
               fetchCollectionFor(found.userId),
@@ -68,6 +71,7 @@ export default function PublicProfilePage() {
         // Demo: only your own handle resolves locally.
         setProfile(me);
         setViewedId(getSession()?.publicId ?? null);
+        setViewedUuid(getSession()?.uuid ?? null);
         setCollection(getCollection());
         setRatings(getRatings());
       }
@@ -131,8 +135,8 @@ export default function PublicProfilePage() {
             )}
           </div>
           {profile.bio && <p className="mt-2 max-w-xl text-sm text-smoke-200">{profile.bio}</p>}
-          {viewedId && <FollowStats userId={viewedId} />}
-          {viewedId && <ProfileSocialLinks userId={viewedId} />}
+          {viewedUuid && <FollowStats userId={viewedUuid} />}
+          {viewedUuid && <ProfileSocialLinks userId={viewedUuid} />}
           {viewedId && <AdminOnlyId id={viewedId} label="User UUID" />}
           {!isSelf && <RemoveProfileButton handle={profile.handle} displayName={profile.displayName} />}
         </div>
@@ -154,8 +158,8 @@ export default function PublicProfilePage() {
         ) : (
           <>
             <CollectionHighlight humidor={humidor} smoked={smoked} />
-            {viewedId && <BadgesSection userId={viewedId} self={isSelf} humidor={humidor} ratings={ratings} />}
-            {viewedId && <ActivityFeed userId={viewedId} ratings={ratings} title="Activity" />}
+            {viewedUuid && <BadgesSection userId={viewedUuid} self={isSelf} humidor={humidor} ratings={ratings} />}
+            {viewedUuid && <ActivityFeed userId={viewedUuid} ratings={ratings} title="Activity" />}
             <ProfileBody humidor={humidor} wishlist={wishlist} ratings={ratings} self={false} />
           </>
         )}
