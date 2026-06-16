@@ -1,3 +1,11 @@
+## Fix — admin reload loop + can't-log-out (auth lock)
+
+Root cause: the previous fix swapped the Supabase auth lock for a **fully pass-through** lock, which removed *all* serialisation of auth operations. That let `autoRefreshToken` race:
+- a refresh re-establishing the session right after `signOut()` → **couldn't log out**;
+- refresh-token rotation racing itself → spurious `SIGNED_OUT` events → the admin page's `subscribeAuth` saw a null session, redirected to `/register`, the session was then restored, and it bounced back → **constant reload loop**.
+
+Fix: use Supabase's exported **`processLock`** (in-memory, single-tab serialisation) instead of pass-through. It still prevents the cross-tab `navigatorLock` deadlock that originally froze the humidor, but restores proper serialisation so refresh can't race sign-out or itself. `signOut()` simplified to a single `auth.signOut()` (global scope already clears local). No in-page reload triggers exist; the loop was purely auth-state thrash.
+
 ## Generated Supabase types wired; SbRow removed
 
 - Dropped in the generated `src/types/database.types.ts` and parameterised all three client factories — `createBrowserClient<Database>`, `createServerClient<Database>` (SSR + service) — so `data`, inserts, updates, and `.rpc()` calls are now fully typed against the live schema.

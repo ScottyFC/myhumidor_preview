@@ -13,6 +13,7 @@
  */
 
 import { createBrowserClient, createServerClient, type CookieOptions } from '@supabase/ssr';
+import { processLock } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
@@ -28,9 +29,14 @@ export const isSupabaseConfigured =
  * One browser client for the whole tab. Creating a new client per call (the old
  * behavior) spun up multiple GoTrueClient instances that all fought over the
  * same Web Locks entry — the cause of the humidor hanging on a token refresh
- * when a tab regained focus. We also swap the default `navigatorLock` for a
- * pass-through lock: in a single-tab SPA the Web Locks coordination buys us
- * nothing and is what was deadlocking, so we just run the critical section.
+ * when a tab regained focus.
+ *
+ * We use `processLock` (in-memory, single-tab) instead of the default
+ * `navigatorLock` (Web Locks API). processLock still serialises auth operations
+ * within the tab — so a token refresh can't race sign-out or itself — but
+ * without the cross-tab LockManager that was deadlocking. A fully pass-through
+ * lock removed serialisation entirely, which let refreshes race sign-out (you
+ * couldn't log out) and emit spurious SIGNED_OUT events (admin redirect loop).
  */
 let browserClient: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
@@ -41,8 +47,7 @@ export function supabaseBrowser() {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      // Pass-through lock — no navigator LockManager, no cross-tab deadlock.
-      lock: async (_name, _acquireTimeout, fn) => fn(),
+      lock: processLock,
     },
   });
   return browserClient;
