@@ -104,15 +104,18 @@ function persistUpsert(seed: CollectionSeed, status: CollectionStatus) {
 
 function persistRemove(cigarId: string) {
   if (!isSupabaseConfigured) return saveLocal();
-  // Delete by cigar_id only — the row-level security policy already scopes to
-  // the current user (auth.uid() = user_id), so this removes exactly this
-  // user's entry without depending on the module-level userId being populated
-  // (a race there was leaving the DB row behind, so it reappeared on refresh).
-  supabaseBrowser()
-    .from('humidor_entries')
-    .delete()
-    .eq('cigar_id', cigarId)
-    .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[collection] delete failed:', r.error.message) } });
+  const sb = supabaseBrowser();
+  // Primary: SECURITY DEFINER RPC deletes the current user's row regardless of
+  // RLS policy config (a direct delete was matching 0 rows on the live DB, so
+  // the cigar came back on refresh). Fall back to a direct delete if the RPC
+  // isn't present yet (migration not run).
+  sb.rpc('remove_humidor_entry', { p_cigar_id: cigarId }).then((r: { error: { message: string } | null }) => {
+    if (r.error) {
+      console.error('[collection] remove rpc failed, trying direct delete:', r.error.message);
+      sb.from('humidor_entries').delete().eq('cigar_id', cigarId)
+        .then((d: { error: { message: string } | null }) => { if (d.error) console.error('[collection] delete failed:', d.error.message); });
+    }
+  });
 }
 
 /* ── init (lazy, once) ───────────────────────────────────────────────────── */

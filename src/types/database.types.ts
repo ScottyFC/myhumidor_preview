@@ -2483,6 +2483,10 @@ export type Database = {
         Args: { p_lounge: string; p_tier: string }
         Returns: string
       }
+      remove_humidor_entry: {
+        Args: { p_cigar_id: string }
+        Returns: number
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       spend_credits: {

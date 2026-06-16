@@ -21,6 +21,7 @@ export function CollectionHighlight({
         count={humidor.length}
         items={humidor}
         empty={self ? 'Nothing saved yet.' : 'No cigars saved.'}
+        href={self ? '/humidor' : undefined}
       />
       <Panel
         icon={<Flame size={13} strokeWidth={1.5} className="text-ember-400" />}
@@ -34,13 +35,20 @@ export function CollectionHighlight({
 }
 
 function Panel({
-  icon, label, count, items, empty,
-}: { icon: React.ReactNode; label: string; count: number; items: CollectionItem[]; empty: string }) {
+  icon, label, count, items, empty, href,
+}: { icon: React.ReactNode; label: string; count: number; items: CollectionItem[]; empty: string; href?: string }) {
   return (
     <section className="rounded-2xl border-[0.5px] border-ember-400/15 bg-gradient-to-b from-char/70 to-char/30 p-4">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="eyebrow flex items-center gap-1.5">{icon}{label}</h2>
-        <span className="font-display text-2xl tabular text-ember-100">{count}</span>
+        <div className="flex items-baseline gap-3">
+          {href && (
+            <Link href={href} className="text-[11px] uppercase tracking-wider text-ember-200/80 hover:text-ember-100">
+              View →
+            </Link>
+          )}
+          <span className="font-display text-2xl tabular text-ember-100">{count}</span>
+        </div>
       </div>
       {items.length === 0 ? (
         <p className="text-xs text-smoke-500">{empty}</p>

@@ -1,3 +1,9 @@
+## Phase 60 — Humidor removal via SECURITY DEFINER RPC + profile humidor link
+
+**Run `supabase/migrations/phase60.sql`.** The direct DELETE was matching 0 rows on the live DB (cigar reappeared on refresh) — the live RLS delete policy wasn't actually permitting it. phase60 adds `remove_humidor_entry(p_cigar_id uuid)` (SECURITY DEFINER — deletes `where user_id = auth.uid()` regardless of policy config) and also (re)asserts a `for delete using (auth.uid() = user_id)` policy. `persistRemove` now calls the RPC, falling back to a direct delete if the RPC isn't present. Added the RPC signature to `database.types.ts`.
+
+- **Profile → humidor link:** the "In your humidor" panel on the profile now has a **View →** link to `/humidor` (own profile only).
+
 ## Fix — removed items reappearing after refresh
 
 Symptom: removing a cigar (or rating) updated the UI instantly, but after a refresh it came back — i.e. the **DB delete never persisted**, so the next hydrate re-fetched the row.
