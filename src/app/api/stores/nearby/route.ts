@@ -32,9 +32,9 @@ export async function GET(request: Request) {
         p_lat: lat, p_lng: lng, p_radius_m: 80_000, p_limit: limit * 2,
       });
 
-      let rows: SbRow[] = [];
+      let rows: Array<Record<string, unknown>> = [];
       if (!error && Array.isArray(near)) {
-        rows = near;
+        rows = near as unknown as Array<Record<string, unknown>>;
       } else {
         // Legacy fallback (pre-phase27): bounded scan, distance computed here.
         const { data } = await sb
@@ -43,7 +43,7 @@ export async function GET(request: Request) {
           .not('lat', 'is', null)
           .not('lng', 'is', null)
           .limit(200);
-        rows = (data ?? []) as SbRow[];
+        rows = (data ?? []) as unknown as Array<Record<string, unknown>>;
       }
 
       const known = new Set(allStores().map((s) => s.slug));

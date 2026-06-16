@@ -50,7 +50,7 @@ export async function earnedBadgeIds(userId: string): Promise<Set<string>> {
   if (!isSupabaseConfigured || !userId) return new Set();
   try {
     const { data } = await supabaseBrowser().from('user_badges').select('badge_id').eq('user_id', userId);
-    return new Set(((data ?? []) as SbRow[]).map((r) => r.badge_id as string));
+    return new Set((data ?? []).map((r) => r.badge_id as string));
   } catch { return new Set(); }
 }
 

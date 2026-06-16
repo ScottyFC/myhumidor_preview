@@ -24,7 +24,7 @@ export async function searchUsers(query: string, limit = 12): Promise<UserHit[]>
       console.error('[users] search failed:', error.message);
       return [];
     }
-    return ((data ?? []) as SbRow[]).map((p) => ({
+    return (data ?? []).map((p) => ({
       handle: p.handle,
       displayName: p.display_name ?? p.handle,
       avatarUrl: p.avatar_url ?? undefined,

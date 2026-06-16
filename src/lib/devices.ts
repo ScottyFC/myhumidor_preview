@@ -44,7 +44,7 @@ export async function listDevices(loungeId: string): Promise<LoungeDevice[]> {
       .select(DEVICE_SELECT)
       .eq('lounge_id', loungeId)
       .order('created_at', { ascending: true });
-    return ((data ?? []) as SbRow[]).map(toDevice);
+    return (data ?? []).map(toDevice);
   } catch {
     return [];
   }
@@ -84,7 +84,7 @@ export async function todayCreditsByDevice(loungeId: string): Promise<Record<str
       .eq('lounge_id', loungeId)
       .eq('day', today);
     const out: Record<string, number> = {};
-    ((data ?? []) as SbRow[]).forEach((r) => { out[r.device_id as string] = (r.credits as number) ?? 0; });
+    (data ?? []).forEach((r) => { out[r.device_id as string] = (r.credits as number) ?? 0; });
     return out;
   } catch {
     return {};
@@ -100,7 +100,7 @@ export async function recentLedger(loungeId: string, limit = 10): Promise<Credit
       .eq('lounge_id', loungeId)
       .order('recorded_at', { ascending: false })
       .limit(limit);
-    return ((data ?? []) as SbRow[]).map((r) => ({
+    return (data ?? []).map((r) => ({
       id: r.id as string, deviceId: (r.device_id as string) ?? null,
       amount: (r.delta as number) ?? 0, reason: (r.reason as string) ?? 'stream',
       createdAt: (r.recorded_at as string) ?? '',
@@ -134,7 +134,7 @@ export async function streamStats7d(loungeId: string): Promise<DayStat[]> {
         .select('day, seconds, credits')
         .eq('lounge_id', loungeId)
         .gte('day', keys[0]);
-      ((data ?? []) as SbRow[]).forEach((r) => {
+      (data ?? []).forEach((r) => {
         const k = r.day as string;
         byDay[k] = byDay[k] || { seconds: 0, credits: 0 };
         byDay[k].seconds += (r.seconds as number) ?? 0;

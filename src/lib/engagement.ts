@@ -71,7 +71,7 @@ export async function getComments(type: TargetType, id: string): Promise<Comment
       .select('id, user_id, body, created_at, profiles!comments_user_id_fkey(handle, display_name, avatar_url)')
       .eq('target_type', type).eq('target_id', id)
       .order('created_at', { ascending: true });
-    return ((data ?? []) as SbRow[]).map((r: Record<string, unknown>) => {
+    return (data ?? []).map((r: Record<string, unknown>) => {
       const p = r.profiles as { handle: string; display_name: string; avatar_url: string | null } | null;
       return {
         id: r.id as string, userId: r.user_id as string, body: r.body as string, createdAt: r.created_at as string,

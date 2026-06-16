@@ -31,7 +31,7 @@ export async function GET(
       console.error('[stock-near] rpc failed:', error.message);
       return NextResponse.json({ items: [] });
     }
-    const items = ((data ?? []) as SbRow[]).map((r: Record<string, unknown>) => ({
+    const items = (data ?? []).map((r: Record<string, unknown>) => ({
       loungeSlug: r.lounge_slug,
       loungeName: r.lounge_name,
       city: r.city,

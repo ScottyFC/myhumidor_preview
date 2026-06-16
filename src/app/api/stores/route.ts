@@ -26,7 +26,7 @@ export async function GET(request: Request) {
         .select('id, slug, name, address, city, state, image_url, lat, lng, verified, certified')
         .or(`name.ilike.${like},city.ilike.${like},state.ilike.${like}`)
         .limit(25);
-      dbItems = ((data ?? []) as SbRow[]).map((l) => ({
+      dbItems = (data ?? []).map((l) => ({
         id: l.id, slug: l.slug, name: l.name,
         address: l.address ?? '', city: l.city ?? '', state: l.state ?? '',
         image_url: l.image_url ?? undefined, lat: l.lat ?? undefined, lng: l.lng ?? undefined,

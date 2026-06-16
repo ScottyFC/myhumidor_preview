@@ -41,7 +41,7 @@ function toSpot(r: Record<string, unknown>): AdSpot {
 export async function listAdSpots(): Promise<AdSpot[]> {
   if (!isSupabaseConfigured) return [];
   const { data } = await supabaseBrowser().from('ad_spots').select(SELECT).order('created_at', { ascending: false });
-  return ((data ?? []) as SbRow[]).map(toSpot);
+  return (data ?? []).map(toSpot);
 }
 
 export interface NewAdSpot {

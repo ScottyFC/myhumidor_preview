@@ -11,6 +11,7 @@
 
 import { getSession, subscribeAuth } from './auth';
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
+import type { Database } from '@/types/database.types';
 
 export interface ProfileFields {
   handle: string;
@@ -116,7 +117,7 @@ async function uploadAvatar(dataUrl: string): Promise<string | null> {
 
 async function persistRemote(fields: Partial<ProfileFields>) {
   if (!userId) return;
-  const patch: Record<string, unknown> = {};
+  const patch: Database['public']['Tables']['profiles']['Update'] = {};
   if (fields.displayName !== undefined) patch.display_name = fields.displayName;
   if (fields.handle !== undefined) patch.handle = fields.handle;
   if (fields.city !== undefined) patch.city = fields.city;

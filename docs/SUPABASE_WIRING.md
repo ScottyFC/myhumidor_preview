@@ -1,3 +1,10 @@
+## Generated Supabase types wired; SbRow removed
+
+- Dropped in the generated `src/types/database.types.ts` and parameterised all three client factories — `createBrowserClient<Database>`, `createServerClient<Database>` (SSR + service) — so `data`, inserts, updates, and `.rpc()` calls are now fully typed against the live schema.
+- **Deleted `src/types/sb-row.d.ts` and every `SbRow` cast.** Reads are type-checked for real now.
+- The typed client caught (and we fixed) real latent issues: `audit_events.meta`/`lounges.socials`/`profiles` update payloads now cast through the generated `Json`/Update types, and **`lounges.address` is NOT NULL in the live DB** — the lounge-submission insert was passing `null`, now sends `''` (would have failed at the DB on certain submissions).
+- `db:types` script uses `npx supabase …`; re-run after any schema change to refresh `database.types.ts`.
+
 ## Phase 57 — Fix cigar-approval crash + Supabase types workflow
 
 - **Bug fixed:** approving a cigar submission threw `null value in column "id" of relation "catalog_cigars"`. That table's `id` was a uuid PK with **no default** (unlike every other table), so it relied entirely on the client supplying one. Added `supabase/migrations/phase57.sql` to set `id default gen_random_uuid()`, and hardened the client (`newUuid()` falls back to a manual v4 if `crypto.randomUUID` is unavailable). **Run phase57.sql.**

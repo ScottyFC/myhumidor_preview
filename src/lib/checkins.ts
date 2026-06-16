@@ -116,7 +116,7 @@ export async function getCheckInsForLounge(loungeId: string, limit = 30): Promis
   if (!isSupabaseConfigured || !loungeId) return [];
   try {
     const { data } = await supabaseBrowser().from('check_ins').select(SELECT).eq('lounge_id', loungeId).order('created_at', { ascending: false }).limit(limit);
-    return ((data ?? []) as SbRow[]).map((r) => rowTo(r as unknown as Row));
+    return (data ?? []).map((r) => rowTo(r as unknown as Row));
   } catch {
     return [];
   }
@@ -138,7 +138,7 @@ export async function getCheckInsForUser(uid: string, limit = 30): Promise<Check
   if (!isSupabaseConfigured || !uid) return [];
   try {
     const { data } = await supabaseBrowser().from('check_ins').select(SELECT).eq('user_id', uid).order('created_at', { ascending: false }).limit(limit);
-    return ((data ?? []) as SbRow[]).map((r) => rowTo(r as unknown as Row));
+    return (data ?? []).map((r) => rowTo(r as unknown as Row));
   } catch {
     return [];
   }
@@ -149,7 +149,7 @@ export async function getCheckInsForUsers(userIds: string[], limit = 40): Promis
   if (!isSupabaseConfigured || userIds.length === 0) return [];
   try {
     const { data } = await supabaseBrowser().from('check_ins').select(SELECT).in('user_id', userIds).order('created_at', { ascending: false }).limit(limit);
-    return ((data ?? []) as SbRow[]).map((r) => rowTo(r as unknown as Row));
+    return (data ?? []).map((r) => rowTo(r as unknown as Row));
   } catch {
     return [];
   }

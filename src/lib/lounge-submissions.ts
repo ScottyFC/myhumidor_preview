@@ -101,7 +101,7 @@ async function hydrateRemote() {
     const ids = Array.from(new Set(rows.map((r) => r.reviewedBy).filter(Boolean))) as string[];
     if (ids.length) {
       const { data: profs } = await sb.from('profiles').select('id, handle, display_name').in('id', ids);
-      const who = new Map(((profs ?? []) as SbRow[]).map((p) => [p.id, p.display_name || p.handle]));
+      const who = new Map((profs ?? []).map((p) => [p.id, p.display_name || p.handle]));
       rows.forEach((r) => {
         if (r.reviewedBy) r.reviewerName = who.get(r.reviewedBy) ?? undefined;
       });
@@ -261,7 +261,7 @@ async function pushToLounges(sub: LoungeSubmission): Promise<string | null> {
       .insert({
         slug,
         name: sub.name,
-        address: sub.address || null,
+        address: sub.address || '',
         city: sub.city || '',
         state: sub.state || '',
         phone: sub.phone || null,

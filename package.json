@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:types": "supabase gen types typescript --project-id daxizltupchiijrdrtep --schema public > src/types/database.types.ts"
+    "db:types": "npx supabase gen types typescript --project-id daxizltupchiijrdrtep --schema public > src/types/database.types.ts"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.2.9",

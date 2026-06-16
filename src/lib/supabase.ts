@@ -13,6 +13,7 @@
  */
 
 import { createBrowserClient, createServerClient, type CookieOptions } from '@supabase/ssr';
+import type { Database } from '@/types/database.types';
 
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 export const SUPABASE_KEY =
@@ -31,11 +32,11 @@ export const isSupabaseConfigured =
  * pass-through lock: in a single-tab SPA the Web Locks coordination buys us
  * nothing and is what was deadlocking, so we just run the critical section.
  */
-let browserClient: ReturnType<typeof createBrowserClient> | null = null;
+let browserClient: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
 export function supabaseBrowser() {
   if (browserClient) return browserClient;
-  browserClient = createBrowserClient(SUPABASE_URL, SUPABASE_KEY, {
+  browserClient = createBrowserClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
@@ -50,7 +51,7 @@ export function supabaseBrowser() {
 export async function supabaseServer() {
   const { cookies } = await import('next/headers');
   const cookieStore = cookies();
-  return createServerClient(SUPABASE_URL, SUPABASE_KEY, {
+  return createServerClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -78,7 +79,7 @@ export function supabaseService() {
   const serviceKey = process.env.SUPABASE_SERVICE_KEY;
   if (!serviceKey || !SUPABASE_URL) return null;
   // Plain client, no cookies/session — auth is the service role itself.
-  return createServerClient(SUPABASE_URL, serviceKey, {
+  return createServerClient<Database>(SUPABASE_URL, serviceKey, {
     cookies: { getAll() { return []; }, setAll() { /* no-op */ } },
   });
 }

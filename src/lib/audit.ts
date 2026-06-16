@@ -1,6 +1,7 @@
 'use client';
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
+import type { Json } from '@/types/database.types';
 import { subscribeAuth } from './auth';
 
 let actorId: string | null = null;
@@ -51,7 +52,7 @@ export function logEvent(input: LogInput) {
       entity_id: input.entityId ?? null,
       entity_name: input.entityName ?? null,
       lounge_id: input.loungeId ?? null,
-      meta: input.meta ?? null,
+      meta: (input.meta ?? null) as Json,
     })
     .then((r: { error: { message: string } | null }) => { if (r.error) { console.error('[audit] log failed:', r.error.message) } });
 }

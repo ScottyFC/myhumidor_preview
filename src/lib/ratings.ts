@@ -225,7 +225,7 @@ export async function fetchRatingPhotos(slug: string): Promise<Array<{ url: stri
       .order('created_at', { ascending: false })
       .limit(30);
     if (error) return [];
-    return ((data ?? []) as SbRow[]).map((r) => ({ url: (r as { photo_url: string }).photo_url }));
+    return (data ?? []).map((r) => ({ url: (r as { photo_url: string }).photo_url }));
   } catch {
     return [];
   }

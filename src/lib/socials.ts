@@ -1,6 +1,7 @@
 'use client';
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
+import type { Json } from '@/types/database.types';
 
 export interface Socials {
   instagram?: string;
@@ -48,7 +49,7 @@ async function getSocials(table: 'profiles' | 'lounges', match: Record<string, s
 async function saveSocials(table: 'profiles' | 'lounges', match: Record<string, string>, socials: Socials): Promise<boolean> {
   if (!isSupabaseConfigured) return false;
   try {
-    let q = supabaseBrowser().from(table).update({ socials });
+    let q = supabaseBrowser().from(table).update({ socials: socials as unknown as Json });
     for (const [k, v] of Object.entries(match)) q = q.eq(k, v);
     const { error } = await q;
     return !error;
