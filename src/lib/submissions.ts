@@ -207,6 +207,18 @@ export function addSubmission(s: Omit<Submission, 'id' | 'status' | 'createdAt'>
   return sub;
 }
 
+/** UUID with a manual v4 fallback for environments where crypto.randomUUID is
+ *  unavailable (older/insecure contexts) — so id is never undefined. */
+function newUuid(): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  } catch { /* fall through */ }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'cigar';
 }
@@ -321,7 +333,7 @@ export async function submitCigar(input: {
  *  approving the same item can't create duplicates. */
 async function pushToCatalog(sub: Submission): Promise<string | null> {
   try {
-    const id = crypto.randomUUID();
+    const id = newUuid();
     const slug = `${slugify(`${sub.brand} ${sub.name}`)}-${id.slice(0, 6)}`;
     const { error } = await supabaseBrowser().from('catalog_cigars').insert({
       id,

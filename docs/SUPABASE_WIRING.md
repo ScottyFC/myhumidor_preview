@@ -1,3 +1,8 @@
+## Phase 57 — Fix cigar-approval crash + Supabase types workflow
+
+- **Bug fixed:** approving a cigar submission threw `null value in column "id" of relation "catalog_cigars"`. That table's `id` was a uuid PK with **no default** (unlike every other table), so it relied entirely on the client supplying one. Added `supabase/migrations/phase57.sql` to set `id default gen_random_uuid()`, and hardened the client (`newUuid()` falls back to a manual v4 if `crypto.randomUUID` is unavailable). **Run phase57.sql.**
+- **Supabase generated types:** added the `supabase` CLI dev-dependency and a `db:types` npm script (`npm run db:types` → `src/types/database.types.ts`). See `docs/SUPABASE_TYPES.md`. Generation must be run by someone with project access (needs the live DB / access token — can't be done in the build sandbox), after which the typed client is wired and `SbRow` removed. Until then `SbRow` stays so the build is green.
+
 ## Supabase client upgrade + deadlock fix
 
 - **Upgraded** `@supabase/ssr` 0.5 → 0.12 and `@supabase/supabase-js` 2.45 → 2.108.
