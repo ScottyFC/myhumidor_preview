@@ -1,3 +1,13 @@
+## logo.dev brand-logo autofill
+
+`/api/brand-logo` now resolves logos in order: **logo.dev** (search the brand via the secret key server-side → `https://img.logo.dev/<domain>?token=<publishable key>`) → Google CSE → monogram fallback. Accepts an optional `&domain=` to skip the search. Because `BrandLogo` already calls this endpoint, every cigar/brand without its own artwork now auto-pulls a logo.dev logo. Admins also get an **"Autofill from logo.dev"** button on the cigar page (next to Upload) that persists the fetched logo to the brand via `set_brand_image`.
+
+**Env vars (set in Vercel + `.env.local`; see `.env.local.example`):**
+- `LOGODEV_PUBLISHABLE_KEY` — `pk_…` (safe to expose; ends up in image URLs)
+- `LOGODEV_SECRET_KEY` — `sk_…` (server-only; brand search). **Do not commit.**
+
+> ⚠️ The secret key was shared in plaintext — rotate it in the logo.dev dashboard and set the new value in Vercel env, not in code.
+
 ## Fix — public profile id mismatch (follows/socials/activity) + cigar reviews
 
 **Public profile sync:** follows (`follows.follower_id/followee_id`), profile socials (`profiles.id`), and check-ins (`check_ins.user_id`) are all keyed by the auth **uuid**, but `/u/[handle]` was passing `viewedId` (the **public_id**, `USER-…`) to `FollowStats`, `ProfileSocialLinks`, and `ActivityFeed` — so they came back empty. Now all uuid-keyed components receive `viewedUuid` (the real `profiles.id`); only `AdminOnlyId`, which *displays* the public id, keeps `viewedId`. Humidor/smoked already used the uuid via `fetchCollectionFor`. (Same root cause as the badges fix.)

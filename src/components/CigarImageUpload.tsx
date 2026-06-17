@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ImagePlus, Loader2, Check } from 'lucide-react';
+import { ImagePlus, Loader2, Check, Sparkles } from 'lucide-react';
 import { subscribeAuth } from '@/lib/auth';
 import { isAdmin } from '@/lib/admin';
 import { isSupabaseConfigured, supabaseBrowser } from '@/lib/supabase';
@@ -42,14 +42,36 @@ export function CigarImageUpload({ slug, brand }: { slug: string; brand: string 
     }
   }
 
+  async function autofillFromLogoDev() {
+    setBusy(true); setErr(''); setDone(0);
+    try {
+      const res = await fetch(`/api/brand-logo?brand=${encodeURIComponent(brand)}`);
+      const { url } = await res.json();
+      if (!url) throw new Error('No logo found for this brand on logo.dev.');
+      const { data, error } = await supabaseBrowser().rpc('set_brand_image', { p_brand: brand, p_url: url, p_slug: slug });
+      if (error) throw new Error(error.message);
+      setDone(typeof data === 'number' ? data : 1);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Autofill failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="mt-3 rounded-lg border-[0.5px] border-dashed border-ember-400/30 bg-char/40 p-3">
       <div className="eyebrow mb-1.5">Admin · brand artwork</div>
       <input ref={fileRef} type="file" accept="image/*" onChange={onPick} className="hidden" />
-      <button onClick={() => fileRef.current?.click()} disabled={busy} className="btn-ghost text-xs">
-        {busy ? <Loader2 size={13} className="animate-spin" /> : <ImagePlus size={13} strokeWidth={1.5} />}
-        Upload image for {brand}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button onClick={() => fileRef.current?.click()} disabled={busy} className="btn-ghost text-xs">
+          {busy ? <Loader2 size={13} className="animate-spin" /> : <ImagePlus size={13} strokeWidth={1.5} />}
+          Upload image for {brand}
+        </button>
+        <button onClick={autofillFromLogoDev} disabled={busy} className="btn-ghost text-xs">
+          {busy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} strokeWidth={1.5} />}
+          Autofill from logo.dev
+        </button>
+      </div>
       {done > 0 && (
         <p className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-ember-100">
           <Check size={11} strokeWidth={2} /> Applied to {done} cigar{done === 1 ? '' : 's'}. Refresh to see it.
