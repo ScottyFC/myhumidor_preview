@@ -134,3 +134,20 @@ untouched and hidden on native via `.web-home`). Layout, in MyHumidor branding
 - **Trending now** with quick filter chips + a featured-cigar rail.
 
 Ships via Vercel deploy (the apps load the hosted site); no native rebuild.
+
+## Tab bar + top bar + startup login
+
+- **Bottom tab bar** rebuilt as 5 evenly-spaced columns (CSS grid): Home · Search
+  · **Cigars** (→ Top) · Humidor (Inventory for retailers) · Lounges. Labels no
+  longer run together.
+- **Profile moved to the top-left** of the native top bar (avatar button → /profile);
+  the notification bell stays top-right, back chevron on detail pages.
+- **Startup login gate** (`NativeAuthGate`, native-only): inside the app, users
+  must sign in or create an account before using it — a full-screen welcome over
+  everything until a session resolves. The /register + legal pages stay reachable
+  so they can actually authenticate. The website remains open (no gate).
+
+## Website — image copy deterrent
+Cigar and lounge pages mount `ProtectMedia`, which blocks right-click/save,
+"copy image address", and drag-to-save on images (and disables image selection).
+Best-effort only — it stops casual copying, not a determined user with dev tools.

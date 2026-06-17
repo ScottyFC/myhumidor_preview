@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { ProtectMedia } from '@/components/ProtectMedia';
 import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation, ShoppingBag } from 'lucide-react';
 import { EliteBanner } from '@/components/EliteBanner';
 import { VenueTag } from '@/components/VenueTag';
@@ -57,6 +58,7 @@ export default async function LoungePage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-4xl px-6 pt-6">
+      <ProtectMedia />
       <Link
         href="/search"
         className="mb-4 inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-smoke-400 hover:text-paper"

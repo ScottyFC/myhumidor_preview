@@ -36,6 +36,7 @@ export default function RegisterPage() {
     if (typeof window === 'undefined') return;
     const q = new URLSearchParams(window.location.search);
     if (q.get('error')) { setLinkError(true); setMode('signin'); }
+    if (q.get('mode') === 'signup') setMode('signup');
     // Retailer signup deep-links (claim/submit flows) preselect the retailer tab.
     if (q.get('type') === 'retailer' || q.get('type') === 'lounge') { setType('retailer'); setMode('signup'); }
     const claim = q.get('claim');

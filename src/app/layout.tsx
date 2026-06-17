@@ -8,6 +8,7 @@ import { Analytics } from '@/components/Analytics';
 import { NativeShell } from '@/components/NativeShell';
 import { MobileTopBar } from '@/components/MobileTopBar';
 import { MobileTabBar } from '@/components/MobileTabBar';
+import { NativeAuthGate } from '@/components/NativeAuthGate';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.myhumidor.shop';
 
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <NativeShell />
         <main className="pb-32">{children}</main>
         <MobileTabBar />
+        <NativeAuthGate />
         <footer className="web-chrome border-t border-ember-400/15 px-6 py-12 text-center">
           <Link href="/" aria-label="MyHumidor home" className="inline-block transition hover:opacity-80">
             <img

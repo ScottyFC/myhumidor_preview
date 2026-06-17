@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { ProtectMedia } from '@/components/ProtectMedia';
 import { ArrowLeft, MapPin, ShoppingBag, ExternalLink } from 'lucide-react';
 import { getCigarSocial } from '@/lib/mock-data';
 import { findCatalogCigarBySlug, featuredLounges, moreFromBrand, similarCigars, brandSlug } from '@/lib/catalog';
@@ -99,6 +100,7 @@ export default async function CigarPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-5xl px-6 pt-6">
+      <ProtectMedia />
       <Link
         href="/search"
         className="mb-4 inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-smoke-400 hover:text-paper"

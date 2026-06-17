@@ -166,3 +166,6 @@ video {
 .native-only-block { display: none; }
 .native-app .native-only-block { display: block; }
 .native-app .web-home { display: none !important; }
+
+/* Image-copy deterrent on cigar/lounge pages (ProtectMedia toggles this). */
+.no-img-copy img { -webkit-user-drag: none; -webkit-touch-callout: none; user-select: none; }

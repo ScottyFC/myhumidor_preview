@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, User } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
 
 /**
@@ -29,10 +29,17 @@ export function MobileTopBar() {
               <ChevronLeft size={24} strokeWidth={1.75} />
             </button>
           )}
-          <Link href="/" aria-label="MyHumidor home" className="flex items-center">
-            <img src="/myhumidor-wordmark.png" alt="MyHumidor" className="h-6 w-auto" />
+          <Link
+            href="/profile"
+            aria-label="Profile"
+            className="flex h-9 w-9 items-center justify-center rounded-full border-[0.5px] border-ember-400/30 bg-char/60 text-ember-200 active:bg-ember-400/10"
+          >
+            <User size={18} strokeWidth={1.75} />
           </Link>
         </div>
+        <Link href="/" aria-label="MyHumidor home" className="flex items-center">
+          <img src="/myhumidor-wordmark.png" alt="MyHumidor" className="h-6 w-auto" />
+        </Link>
         <NotificationBell />
       </div>
     </header>
