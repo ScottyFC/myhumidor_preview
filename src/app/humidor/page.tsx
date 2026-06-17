@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Heart, Box, Trash2, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CigarThumb } from '@/components/CigarThumb';
+import { CigarName } from '@/components/CigarName';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { Feed } from '@/components/Feed';
 import { AgingTracker } from '@/components/AgingTracker';
@@ -235,10 +236,8 @@ function Row({ row, onRemove }: { row: Row; onRemove: (row: Row) => void }) {
       <Link href={`/cigars/${row.slug}`} className="flex min-w-0 flex-1 gap-4">
         <CigarThumb slug={row.slug} brand={row.brand} fit="contain" rounded="rounded" className="h-16 w-12 shrink-0" />
         <div className="min-w-0 flex-1">
-          <div className="eyebrow truncate">{row.brand}</div>
-          <div className="font-display text-base font-medium leading-tight text-paper group-hover:text-ember-100">
-            {row.name}
-          </div>
+          <div className="eyebrow truncate"><CigarName slug={row.slug} brand={row.brand} mode="brand" /></div>
+          <div className="font-display text-base font-medium leading-tight text-paper group-hover:text-ember-100"><CigarName slug={row.slug} name={row.name} /></div>
           <div className="mt-1 text-xs text-smoke-400">
             {row.size}
             {row.quantity !== undefined && ` · ×${row.quantity}`}

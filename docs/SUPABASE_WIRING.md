@@ -1,3 +1,13 @@
+## Live-join cigar names (no rebuild, no re-save)
+
+The snapshot propagation only runs when an override is *saved*, so edits made before phase67 (or rows with a null slug) kept showing the old name. Display now **live-joins** the name/brand from the catalog/overrides by slug — no migration.
+
+- `/api/cigar-images` (the batched resolver behind `CigarThumb`) now returns full meta per slug: `{ url, brand, name, buyUrl, removed }`, merging `catalog_overrides` over the static catalog. `lib/cigar-images.ts` exposes `resolveCigarMeta`; `resolveCigarImage` kept for back-compat.
+- New `CigarName` (modes name/brand/full) renders the live name, falling back to the snapshot until resolved.
+- Wired into the **profile highlight** label, **humidor** rows (brand + name), and the **activity feed** rating rows ("reviews"). Search/brand/cigar pages already merge overrides server-side.
+
+Net: renaming a cigar updates it everywhere on next view, even for edits saved before the propagation existed. (Re-saving still also rewrites the stored snapshots, which matters for CSV exports.)
+
 ## Phase 67 — Universal edits, brand pooling, bulk preview, brand CSV export, profile highlight fix
 
 **Run `supabase/migrations/phase67.sql`** (after 66) — redefines `set_catalog_override` + `bulk_set_catalog_override` to **propagate** brand/name changes to the snapshot copies on `humidor_entries` and `ratings`. So renaming a cigar updates it on the profile highlight, the humidor list, and reviews — not just the cigar page. (Also fixes the mojibake'd old name once you re-save the correct one.)

@@ -3,6 +3,7 @@ import { Cigarette, Box, Flame } from 'lucide-react';
 import type { CollectionItem } from '@/lib/collection';
 import { BrandLogo } from '@/components/BrandLogo';
 import { CigarThumb } from '@/components/CigarThumb';
+import { CigarName } from '@/components/CigarName';
 
 /**
  * Top-of-profile highlight: at a glance, what this member is keeping in their
@@ -59,7 +60,7 @@ function Panel({
             <Link key={c.cigarId} href={`/cigars/${c.slug}`} className="group w-20 shrink-0" title={`${c.brand} ${c.name}`}>
               <CigarThumb slug={c.slug} brand={c.brand} fit="contain" rounded="rounded-lg"
                 className="aspect-[4/5] w-full text-base transition group-hover:ring-1 group-hover:ring-ember-400/50" />
-              <div className="mt-1.5 truncate text-[10px] text-smoke-400 group-hover:text-ember-100">{c.name}</div>
+              <div className="mt-1.5 truncate text-[10px] text-smoke-400 group-hover:text-ember-100"><CigarName slug={c.slug} name={c.name} /></div>
             </Link>
           ))}
           {items.length > 12 && (

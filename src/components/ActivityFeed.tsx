@@ -6,6 +6,7 @@ import { Star, Flame, MapPin } from 'lucide-react';
 import { getCheckInsForUser, type CheckIn } from '@/lib/checkins';
 import { EngagementBar } from '@/components/EngagementBar';
 import type { UserRating } from '@/lib/ratings';
+import { CigarName } from '@/components/CigarName';
 
 type Item =
   | { type: 'rating'; ts: number; r: UserRating }
@@ -67,7 +68,7 @@ function RatingRow({ r, ownerId }: { r: UserRating; ownerId: string }) {
         <span className="text-smoke-500">· {ago(r.createdAt)}</span>
       </div>
       <Link href={`/cigars/${r.slug}`} className="mt-1 block">
-        <span className="text-sm font-medium hover:text-ember-100">{[r.brand, r.name].filter(Boolean).join(' ')}</span>
+        <CigarName slug={r.slug} brand={r.brand} name={r.name} mode="full" className="text-sm font-medium hover:text-ember-100" />
         <span className="text-xs text-smoke-400"> · {r.size}</span>
       </Link>
       {r.notes && <p className="mt-1 text-sm text-smoke-200">{r.notes}</p>}
