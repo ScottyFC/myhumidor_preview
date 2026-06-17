@@ -54,16 +54,16 @@ function Panel({
       {items.length === 0 ? (
         <p className="text-xs text-smoke-500">{empty}</p>
       ) : (
-        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-3 overflow-x-auto px-0.5 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.slice(0, 12).map((c) => (
-            <Link key={c.cigarId} href={`/cigars/${c.slug}`} className="group w-16 shrink-0" title={`${c.brand} ${c.name}`}>
+            <Link key={c.cigarId} href={`/cigars/${c.slug}`} className="group w-20 shrink-0" title={`${c.brand} ${c.name}`}>
               <CigarThumb slug={c.slug} brand={c.brand} fit="contain" rounded="rounded-lg"
                 className="aspect-[4/5] w-full text-base transition group-hover:ring-1 group-hover:ring-ember-400/50" />
-              <div className="mt-1 truncate text-[10px] text-smoke-400 group-hover:text-ember-100">{c.name}</div>
+              <div className="mt-1.5 truncate text-[10px] text-smoke-400 group-hover:text-ember-100">{c.name}</div>
             </Link>
           ))}
           {items.length > 12 && (
-            <div className="flex w-16 shrink-0 items-center justify-center text-xs text-smoke-400">
+            <div className="flex w-20 shrink-0 items-center justify-center text-xs text-smoke-400">
               +{items.length - 12}
             </div>
           )}

@@ -1,3 +1,12 @@
+## Phase 67 — Universal edits, brand pooling, bulk preview, brand CSV export, profile highlight fix
+
+**Run `supabase/migrations/phase67.sql`** (after 66) — redefines `set_catalog_override` + `bulk_set_catalog_override` to **propagate** brand/name changes to the snapshot copies on `humidor_entries` and `ratings`. So renaming a cigar updates it on the profile highlight, the humidor list, and reviews — not just the cigar page. (Also fixes the mojibake'd old name once you re-save the correct one.)
+
+- **Brand renaming pools correctly:** `/brands/[slug]` now groups by each cigar's *effective* (post-override) brand — cigars renamed into an existing brand show on that brand's page, and ones renamed away drop off. Page label/logo follow the pooled brand.
+- **Bulk tool now has a validation/preview step:** uploading a CSV parses + scans it in-panel and shows a per-row table (OK / Check / Skip) with notes (missing slug, non-numeric price, bad URL, nothing-to-change, duplicate slug, unknown columns) before you click **Apply**. Only clean rows are sent.
+- **Admin brand CSV export:** on a brand page, admins get **Download brand CSV** (slug + brand/name/country/price/image_url/buy_url) — a ready-to-edit file for the bulk tool (great for bulk image work on one brand).
+- **Profile highlight no longer crops:** the humidor/smoked thumbnail rows had `overflow-x-auto` (which also clips vertical overflow); added vertical padding + larger tiles so the full thumbnail and hover ring show.
+
 ## Phase 66 — Catalog overrides: removals, inline edits, bulk CSV, purchase links
 
 **Run `supabase/migrations/phase66.sql`** — adds `catalog_overrides` (slug-keyed: removed/brand/name/country/price/image_url/buy_url), `_is_admin()`, `set_catalog_override(...)`, `bulk_set_catalog_override(jsonb)`, and a `buy_url` column on `cigar_submissions`. Types updated.

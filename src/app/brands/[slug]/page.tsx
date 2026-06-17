@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Boxes, ArrowLeft } from 'lucide-react';
-import { cigarsByBrand, brandSlug } from '@/lib/catalog';
-import { applyOverrides } from '@/lib/overrides';
+import { cigarsByBrand, brandSlug, findCatalogCigarBySlug } from '@/lib/catalog';
+import { applyOverrides, applyOverride, loadOverrides } from '@/lib/overrides';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 import type { CatalogCigar } from '@/types';
 import { BrandLogo } from '@/components/BrandLogo';
 import { CigarThumb } from '@/components/CigarThumb';
+import { BrandCsvDownload } from '@/components/BrandCsvDownload';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -44,10 +45,28 @@ export default async function BrandPage({ params }: PageProps) {
   }
 
   const label = brand ?? (merged[0]?.brand ?? null);
-  if (!label || merged.length === 0) notFound();
+  if (!label || merged.length === 0) {
+    // Even with no static match, an override may have moved cigars into this brand.
+  }
 
   const visible = await applyOverrides(merged);
-  visible.sort((a, b) => a.name.localeCompare(b.name));
+  // Keep only cigars whose *effective* (post-override) brand matches this page…
+  const pooled: typeof visible = visible.filter((c) => brandSlug(c.brand) === slug);
+  const have = new Set(pooled.map((c) => c.slug));
+  // …and pull in cigars an admin renamed *into* this brand from elsewhere.
+  const ov = await loadOverrides();
+  for (const [s, o] of ov) {
+    if (o.removed || !o.brand || brandSlug(o.brand) !== slug || have.has(s)) continue;
+    const base = findCatalogCigarBySlug(s);
+    if (!base) continue;
+    const m = await applyOverride(base);
+    if (m && brandSlug(m.brand) === slug) { pooled.push(m); have.add(s); }
+  }
+
+  const finalLabel = pooled[0]?.brand ?? label;
+  if (!finalLabel || pooled.length === 0) notFound();
+
+  pooled.sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="mx-auto max-w-5xl px-6 pt-10">
@@ -59,17 +78,22 @@ export default async function BrandPage({ params }: PageProps) {
         <Boxes size={14} strokeWidth={1.5} className="text-ember-400" /> Brand
       </div>
       <div className="flex items-center gap-4">
-        <BrandLogo brand={label} className="h-16 w-16 shrink-0 text-2xl" rounded="rounded-xl" />
+        <BrandLogo brand={finalLabel} className="h-16 w-16 shrink-0 text-2xl" rounded="rounded-xl" />
         <div>
-          <h1 className="font-display text-5xl tracking-tightest">{label}</h1>
+          <h1 className="font-display text-5xl tracking-tightest">{finalLabel}</h1>
           <p className="mt-1 text-sm text-smoke-400">
-            {visible.length} {visible.length === 1 ? 'cigar' : 'cigars'} on MyHumidor
+            {pooled.length} {pooled.length === 1 ? 'cigar' : 'cigars'} on MyHumidor
           </p>
         </div>
       </div>
 
+      <BrandCsvDownload brand={finalLabel} rows={pooled.map((c) => ({
+        slug: c.slug, brand: c.brand, name: c.name, country: c.country,
+        price: c.price ?? null, image_url: c.image_url ?? null, buy_url: c.buyUrl ?? null,
+      }))} />
+
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.map((c) => (
+        {pooled.map((c) => (
           <Link
             key={c.slug}
             href={`/cigars/${c.slug}`}
