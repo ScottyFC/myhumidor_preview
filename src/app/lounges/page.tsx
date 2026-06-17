@@ -6,6 +6,7 @@ import { BrandTile } from '@/components/BrandTile';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
 import { SubmitLounge } from '@/components/SubmitLounge';
 import { NearbyLounges } from '@/components/NearbyLounges';
+import { LoungeDirectory } from '@/components/LoungeDirectory';
 
 export const metadata = {
   title: 'Lounges · MyHumidor by CigarTV',
@@ -40,28 +41,7 @@ export default async function LoungesPage() {
         <RecentlyAdded lounges members />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        {lounges.map((l) => (
-          <Link
-            key={l.id}
-            href={`/lounges/${l.slug}`}
-            className="group relative flex items-start gap-4 overflow-hidden rounded-xl border-[0.5px] border-ember-400/15 bg-gradient-to-b from-char/70 to-char/30 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-ember-400/45 hover:shadow-[0_10px_28px_rgba(0,0,0,0.4)]"
-          >
-            <BrandTile name={l.name} src={l.image_url} className="h-12 w-12 shrink-0 text-lg" rounded="rounded-lg" />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <h2 className="truncate font-display text-base font-medium group-hover:text-ember-100">
-                  {l.name}
-                </h2>
-                {l.verified && <BadgeCheck size={14} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
-              </div>
-              <div className="mt-0.5 inline-flex items-center gap-1 text-xs text-smoke-400">
-                <MapPin size={11} strokeWidth={1.5} /> {[l.city, l.state].filter(Boolean).join(', ')}
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+      <LoungeDirectory lounges={lounges} />
 
       {/* Submit your lounge */}
       <div className="mt-8">

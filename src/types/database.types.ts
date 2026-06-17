@@ -1479,6 +1479,7 @@ export type Database = {
           socials: Json | null
           state: string
           tier: string
+          venue_type: string
           verified: boolean
           website: string | null
         }
@@ -1506,6 +1507,7 @@ export type Database = {
           socials?: Json | null
           state: string
           tier?: string
+          venue_type?: string
           verified?: boolean
           website?: string | null
         }
@@ -1533,6 +1535,7 @@ export type Database = {
           socials?: Json | null
           state?: string
           tier?: string
+          venue_type?: string
           verified?: boolean
           website?: string | null
         }
@@ -2486,6 +2489,10 @@ export type Database = {
       set_aficionado: {
         Args: { p_handle: string; p_on: boolean }
         Returns: boolean
+      }
+      set_venue_type: {
+        Args: { p_slug: string; p_type: string }
+        Returns: string
       }
       remove_humidor_entry: {
         Args: { p_cigar_id: string }

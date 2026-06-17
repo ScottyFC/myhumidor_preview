@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation, ShoppingBag } from 'lucide-react';
 import { EliteBanner } from '@/components/EliteBanner';
+import { VenueTag } from '@/components/VenueTag';
 import type { CatalogStore } from '@/types';
 import { findCatalogStoreBySlug } from '@/lib/catalog';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
@@ -37,7 +38,7 @@ export default async function LoungePage({ params }: PageProps) {
     const sb = await supabaseServer();
     const { data } = await sb
       .from('lounges')
-      .select('id, slug, name, address, city, state, phone, email, website, image_url, verified, certified, lat, lng')
+      .select('id, slug, name, address, city, state, phone, email, website, image_url, verified, certified, venue_type, lat, lng')
       .eq('slug', slug)
       .single();
     if (data) {
@@ -46,7 +47,7 @@ export default async function LoungePage({ params }: PageProps) {
         city: data.city ?? '', state: data.state ?? '', phone: data.phone ?? undefined,
         website: data.website ?? undefined, email: data.email ?? undefined,
         image_url: data.image_url ?? null, verified: data.verified ?? false,
-        certified: data.certified ?? false, lat: data.lat ?? 0, lng: data.lng ?? 0,
+        certified: data.certified ?? false, venue_type: (data.venue_type as 'lounge'|'retail'|'both') ?? 'lounge', lat: data.lat ?? 0, lng: data.lng ?? 0,
       } as LoungeView;
     }
   }
@@ -89,6 +90,17 @@ export default async function LoungePage({ params }: PageProps) {
             </span>
           ) : null}
         </h1>
+
+        <div className="mt-3">
+          <VenueTag type={lounge.venue_type} />
+        </div>
+        {lounge.venue_type === 'retail' && (
+          <p className="mt-3 flex items-start gap-2 rounded-lg border-[0.5px] border-smoke-500/30 bg-smoke-800/30 px-3.5 py-2.5 text-sm text-smoke-200">
+            <ShoppingBag size={15} strokeWidth={1.5} className="mt-0.5 shrink-0 text-smoke-300" />
+            This is a retailer — cigars are sold here, but it isn’t a sit-down lounge, so there’s
+            typically no on-site smoking. Call ahead to confirm.
+          </p>
+        )}
 
         <div className="mt-5 grid gap-2 text-sm text-smoke-200 sm:grid-cols-2">
           {fullAddress && (

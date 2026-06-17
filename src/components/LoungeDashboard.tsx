@@ -5,6 +5,7 @@ import { Users, Clock, Zap, Wallet, BadgeCheck, Pencil, Check, Loader2, External
 import Link from 'next/link';
 import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
 import { getMyLounges, type MyLounge } from '@/lib/lounges-owner';
+import { VenueTypeControl } from '@/components/VenueTypeControl';
 import {
   listDevices, recentLedger, streamStats7d, renameLounge,
   type LoungeDevice, type CreditLedgerEntry, type DayStat,
@@ -108,6 +109,8 @@ export function LoungeDashboard() {
             </Link>
           </div>
         )}
+
+        {lounge?.slug && <VenueTypeControl slug={lounge.slug} />}
 
         {!hasVenue && (
           <div className="mt-3 text-xs text-smoke-400">

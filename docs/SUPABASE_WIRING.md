@@ -1,3 +1,15 @@
+## Phase 63 — Lounges vs retailers (venue type)
+
+**Run `supabase/migrations/phase63.sql`** (adds `lounges.venue_type` ∈ {lounge, retail, both}, default 'lounge', + `set_venue_type(slug, type)` RPC: owner-or-admin only).
+
+- Distinguishes **sit-down lounges** (smoke on-site) from **retailers** (liquor/big-box stores that sell cigars but aren't smoking venues — Total Wine, ABC, Spec's, etc.).
+- New `VenueTag` shows on lounge cards and the lounge detail header; retailers get a clear notice ("cigars sold here, but not a sit-down lounge — call ahead").
+- Lounges **directory has a filter**: All / Sit-down lounges / Retailers (`LoungeDirectory`).
+- **Owners set their venue type** from the dashboard (`VenueTypeControl` → `set_venue_type`); admins can also set it (RPC allows admin).
+- **Static catalog pre-tagged:** a heuristic marked **273 / 728** stores as `retail` (liquor/grocery/big-box chains by name); the rest default to lounge. Added `venue_type` to the generated `lounges` types + `CatalogStore`.
+
+> The static tagging is heuristic (name-based) and imperfect — owners/admins can correct any entry via the controls above, and member-submitted lounges default to 'lounge' until set.
+
 ## logo.dev brand-logo autofill
 
 `/api/brand-logo` now resolves logos in order: **logo.dev** (search the brand via the secret key server-side → `https://img.logo.dev/<domain>?token=<publishable key>`) → Google CSE → monogram fallback. Accepts an optional `&domain=` to skip the search. Because `BrandLogo` already calls this endpoint, every cigar/brand without its own artwork now auto-pulls a logo.dev logo. Admins also get an **"Autofill from logo.dev"** button on the cigar page (next to Upload) that persists the fetched logo to the brand via `set_brand_image`.

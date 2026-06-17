@@ -23,6 +23,7 @@ export interface CatalogStore {
   geo?: 'city' | 'state' | null; // coordinate precision (approximate, pending exact geocode)
   image_url?: string | null;
   verified: boolean;
+  venue_type?: 'lounge' | 'retail' | 'both';
   phone: string;
   email: string;
   website: string;
