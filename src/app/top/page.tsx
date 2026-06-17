@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { featuredCigars } from '@/lib/catalog';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
+import { CigarThumb } from '@/components/CigarThumb';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
 import { TopCigarsSections } from '@/components/TopCigarsSections';
 import { CigarAgent } from '@/components/CigarAgent';
@@ -41,7 +42,7 @@ export default function TopCigarsPage() {
             key={c.uuid}
             className="flex items-center gap-4 border-b-[0.5px] border-ember-400/10 bg-char/40 px-4 py-4 last:border-b-0 sm:px-5"
           >
-            <BrandTile name={c.brand} src={c.image_url} fit="contain" className="h-12 w-10 shrink-0 text-xs" rounded="rounded" />
+            <CigarThumb slug={c.slug} brand={c.brand} src={c.image_url} fit="contain" className="h-12 w-10 shrink-0 text-xs" rounded="rounded" />
 
             <Link href={`/cigars/${c.slug}`} className="group min-w-0 flex-1">
               <div className="eyebrow truncate">{c.brand}</div>

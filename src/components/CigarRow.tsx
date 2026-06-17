@@ -16,7 +16,7 @@ export function CigarRow({ title, eyebrowIcon, cigars }: { title: string; eyebro
         {cigars.map((c) => (
           <Link key={c.uuid} href={`/cigars/${c.slug}`} className="group w-40 shrink-0 transition-transform duration-200 hover:-translate-y-1">
             <div className="relative">
-              <BrandLogo brand={c.brand} src={c.image_url} fit="contain" rounded="rounded-xl"
+              <BrandLogo brand={c.brand} slug={c.slug} src={c.image_url} fit="contain" rounded="rounded-xl"
                 className="aspect-[4/5] w-full text-3xl transition group-hover:ring-1 group-hover:ring-ember-400/50" />
               {typeof c.price === 'number' && (
                 <span className="absolute bottom-2 right-2 rounded-md bg-char/90 px-1.5 py-0.5 font-display text-xs tabular text-ember-100 ring-1 ring-ember-400/20">

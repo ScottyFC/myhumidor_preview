@@ -9,6 +9,7 @@ import {
   type RecentCigar, type RecentMember, type RecentLounge,
 } from '@/lib/db';
 import { BrandTile } from '@/components/BrandTile';
+import { CigarThumb } from '@/components/CigarThumb';
 
 export function RecentlyAdded({
   cigars = false,
@@ -49,8 +50,9 @@ export function RecentlyAdded({
         <Block title="Recently added cigars">
           {c.map((x) => (
             <Link key={x.uuid} href={`/cigars/${x.slug}`} className="group w-40 shrink-0 snap-start">
-              <BrandTile
-                name={x.brand}
+              <CigarThumb
+                slug={x.slug}
+                brand={x.brand}
                 src={x.image_url}
                 fit="contain"
                 rounded="rounded-xl"

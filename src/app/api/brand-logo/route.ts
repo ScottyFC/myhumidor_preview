@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
+import { findCatalogCigarBySlug } from '@/lib/catalog';
 
 /**
  * GET /api/brand-logo?brand=Padron[&slug=padron-1964][&domain=padron.com]
@@ -73,6 +74,10 @@ export async function GET(request: Request) {
         const { data } = await sb.from('catalog_cigars').select('image_url').eq('slug', slug).maybeSingle();
         const u = (data as { image_url?: string } | null)?.image_url;
         if (u) return NextResponse.json({ url: u, source: 'product' });
+        // Static catalog image is also a product-level image — don't let a brand
+        // image override a cigar that already has its own artwork.
+        const stat = findCatalogCigarBySlug(slug);
+        if (stat?.image_url) return NextResponse.json({ url: stat.image_url, source: 'product-static' });
       }
       if (brand) {
         const { data } = await sb.from('brand_images').select('image_url').eq('brand', brand).maybeSingle();

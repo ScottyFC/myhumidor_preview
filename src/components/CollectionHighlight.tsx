@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Cigarette, Box, Flame } from 'lucide-react';
 import type { CollectionItem } from '@/lib/collection';
 import { BrandLogo } from '@/components/BrandLogo';
+import { CigarThumb } from '@/components/CigarThumb';
 
 /**
  * Top-of-profile highlight: at a glance, what this member is keeping in their
@@ -56,7 +57,7 @@ function Panel({
         <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.slice(0, 12).map((c) => (
             <Link key={c.cigarId} href={`/cigars/${c.slug}`} className="group w-16 shrink-0" title={`${c.brand} ${c.name}`}>
-              <BrandLogo brand={c.brand} fit="contain" rounded="rounded-lg"
+              <CigarThumb slug={c.slug} brand={c.brand} fit="contain" rounded="rounded-lg"
                 className="aspect-[4/5] w-full text-base transition group-hover:ring-1 group-hover:ring-ember-400/50" />
               <div className="mt-1 truncate text-[10px] text-smoke-400 group-hover:text-ember-100">{c.name}</div>
             </Link>

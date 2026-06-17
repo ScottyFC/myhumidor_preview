@@ -4,6 +4,7 @@ import { featuredCigars, featuredLounges, allCigars, allStores } from '@/lib/cat
 import { boostedLounges } from '@/lib/featured-server';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
+import { CigarThumb } from '@/components/CigarThumb';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
 import { AutoScrollRow } from '@/components/AutoScrollRow';
 import { AficionadoSection } from '@/components/AficionadoSection';
@@ -88,8 +89,9 @@ export default async function HomePage() {
               className="group w-44 shrink-0 transition-transform duration-200 hover:-translate-y-1"
             >
               <div className="relative">
-                <BrandTile
-                  name={c.brand}
+                <CigarThumb
+                  slug={c.slug}
+                  brand={c.brand}
                   src={c.image_url}
                   fit="contain"
                   rounded="rounded-xl"
@@ -169,7 +171,7 @@ export default async function HomePage() {
               key={c.uuid}
               className="flex items-center gap-4 border-b-[0.5px] border-ember-400/10 bg-char/40 px-4 py-3.5 last:border-b-0 sm:px-5"
             >
-              <BrandTile name={c.brand} src={c.image_url} fit="contain" className="h-10 w-8 shrink-0 text-[10px]" rounded="rounded" />
+              <CigarThumb slug={c.slug} brand={c.brand} src={c.image_url} fit="contain" className="h-10 w-8 shrink-0 text-[10px]" rounded="rounded" />
               <Link href={`/cigars/${c.slug}`} className="group min-w-0 flex-1">
                 <div className="truncate font-display text-base font-medium text-paper group-hover:text-ember-100">
                   {c.brand} {c.name}

@@ -1,4 +1,5 @@
 'use client';
+import { CigarThumb } from '@/components/CigarThumb';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -33,10 +34,13 @@ export function LoungeMenu({ slug, storeId, fallbackCount }: { slug: string; sto
       {items.map((it) => {
         const Row = (
           <div className="flex items-center justify-between gap-3 border-b-[0.5px] border-ember-400/10 bg-char/40 px-4 py-3 last:border-b-0">
-            <div className="min-w-0">
-              <div className="eyebrow truncate">{it.brand}</div>
-              <div className="truncate text-sm font-medium">{it.name}</div>
-              <div className="text-xs text-smoke-400">{it.size}</div>
+            <div className="flex min-w-0 items-center gap-3">
+              <CigarThumb slug={it.slug} brand={it.brand} fit="contain" rounded="rounded" className="h-12 w-10 shrink-0 text-[10px]" />
+              <div className="min-w-0">
+                <div className="eyebrow truncate">{it.brand}</div>
+                <div className="truncate text-sm font-medium">{it.name}</div>
+                <div className="text-xs text-smoke-400">{it.size}</div>
+              </div>
             </div>
             <div className="shrink-0 text-right">
               <div className="text-sm tabular text-ember-100">{formatUSD(it.price)}</div>

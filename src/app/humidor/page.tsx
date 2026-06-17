@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Heart, Box, Trash2, Plus, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CigarThumb } from '@/components/CigarThumb';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { Feed } from '@/components/Feed';
 import { AgingTracker } from '@/components/AgingTracker';
@@ -232,9 +233,7 @@ function Row({ row, onRemove }: { row: Row; onRemove: (row: Row) => void }) {
   return (
     <div className="group flex gap-4 rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-4">
       <Link href={`/cigars/${row.slug}`} className="flex min-w-0 flex-1 gap-4">
-        <div className="relative h-16 w-12 shrink-0 items-center overflow-hidden rounded bg-gradient-to-b from-leather to-leather-deep">
-          <div className="absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 bg-ember-600 border-y border-ember-400/40" />
-        </div>
+        <CigarThumb slug={row.slug} brand={row.brand} fit="contain" rounded="rounded" className="h-16 w-12 shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="eyebrow truncate">{row.brand}</div>
           <div className="font-display text-base font-medium leading-tight text-paper group-hover:text-ember-100">

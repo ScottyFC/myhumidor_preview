@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Flame, Star, TrendingUp } from 'lucide-react';
 import { topCigarsThisWeek, highestRatedCigars, type RatedCigar } from '@/lib/db';
 import { BrandTile } from '@/components/BrandTile';
+import { CigarThumb } from '@/components/CigarThumb';
 
 export function TopCigarsSections() {
   const [week, setWeek] = useState<RatedCigar[]>([]);
@@ -53,8 +54,9 @@ function RankRow({
         {cigars.map((c, i) => (
           <Link key={c.slug} href={`/cigars/${c.slug}`} className="group w-44 shrink-0 snap-start">
             <div className="relative">
-              <BrandTile
-                name={c.brand}
+              <CigarThumb
+                slug={c.slug}
+                brand={c.brand}
                 src={c.image_url}
                 fit="contain"
                 rounded="rounded-xl"

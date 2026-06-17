@@ -1,3 +1,13 @@
+## Image sync across thumbnails (product → brand → fallback everywhere)
+
+Admin image changes now propagate to every thumbnail, not just the cigar detail page. No migration.
+
+- **Batched resolver:** new `POST /api/cigar-images { slugs }` resolves a whole list in one request — product (`catalog_cigars.image_url` overwrite ?? static catalog image) ?? brand (`brand_images`) ?? null. Client module `lib/cigar-images.ts` collects slugs per tick + caches; `CigarThumb` paints `src` immediately then swaps in the resolved image.
+- **Hierarchy bug fixed:** `/api/brand-logo` now treats a cigar's **static** image as a product-level image too, so a brand image never overrides a cigar that already has its own artwork (affected the detail page + profile highlight).
+- **Wired CigarThumb / slug-aware BrandLogo into:** homepage (carousel + list), `/top`, `TopCigarsSections`, the **humidor** rows (which previously showed only a placeholder — now show the real image), the **profile** collection highlight, **lounge inventory** rows (`LoungeMenu`, previously image-less), `RecentlyAdded`, and `CigarRow` (More-from-brand / Similar). Search results stay text-only (no thumbnail by design).
+
+So overwriting a cigar's image (or setting a brand image) shows up in the humidor, homepage, Top, profiles, and lounge menus after refresh.
+
 ## Phase 65 — Image hierarchy (product → brand → fallback) + brand-by-URL + file types + live refresh
 
 **Run `supabase/migrations/phase65.sql`** (adds `brand_images` table; **replaces** `set_brand_image` with a 2-arg `set_brand_image(p_brand, p_url)` that upserts the brand image instead of writing into cigar rows). Regenerate types or note: `database.types.ts` updated (brand_images table, 2-arg set_brand_image).
