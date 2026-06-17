@@ -161,3 +161,8 @@ video {
 .native-app, .native-app * { -webkit-tap-highlight-color: transparent; }
 .native-app body { overscroll-behavior-y: none; }
 .native-app button, .native-app a { -webkit-touch-callout: none; }
+
+/* Native app home: show the app-style launcher, hide the marketing home. */
+.native-only-block { display: none; }
+.native-app .native-only-block { display: block; }
+.native-app .web-home { display: none !important; }

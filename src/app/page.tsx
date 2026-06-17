@@ -9,6 +9,7 @@ import { CigarThumb } from '@/components/CigarThumb';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
 import { AutoScrollRow } from '@/components/AutoScrollRow';
 import { AficionadoSection } from '@/components/AficionadoSection';
+import { NativeHome } from '@/components/NativeHome';
 
 export const revalidate = 3600;
 
@@ -24,8 +25,11 @@ export default async function HomePage() {
   const seen = new Set(boosted.map((l) => l.slug));
   const lounges = [...boosted, ...baseLounges.filter((l) => !seen.has(l.slug))].slice(0, 8);
 
+  const nativeFeatured = featured.slice(0, 10).map((c) => ({ slug: c.slug, brand: c.brand, name: c.name, image_url: c.image_url ?? null }));
   return (
-    <div className="mx-auto max-w-7xl px-6 pt-8">
+    <>
+      <NativeHome featured={nativeFeatured} />
+    <div className="web-home mx-auto max-w-7xl px-6 pt-8">
       {/* ─── HERO ──────────────────────────────────────────────────────────── */}
       <section className="relative py-12 lg:py-16 animate-fade-up">
         {/* Ambient ember glow — pure CSS, sits behind the headline */}
@@ -197,6 +201,7 @@ export default async function HomePage() {
 
       {/* ─── LOUNGE PROGRAM PITCH ──────────────────────────────────────── */}
     </div>
+    </>
   );
 }
 

@@ -120,3 +120,17 @@ web chrome for native chrome — **only** when running in the app (`<html>` gets
 no native rebuild needed.** Deploy, and the already-installed apps pick up the
 new chrome on next launch. Only re-run `cap sync` / rebuild when native config,
 icons, or plugins change.
+
+## Native home screen (app launcher layout)
+
+Inside the app, the home tab now uses an app-style launcher instead of the
+marketing site (`NativeHome`, shown only under `.native-app`; the web home is
+untouched and hidden on native via `.web-home`). Layout, in MyHumidor branding
+(dark ink + gold ember, Fraunces display):
+- a tappable **search bar** → /search,
+- a **2×4 quick-action tile grid** (Top Rated, For You, Lounges, Map, Add Cigar,
+  Concierge, Aficionados, My Humidor),
+- a dismissible **promo banner** (gold gradient) → /submit,
+- **Trending now** with quick filter chips + a featured-cigar rail.
+
+Ships via Vercel deploy (the apps load the hosted site); no native rebuild.
