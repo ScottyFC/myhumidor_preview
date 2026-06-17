@@ -1,3 +1,11 @@
+## Brand pages — navigate from a cigar to all of its brand's cigars
+
+The `/brands/[slug]` route already existed (lists every cigar for a brand via `cigarsByBrand`, merging DB-submitted cigars); the missing piece was navigation. No migration.
+
+- The **brand name on the cigar page is now a link** to `/brands/{brandSlug(brand)}`.
+- The **"More from {brand}" row** on the cigar page gained a **"View all →"** link to the brand page (new optional `href` prop on `CigarRow`).
+- The brand page now shows a **brand logo header** (`BrandLogo`) and **image thumbnails** on each cigar card (`CigarThumb`), consistent with the rest of the site and the image hierarchy.
+
 ## Image sync across thumbnails (product → brand → fallback everywhere)
 
 Admin image changes now propagate to every thumbnail, not just the cigar detail page. No migration.

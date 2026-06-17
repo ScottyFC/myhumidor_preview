@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, MapPin } from 'lucide-react';
 import { getCigarSocial } from '@/lib/mock-data';
-import { findCatalogCigarBySlug, featuredLounges, moreFromBrand, similarCigars } from '@/lib/catalog';
+import { findCatalogCigarBySlug, featuredLounges, moreFromBrand, similarCigars, brandSlug } from '@/lib/catalog';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
@@ -114,7 +114,9 @@ export default async function CigarPage({ params }: PageProps) {
 
         {/* ─── Header + Aggregates ───────────────────────────────────── */}
         <div className="lg:col-span-7">
-          <div className="eyebrow mb-2">{view.brand}</div>
+          <Link href={`/brands/${brandSlug(view.brand)}`} className="eyebrow mb-2 inline-flex items-center gap-1 text-ember-300 underline-offset-2 transition hover:text-ember-100 hover:underline">
+            {view.brand}
+          </Link>
           <h1 className="font-display text-4xl leading-[1.0] tracking-tightest sm:text-5xl">
             {view.headline}
           </h1>
@@ -194,6 +196,7 @@ export default async function CigarPage({ params }: PageProps) {
       <CigarRow
         title={`More from ${view.brand}`}
         cigars={brandMore}
+        href={`/brands/${brandSlug(view.brand)}`}
       />
 
       <CigarRow
