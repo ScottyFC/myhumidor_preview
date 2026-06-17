@@ -104,6 +104,7 @@ export default async function CigarPage({ params }: PageProps) {
           <BrandLogo
             brand={view.brand}
             src={view.imageUrl}
+            slug={slug}
             fit="contain"
             rounded="rounded-xl"
             className="aspect-[4/5] w-full text-6xl"

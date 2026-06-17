@@ -347,6 +347,12 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_images: {
+        Row: { brand: string; image_url: string; updated_at: string }
+        Insert: { brand: string; image_url: string; updated_at?: string }
+        Update: { brand?: string; image_url?: string; updated_at?: string }
+        Relationships: []
+      }
       catalog_cigars: {
         Row: {
           brand: string
@@ -2483,8 +2489,8 @@ export type Database = {
         Returns: number
       }
       set_brand_image: {
-        Args: { p_brand: string; p_slug?: string; p_url: string }
-        Returns: number
+        Args: { p_brand: string; p_url: string }
+        Returns: string
       }
       set_cert_tier: {
         Args: { p_lounge: string; p_tier: string }

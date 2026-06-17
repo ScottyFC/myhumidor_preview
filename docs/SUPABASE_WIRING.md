@@ -1,3 +1,12 @@
+## Phase 65 — Image hierarchy (product → brand → fallback) + brand-by-URL + file types + live refresh
+
+**Run `supabase/migrations/phase65.sql`** (adds `brand_images` table; **replaces** `set_brand_image` with a 2-arg `set_brand_image(p_brand, p_url)` that upserts the brand image instead of writing into cigar rows). Regenerate types or note: `database.types.ts` updated (brand_images table, 2-arg set_brand_image).
+
+- **Hierarchy:** `/api/brand-logo?brand=&slug=` now resolves **product** (`catalog_cigars.image_url` by slug) → **brand** (`brand_images`) → **logo.dev/CSE** → monogram. `BrandLogo` takes a `slug` and resolves live for cigars.
+- **"Doesn't change straight away" fixed:** the product/brand layers are read **live from the DB** (only external logo.dev results are cached), so an admin upload/overwrite shows on refresh. Uploads also use a unique path so the CDN never serves a stale copy.
+- **Brand image by URL:** admin control supports source = Upload **or** Image URL × scope = This cigar (`set_cigar_image`) or Whole brand (`set_brand_image`). Brand-by-URL works.
+- **File types:** uploads accept and preserve **.svg/.png/.webp/.jpg/.gif/.avif** (correct extension + content-type, no more forced .jpg); URL links accept any image URL.
+
 ## Phase 64 — Admin cigar/label image: upload or URL, per-cigar or brand
 
 **Run `supabase/migrations/phase64.sql`** (adds `set_cigar_image(p_slug, p_url)` — SECURITY DEFINER, admin-only, **overwrites** that one cigar's `image_url`).

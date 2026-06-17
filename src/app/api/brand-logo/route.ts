@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
+import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 
 /**
- * GET /api/brand-logo?brand=Padron[&domain=padron.com]
- * Resolves a brand logo image URL, trying sources in order:
- *   1. logo.dev — search the brand (server-side, secret key) → logo image
- *      (https://img.logo.dev/<domain>?token=<publishable key>). If a domain is
- *      passed we skip the search and use it directly.
- *   2. Google Custom Search image API (GOOGLE_CSE_KEY + GOOGLE_CSE_CX).
- *   3. null → the UI falls back to a branded monogram.
- * Cached in memory for the process lifetime.
+ * GET /api/brand-logo?brand=Padron[&slug=padron-1964][&domain=padron.com]
+ * Resolves an image following the hierarchy product → brand → fallback:
+ *   1. product — catalog_cigars.image_url by slug (the cigar's own photo);
+ *   2. brand   — brand_images by brand;
+ *   3. logo.dev (search → logo image), then Google CSE;
+ *   4. null → UI falls back to a monogram.
+ * DB layers are read live (so admin uploads reflect on refresh); only the
+ * external logo.dev/CSE results are cached.
  */
 const cache = new Map<string, string | null>();
 
@@ -60,13 +61,32 @@ async function fromGoogleCse(brand: string): Promise<string | null> {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const brand = (searchParams.get('brand') ?? '').trim();
+  const slug = (searchParams.get('slug') ?? '').trim();
   const domain = (searchParams.get('domain') ?? '').trim() || undefined;
-  if (!brand && !domain) return NextResponse.json({ url: null });
+  if (!brand && !slug && !domain) return NextResponse.json({ url: null });
 
+  // 1) Product + 2) Brand — live DB reads (not cached, so admin edits show up).
+  if (isSupabaseConfigured && (slug || brand)) {
+    try {
+      const sb = await supabaseServer();
+      if (slug) {
+        const { data } = await sb.from('catalog_cigars').select('image_url').eq('slug', slug).maybeSingle();
+        const u = (data as { image_url?: string } | null)?.image_url;
+        if (u) return NextResponse.json({ url: u, source: 'product' });
+      }
+      if (brand) {
+        const { data } = await sb.from('brand_images').select('image_url').eq('brand', brand).maybeSingle();
+        const u = (data as { image_url?: string } | null)?.image_url;
+        if (u) return NextResponse.json({ url: u, source: 'brand' });
+      }
+    } catch { /* fall through to external sources */ }
+  }
+
+  // 3) External (cached).
   const key = `${brand.toLowerCase()}|${domain ?? ''}`;
-  if (cache.has(key)) return NextResponse.json({ url: cache.get(key) });
+  if (cache.has(key)) return NextResponse.json({ url: cache.get(key), source: 'cache' });
 
   const url = (await fromLogoDev(brand, domain)) || (await fromGoogleCse(brand));
   cache.set(key, url ?? null);
-  return NextResponse.json({ url: url ?? null, source: url ? (domain || LOGODEV_SECRET ? 'logo.dev' : 'cse') : null });
+  return NextResponse.json({ url: url ?? null, source: url ? 'logo.dev' : null });
 }

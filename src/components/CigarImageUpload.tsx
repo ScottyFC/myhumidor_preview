@@ -38,15 +38,23 @@ export function CigarImageUpload({ slug, brand }: { slug: string; brand: string 
       if (error) throw new Error(error.message);
       return typeof data === 'number' ? data : 1;
     }
-    const { data, error } = await sb.rpc('set_brand_image', { p_brand: brand, p_url: imageUrl, p_slug: slug });
+    const { data, error } = await sb.rpc('set_brand_image', { p_brand: brand, p_url: imageUrl });
     if (error) throw new Error(error.message);
-    return typeof data === 'number' ? data : 1;
+    return 1;
   }
 
   async function uploadFile(f: File): Promise<string> {
     const sb = supabaseBrowser();
-    const path = `cigar-art/${slug}-${Date.now()}.jpg`;
-    const up = await sb.storage.from('avatars').upload(path, f, { contentType: f.type || 'image/jpeg', upsert: true });
+    // Preserve the real type so SVG/PNG/WEBP/JPEG all upload correctly.
+    const extByType: Record<string, string> = {
+      'image/svg+xml': 'svg', 'image/png': 'png', 'image/webp': 'webp',
+      'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/gif': 'gif', 'image/avif': 'avif',
+    };
+    const nameExt = (f.name.split('.').pop() || '').toLowerCase();
+    const ext = extByType[f.type] || (['svg', 'png', 'webp', 'jpg', 'jpeg', 'gif', 'avif'].includes(nameExt) ? nameExt : 'png');
+    const contentType = f.type || (ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`);
+    const path = `cigar-art/${slug}-${Date.now()}.${ext}`;
+    const up = await sb.storage.from('avatars').upload(path, f, { contentType, upsert: true });
     if (up.error) throw new Error(up.error.message);
     return sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
   }
@@ -95,7 +103,7 @@ export function CigarImageUpload({ slug, brand }: { slug: string; brand: string 
         </div>
       </div>
 
-      <input ref={fileRef} type="file" accept="image/*" onChange={onPick} className="hidden" />
+      <input ref={fileRef} type="file" accept=".svg,.png,.webp,.jpg,.jpeg,.gif,.avif,image/*" onChange={onPick} className="hidden" />
 
       {source === 'upload' ? (
         <button onClick={() => fileRef.current?.click()} disabled={busy} className="btn-ghost text-xs">
@@ -130,7 +138,7 @@ export function CigarImageUpload({ slug, brand }: { slug: string; brand: string 
 
       {done !== null && (
         <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-ember-100">
-          <Check size={11} strokeWidth={2} /> Updated {done} cigar{done === 1 ? '' : 's'}. Refresh to see it.
+          <Check size={11} strokeWidth={2} /> Saved — refresh to see the new image.
         </p>
       )}
       {err && <p className="mt-2 text-[11px] text-red-400">{err}</p>}
