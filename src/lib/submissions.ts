@@ -254,7 +254,7 @@ export interface SubmitResult {
  */
 export async function submitCigar(input: {
   brand: string; name: string; country?: string; size?: string; price?: number | null;
-  notes?: string; photoDataUrl?: string;
+  notes?: string; photoDataUrl?: string; buyUrl?: string;
 }): Promise<SubmitResult> {
   start();
   const slug = slugify(`${input.brand} ${input.name}`);
@@ -302,7 +302,7 @@ export async function submitCigar(input: {
       submitted_by: userId,
       brand: input.brand, name: input.name, slug,
       country: input.country || null, size: input.size || null, price: input.price ?? null,
-      photo_url, notes: input.notes ?? null,
+      photo_url, notes: input.notes ?? null, buy_url: input.buyUrl ?? null,
       status: autoApprove ? 'approved' : 'pending',
       ...(catalogId ? { catalog_id: catalogId, reviewed_by: userId } : {}),
     });
@@ -311,6 +311,9 @@ export async function submitCigar(input: {
       return { ok: false, slug, duplicatePending, autoApproved: false, error: error.message };
     }
 
+    if (autoApprove && input.buyUrl) {
+      try { await sb.rpc('set_catalog_override', { p_slug: slug, p_buy_url: input.buyUrl }); } catch { /* ignore */ }
+    }
     if (autoApprove) {
       logEvent({
         action: 'cigar.auto_approved',

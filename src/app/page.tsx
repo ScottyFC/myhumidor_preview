@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, MapPin, Tv, Flame, BadgeCheck } from 'lucide-react';
 import { featuredCigars, featuredLounges, allCigars, allStores } from '@/lib/catalog';
 import { boostedLounges } from '@/lib/featured-server';
+import { applyOverrides } from '@/lib/overrides';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
 import { CigarThumb } from '@/components/CigarThumb';
@@ -14,7 +15,7 @@ export const revalidate = 3600;
 export default async function HomePage() {
   const catalogCount = allCigars().length;
   const loungeCount = Math.floor(allStores().length / 10) * 10;
-  const allFeatured = featuredCigars(24);
+  const allFeatured = await applyOverrides(featuredCigars(30));
   const featured = allFeatured.slice(0, 12);
   const browse = allFeatured.slice(12, 17);
   const boosted = await boostedLounges(4);

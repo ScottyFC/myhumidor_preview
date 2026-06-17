@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { featuredCigars } from '@/lib/catalog';
+import { applyOverrides } from '@/lib/overrides';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
 import { CigarThumb } from '@/components/CigarThumb';
@@ -11,8 +12,8 @@ export const metadata = {
   title: 'Cigars · MyHumidor by CigarTV',
 };
 
-export default function TopCigarsPage() {
-  const cigars = featuredCigars(30);
+export default async function TopCigarsPage() {
+  const cigars = await applyOverrides(featuredCigars(40));
 
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">

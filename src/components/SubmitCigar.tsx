@@ -24,6 +24,7 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
   const [size, setSize] = useState('');
   const [price, setPrice] = useState('');
   const [notes, setNotes] = useState('');
+  const [buyUrl, setBuyUrl] = useState('');
   const [photo, setPhoto] = useState<string | undefined>();
   const [photoError, setPhotoError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -92,6 +93,7 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
       price: price ? parseFloat(price) : null,
       photoDataUrl: photo,
       notes: notes.trim() || undefined,
+      buyUrl: buyUrl.trim() || undefined,
     });
     setSubmitting(false);
     setResult(res);
@@ -191,6 +193,9 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
         </Field>
         <Field label="Notes (optional)">
           <input value={notes} onChange={(e) => setNotes(e.target.value)} className={inputCls} placeholder="Wrapper, blend, anything notable" />
+        </Field>
+        <Field label="Purchase link (optional)">
+          <input value={buyUrl} onChange={(e) => setBuyUrl(e.target.value)} className={inputCls} placeholder="https://brand.com/this-cigar" />
         </Field>
       </div>
 

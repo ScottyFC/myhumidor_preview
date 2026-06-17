@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Boxes, ArrowLeft } from 'lucide-react';
 import { cigarsByBrand, brandSlug } from '@/lib/catalog';
+import { applyOverrides } from '@/lib/overrides';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 import type { CatalogCigar } from '@/types';
 import { BrandLogo } from '@/components/BrandLogo';
@@ -45,7 +46,8 @@ export default async function BrandPage({ params }: PageProps) {
   const label = brand ?? (merged[0]?.brand ?? null);
   if (!label || merged.length === 0) notFound();
 
-  merged.sort((a, b) => a.name.localeCompare(b.name));
+  const visible = await applyOverrides(merged);
+  visible.sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="mx-auto max-w-5xl px-6 pt-10">
@@ -61,13 +63,13 @@ export default async function BrandPage({ params }: PageProps) {
         <div>
           <h1 className="font-display text-5xl tracking-tightest">{label}</h1>
           <p className="mt-1 text-sm text-smoke-400">
-            {merged.length} {merged.length === 1 ? 'cigar' : 'cigars'} on MyHumidor
+            {visible.length} {visible.length === 1 ? 'cigar' : 'cigars'} on MyHumidor
           </p>
         </div>
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {merged.map((c) => (
+        {visible.map((c) => (
           <Link
             key={c.slug}
             href={`/cigars/${c.slug}`}

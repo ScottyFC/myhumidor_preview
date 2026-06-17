@@ -6,6 +6,7 @@ import { Trash2, Loader2 } from 'lucide-react';
 import { subscribeAuth } from '@/lib/auth';
 import { isAdmin } from '@/lib/admin';
 import { deleteCatalogCigar } from '@/lib/db';
+import { supabaseBrowser } from '@/lib/supabase';
 
 /** Super-admin control to remove a cigar from the catalog. */
 export function AdminCigarActions({ slug, name }: { slug: string; name: string }) {
@@ -19,7 +20,14 @@ export function AdminCigarActions({ slug, name }: { slug: string; name: string }
 
   async function remove() {
     setBusy(true);
-    const ok = await deleteCatalogCigar(slug);
+    // Mark removed in catalog_overrides so it's hidden from the static catalog
+    // too, and best-effort delete any DB row.
+    let ok = false;
+    try {
+      const { error } = await supabaseBrowser().rpc('set_catalog_override', { p_slug: slug, p_removed: true });
+      ok = !error;
+    } catch { ok = false; }
+    await deleteCatalogCigar(slug).catch(() => {});
     setBusy(false);
     if (ok) router.push('/top');
     else setConfirming(false);

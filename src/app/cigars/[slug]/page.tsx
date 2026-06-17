@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, MapPin, ShoppingBag, ExternalLink } from 'lucide-react';
 import { getCigarSocial } from '@/lib/mock-data';
 import { findCatalogCigarBySlug, featuredLounges, moreFromBrand, similarCigars, brandSlug } from '@/lib/catalog';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
@@ -13,6 +13,8 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { StockNearYou } from '@/components/StockNearYou';
 import { CigarPhotos } from '@/components/CigarPhotos';
 import { CigarReviews } from '@/components/CigarReviews';
+import { CigarEditForm } from '@/components/CigarEditForm';
+import { applyOverride } from '@/lib/overrides';
 import { CigarImageUpload } from '@/components/CigarImageUpload';
 import { CigarRow } from '@/components/CigarRow';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
@@ -65,6 +67,12 @@ export default async function CigarPage({ params }: PageProps) {
     }
   }
   if (!cat) notFound();
+
+  // Apply admin overrides (edits / removal / purchase link). A removed cigar 404s.
+  const merged = await applyOverride(cat);
+  if (!merged) notFound();
+  cat = merged;
+  const buyUrl = merged.buyUrl ?? null;
 
   // Community averages come from the live `ratings` table once users start
   // rating. Until then every cigar shows the "not yet rated" state.
@@ -125,6 +133,22 @@ export default async function CigarPage({ params }: PageProps) {
           </div>
           <AdminOnlyId id={view.id} label="Cigar UUID" />
           <div><AdminCigarActions slug={slug} name={`${view.brand} ${view.headline}`} /></div>
+          <CigarEditForm
+            slug={slug}
+            current={{ brand: view.brand, name: view.headline, country: view.country, price: view.msrp, buyUrl }}
+          />
+
+          {buyUrl && (
+            <a
+              href={buyUrl}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-ember-400 px-4 py-2.5 text-sm font-medium text-paper transition hover:bg-ember-600"
+            >
+              <ShoppingBag size={15} strokeWidth={1.75} /> Buy from the brand
+              <ExternalLink size={13} strokeWidth={1.5} className="opacity-70" />
+            </a>
+          )}
 
           <dl className="mt-6 grid grid-cols-3 gap-4 border-y border-ember-400/15 py-4 text-sm">
             {view.lengthIn != null && <Stat label="Length" value={`${view.lengthIn}″`} />}

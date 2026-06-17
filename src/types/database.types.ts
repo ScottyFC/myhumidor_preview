@@ -353,6 +353,12 @@ export type Database = {
         Update: { brand?: string; image_url?: string; updated_at?: string }
         Relationships: []
       }
+      catalog_overrides: {
+        Row: { slug: string; removed: boolean; brand: string | null; name: string | null; country: string | null; price: number | null; image_url: string | null; buy_url: string | null; updated_at: string }
+        Insert: { slug: string; removed?: boolean; brand?: string | null; name?: string | null; country?: string | null; price?: number | null; image_url?: string | null; buy_url?: string | null; updated_at?: string }
+        Update: { slug?: string; removed?: boolean; brand?: string | null; name?: string | null; country?: string | null; price?: number | null; image_url?: string | null; buy_url?: string | null; updated_at?: string }
+        Relationships: []
+      }
       catalog_cigars: {
         Row: {
           brand: string
@@ -522,6 +528,7 @@ export type Database = {
           id: string
           name: string
           notes: string | null
+          buy_url: string | null
           photo_url: string | null
           price: number | null
           reviewed_at: string | null
@@ -539,6 +546,7 @@ export type Database = {
           id?: string
           name: string
           notes?: string | null
+          buy_url?: string | null
           photo_url?: string | null
           price?: number | null
           reviewed_at?: string | null
@@ -556,6 +564,7 @@ export type Database = {
           id?: string
           name?: string
           notes?: string | null
+          buy_url?: string | null
           photo_url?: string | null
           price?: number | null
           reviewed_at?: string | null
@@ -2483,6 +2492,14 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      set_catalog_override: {
+        Args: { p_slug: string; p_brand?: string | null; p_name?: string | null; p_country?: string | null; p_price?: number | null; p_image_url?: string | null; p_buy_url?: string | null; p_removed?: boolean }
+        Returns: string
+      }
+      bulk_set_catalog_override: {
+        Args: { p_rows: Json }
+        Returns: number
       }
       set_cigar_image: {
         Args: { p_slug: string; p_url: string }

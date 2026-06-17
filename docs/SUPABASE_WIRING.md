@@ -1,3 +1,17 @@
+## Phase 66 — Catalog overrides: removals, inline edits, bulk CSV, purchase links
+
+**Run `supabase/migrations/phase66.sql`** — adds `catalog_overrides` (slug-keyed: removed/brand/name/country/price/image_url/buy_url), `_is_admin()`, `set_catalog_override(...)`, `bulk_set_catalog_override(jsonb)`, and a `buy_url` column on `cigar_submissions`. Types updated.
+
+**Why:** the browse catalog is large static JSON, so deleting a `catalog_cigars` row never removed a static cigar from the site. Overrides are merged **live** (server helper `lib/overrides.ts`, ~30s cache) so removals/edits/images/buy-links reflect on the front end.
+
+- **Removal now works for any cigar:** the cigar-page "Remove" sets `removed=true` in overrides (+ best-effort DB delete). Removed cigars are filtered from the cigar page (404), search (`/api/cigars`), brand pages, `/top`, and the homepage.
+- **Bulk = Supabase-direct sync:** the same override read path means rows you remove/edit in Supabase show up front-end within ~30s. Bulk edits are best done via the new admin tool rather than raw table edits, but both flow through the same merge.
+- **Inline admin edit** (`CigarEditForm` on the cigar page): brand, name, origin, MSRP, purchase link → `set_catalog_override`.
+- **Bulk catalog tool** (admin → "Bulk catalog"): **download a CSV template**, fill it (slug + any of brand/name/country/price/image_url/buy_url/removed), **re-upload** → `bulk_set_catalog_override` in 500-row chunks. Ideal for bulk image updates.
+- **Purchase links:** a "Buy from the brand" button shows on the cigar page when set. Users can include a link when submitting (`SubmitCigar` → `cigar_submissions.buy_url`; auto-approved lounge submissions also set the override); admins can add/change it via the inline edit or bulk CSV.
+
+> Note: overrides apply on browse surfaces; a removed cigar already sitting in a user's humidor isn't force-removed from their personal collection. Image-only bulk updates use the existing image hierarchy (override image_url is the product layer).
+
 ## Brand pages — navigate from a cigar to all of its brand's cigars
 
 The `/brands/[slug]` route already existed (lists every cigar for a brand via `cigarsByBrand`, merging DB-submitted cigars); the missing piece was navigation. No migration.
