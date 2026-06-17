@@ -1,3 +1,14 @@
+## Phase 64 — Admin cigar/label image: upload or URL, per-cigar or brand
+
+**Run `supabase/migrations/phase64.sql`** (adds `set_cigar_image(p_slug, p_url)` — SECURITY DEFINER, admin-only, **overwrites** that one cigar's `image_url`).
+
+The admin image control on a cigar page (`CigarImageUpload`) now supports:
+- **Source:** direct **file upload** (stored in the `avatars` bucket under `cigar-art/`) **or paste an image URL** (stored as-is).
+- **Scope:** **This cigar** (overwrites just this entry via `set_cigar_image`) or **Whole brand** (fills all same-brand cigars + this one via `set_brand_image`).
+- Plus the existing one-click **logo.dev autofill**, which respects the chosen scope.
+
+Added the `set_cigar_image` signature to `database.types.ts`.
+
 ## Phase 63 — Lounges vs retailers (venue type)
 
 **Run `supabase/migrations/phase63.sql`** (adds `lounges.venue_type` ∈ {lounge, retail, both}, default 'lounge', + `set_venue_type(slug, type)` RPC: owner-or-admin only).

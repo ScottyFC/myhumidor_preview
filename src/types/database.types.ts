@@ -2478,6 +2478,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_cigar_image: {
+        Args: { p_slug: string; p_url: string }
+        Returns: number
+      }
       set_brand_image: {
         Args: { p_brand: string; p_slug?: string; p_url: string }
         Returns: number
