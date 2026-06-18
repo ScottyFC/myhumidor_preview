@@ -31,7 +31,7 @@ export function BrandTile({
   name,
   src,
   className,
-  rounded = 'rounded-lg',
+  rounded = 'rounded-xl',
   fit = 'cover',
 }: {
   name: string;
@@ -44,9 +44,9 @@ export function BrandTile({
     if (fit === 'contain') {
       // Logos: keep the whole mark visible, centered on a dark tile.
       return (
-        <div className={cn('flex items-center justify-center bg-char/70 p-1.5', rounded, className)}>
+        <div className={cn('flex items-center justify-center overflow-hidden bg-char/70 p-1.5', rounded, className)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt={name} className="h-full w-full object-contain" loading="lazy" />
+          <img src={src} alt={name} className={cn('h-full w-full object-contain', rounded)} loading="lazy" />
         </div>
       );
     }

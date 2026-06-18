@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings, Bell, Package } from 'lucide-react';
+import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings, Bell, Package, Newspaper } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
@@ -13,6 +13,7 @@ import { isAdmin, onAdminsChange } from '@/lib/admin';
 
 const CONSUMER_TABS = [
   { href: '/humidor', label: 'Humidor', icon: Box },
+  { href: '/feed', label: 'Feed', icon: Newspaper },
   { href: '/top', label: 'Cigars', icon: Flame },
   { href: '/search', label: 'Search', icon: Search },
   { href: '/map', label: 'Map', icon: MapPin },
@@ -21,6 +22,7 @@ const CONSUMER_TABS = [
 
 const LOUNGE_TABS = [
   { href: '/dashboard', label: 'Inventory', icon: Package },
+  { href: '/feed', label: 'Feed', icon: Newspaper },
   { href: '/top', label: 'Cigars', icon: Flame },
   { href: '/search', label: 'Search', icon: Search },
   { href: '/map', label: 'Map', icon: MapPin },

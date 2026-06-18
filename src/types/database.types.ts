@@ -347,6 +347,12 @@ export type Database = {
         }
         Relationships: []
       }
+      device_tokens: {
+        Row: { token: string; user_id: string; platform: string | null; updated_at: string }
+        Insert: { token: string; user_id: string; platform?: string | null; updated_at?: string }
+        Update: { token?: string; user_id?: string; platform?: string | null; updated_at?: string }
+        Relationships: []
+      }
       brand_images: {
         Row: { brand: string; image_url: string; updated_at: string }
         Insert: { brand: string; image_url: string; updated_at?: string }
@@ -1696,6 +1702,10 @@ export type Database = {
           id: string
           notify_comments: boolean
           notify_follows: boolean
+          notify_inventory: boolean
+          notify_new_lounges: boolean
+          notify_daily_top: boolean
+          notify_system: boolean
           notify_likes: boolean
           notify_lounges: boolean
           public_id: string
@@ -1715,6 +1725,10 @@ export type Database = {
           id: string
           notify_comments?: boolean
           notify_follows?: boolean
+          notify_inventory?: boolean
+          notify_new_lounges?: boolean
+          notify_daily_top?: boolean
+          notify_system?: boolean
           notify_likes?: boolean
           notify_lounges?: boolean
           public_id: string
@@ -1734,6 +1748,10 @@ export type Database = {
           id?: string
           notify_comments?: boolean
           notify_follows?: boolean
+          notify_inventory?: boolean
+          notify_new_lounges?: boolean
+          notify_daily_top?: boolean
+          notify_system?: boolean
           notify_likes?: boolean
           notify_lounges?: boolean
           public_id?: string
@@ -2496,6 +2514,14 @@ export type Database = {
       set_catalog_override: {
         Args: { p_slug: string; p_brand?: string | null; p_name?: string | null; p_country?: string | null; p_price?: number | null; p_image_url?: string | null; p_buy_url?: string | null; p_removed?: boolean }
         Returns: string
+      }
+      broadcast_notification: {
+        Args: { p_title: string }
+        Returns: number
+      }
+      notify_admins: {
+        Args: { p_type: string; p_entity_name?: string | null }
+        Returns: number
       }
       bulk_set_catalog_override: {
         Args: { p_rows: Json }

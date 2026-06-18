@@ -8,7 +8,6 @@ import { cn } from '@/lib/utils';
 import { CigarThumb } from '@/components/CigarThumb';
 import { CigarName } from '@/components/CigarName';
 import { subscribeAuth, type Session } from '@/lib/auth';
-import { Feed } from '@/components/Feed';
 import { AgingTracker } from '@/components/AgingTracker';
 import { subscribeAficionado } from '@/lib/aficionado';
 import {
@@ -37,7 +36,6 @@ interface Row {
 export default function HumidorPage() {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>('all');
-  const [view, setView] = useState<'feed' | 'collection'>('feed');
   const [userItems, setUserItems] = useState<CollectionItem[]>([]);
   const [member, setMember] = useState(false);
   const [authState, setAuthState] = useState<'checking' | 'in' | 'out'>('checking');
@@ -132,27 +130,8 @@ export default function HumidorPage() {
         </div>
       </header>
 
-      {/* Feed / Collection toggle */}
-      <div className="mb-6 flex gap-2 border-b border-ember-400/15">
-        {(['feed', 'collection'] as const).map((v) => (
-          <button
-            key={v}
-            onClick={() => setView(v)}
-            className={cn(
-              '-mb-px border-b-2 px-1 pb-3 text-sm font-medium capitalize transition',
-              view === v
-                ? 'border-ember-400 text-paper'
-                : 'border-transparent text-smoke-400 hover:text-smoke-100'
-            )}
-          >
-            {v === 'feed' ? 'Feed' : 'My collection'}
-          </button>
-        ))}
-      </div>
 
-      {view === 'feed' ? (
-        <Feed />
-      ) : (
+      {(
         <>
           <div className="mb-8">
             <AgingTracker humidor={userItems.filter((i) => i.status === 'humidor')} member={member} />

@@ -311,6 +311,7 @@ export async function submitCigar(input: {
       return { ok: false, slug, duplicatePending, autoApproved: false, error: error.message };
     }
 
+    try { await sb.rpc('notify_admins', { p_type: 'submission', p_entity_name: `${input.brand} ${input.name}` }); } catch { /* non-critical */ }
     if (autoApprove && input.buyUrl) {
       try { await sb.rpc('set_catalog_override', { p_slug: slug, p_buy_url: input.buyUrl }); } catch { /* ignore */ }
     }

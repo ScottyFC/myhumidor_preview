@@ -38,7 +38,7 @@ export function MobileTopBar() {
           </Link>
         </div>
         <Link href="/" aria-label="MyHumidor home" className="flex items-center">
-          <img src="/myhumidor-wordmark.png" alt="MyHumidor" className="h-6 w-auto" />
+          <img src="/logo.svg" alt="MyHumidor" className="h-7 w-auto" />
         </Link>
         <NotificationBell />
       </div>

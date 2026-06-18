@@ -48,7 +48,7 @@ export function NotificationBell() {
       <button onClick={openMenu} className="relative flex h-9 w-9 items-center justify-center rounded-md border-[0.5px] border-ember-400/20 bg-char/60 text-smoke-200 hover:bg-ember-400/10" aria-label="Notifications">
         <Bell size={15} strokeWidth={1.5} />
         {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-ember-400 px-1 text-[10px] font-semibold text-paper">
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
             {unread > 9 ? '9+' : unread}
           </span>
         )}

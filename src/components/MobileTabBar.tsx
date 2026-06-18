@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Home, Search, Box, Store, Cigarette, Package } from 'lucide-react';
+import { Home, Search, Box, Store, Cigarette, Package, Newspaper } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { subscribeAuth, type Session } from '@/lib/auth';
 
@@ -15,6 +15,7 @@ const CONSUMER: Tab[] = [
   { href: '/top', label: 'Cigars', icon: Cigarette, match: (p) => p.startsWith('/top') || p.startsWith('/cigars') || p.startsWith('/brands') },
   { href: '/humidor', label: 'Humidor', icon: Box, match: (p) => p.startsWith('/humidor') },
   { href: '/lounges', label: 'Lounges', icon: Store, match: (p) => p.startsWith('/lounges') || p.startsWith('/map') },
+  { href: '/feed', label: 'Feed', icon: Newspaper, match: (p) => p.startsWith('/feed') },
 ];
 
 const LOUNGE: Tab[] = [
@@ -23,6 +24,7 @@ const LOUNGE: Tab[] = [
   { href: '/top', label: 'Cigars', icon: Cigarette, match: (p) => p.startsWith('/top') || p.startsWith('/cigars') || p.startsWith('/brands') },
   { href: '/dashboard', label: 'Inventory', icon: Package, match: (p) => p.startsWith('/dashboard') },
   { href: '/lounges', label: 'Lounges', icon: Store, match: (p) => p.startsWith('/lounges') || p.startsWith('/map') },
+  { href: '/feed', label: 'Feed', icon: Newspaper, match: (p) => p.startsWith('/feed') },
 ];
 
 /**
@@ -39,7 +41,7 @@ export function MobileTabBar() {
 
   return (
     <nav className="native-only native-tabbar fixed inset-x-0 bottom-0 z-40 border-t border-ember-400/15 bg-ink/95 backdrop-blur-lg">
-      <div className="grid grid-cols-5">
+      <div className="grid w-full grid-cols-6">
         {tabs.map((t) => {
           const active = t.match(pathname);
           const Icon = t.icon;

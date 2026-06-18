@@ -16,7 +16,7 @@ function bind() {
   });
 }
 
-export type NotificationType = 'follow' | 'like' | 'comment' | 'lounge_post' | 'check_in';
+export type NotificationType = 'follow' | 'like' | 'comment' | 'lounge_post' | 'check_in' | 'system' | 'submission' | 'lounge_new' | 'inventory' | 'top_daily';
 
 export interface AppNotification {
   id: string;
@@ -102,6 +102,11 @@ export function describeNotification(n: AppNotification): string {
     case 'comment': return `${who} commented on your${what || ' post'}`;
     case 'lounge_post': return `${who} posted:${what}`;
     case 'check_in': return `${who} checked in${what ? ` with${what}` : ''}`;
+    case 'system': return what ? what.trim() : 'Announcement from MyHumidor';
+    case 'submission': return `${who} submitted${what || ' something'} for review`;
+    case 'lounge_new': return `New lounge near you:${what}`;
+    case 'inventory': return `${who} added${what || ' a new cigar'} to their inventory`;
+    case 'top_daily': return `Today’s top-rated:${what}`;
     default: return `${who} sent an update`;
   }
 }
@@ -112,18 +117,22 @@ export interface NotifySettings {
   notify_likes: boolean;
   notify_comments: boolean;
   notify_lounges: boolean;
+  notify_inventory: boolean;
+  notify_new_lounges: boolean;
+  notify_daily_top: boolean;
+  notify_system: boolean;
 }
 
 export async function getNotifySettings(userId: string): Promise<NotifySettings> {
-  const fallback = { notify_follows: true, notify_likes: true, notify_comments: true, notify_lounges: true };
+  const fallback = { notify_follows: true, notify_likes: true, notify_comments: true, notify_lounges: true, notify_inventory: true, notify_new_lounges: true, notify_daily_top: true, notify_system: true };
   if (!isSupabaseConfigured || !userId) return fallback;
   try {
     const { data } = await supabaseBrowser()
       .from('profiles')
-      .select('notify_follows, notify_likes, notify_comments, notify_lounges')
+      .select('notify_follows, notify_likes, notify_comments, notify_lounges, notify_inventory, notify_new_lounges, notify_daily_top, notify_system')
       .eq('id', userId)
       .single();
-    return { ...fallback, ...(data ?? {}) };
+    return { ...fallback, ...((data ?? {}) as Partial<NotifySettings>) };
   } catch {
     return fallback;
   }
@@ -137,4 +146,21 @@ export async function saveNotifySettings(userId: string, s: Partial<NotifySettin
   } catch {
     return false;
   }
+}
+
+/* ── Admin / system notifications ───────────────────────────────────────────── */
+
+/** Admin: broadcast a message to every member. Returns rows created. */
+export async function broadcastNotification(title: string): Promise<number> {
+  if (!isSupabaseConfigured) return 0;
+  const { data, error } = await supabaseBrowser().rpc('broadcast_notification', { p_title: title });
+  if (error) throw new Error(error.message);
+  return typeof data === 'number' ? data : 0;
+}
+
+/** Alert all admins (e.g. a new submission awaiting review). Best-effort. */
+export async function notifyAdmins(type: NotificationType, entityName?: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  try { await supabaseBrowser().rpc('notify_admins', { p_type: type, p_entity_name: entityName ?? null }); }
+  catch { /* non-critical */ }
 }

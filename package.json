@@ -2,7 +2,7 @@
   "name": "myhumidor",
   "version": "0.1.0",
   "private": true,
-  "description": "MyHumidor by CigarTV \u2014 premium cigar rating, collection, and discovery platform.",
+  "description": "MyHumidor by CigarTV — premium cigar rating, collection, and discovery platform.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -20,6 +20,7 @@
     "@capacitor/app": "^8.1.0",
     "@capacitor/core": "^8.4.0",
     "@capacitor/keyboard": "^8.0.5",
+    "@capacitor/push-notifications": "^8.1.1",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
     "@fontsource-variable/fraunces": "^5.2.9",

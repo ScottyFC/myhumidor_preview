@@ -7,6 +7,7 @@ import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, Bad
 import { AdManager } from '@/components/AdManager';
 import { MemberVerify } from '@/components/MemberVerify';
 import { BulkCatalogTool } from '@/components/BulkCatalogTool';
+import { SystemNotify } from '@/components/SystemNotify';
 import { AnalyticsPanel } from '@/components/AnalyticsPanel';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { isAdmin, isBootstrapAdmin, listAdmins, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
@@ -30,7 +31,7 @@ import {
 } from '@/lib/submissions';
 import { cn } from '@/lib/utils';
 
-type Tab = 'cigars' | 'lounges' | 'claims' | 'certify' | 'requests' | 'log' | 'ads' | 'admins' | 'analytics' | 'members' | 'bulk';
+type Tab = 'cigars' | 'lounges' | 'claims' | 'certify' | 'requests' | 'log' | 'ads' | 'admins' | 'analytics' | 'members' | 'bulk' | 'notify';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -79,6 +80,7 @@ export default function AdminPage() {
     { id: 'certify', label: 'Certify lounges', icon: BadgeCheck },
     { id: 'members', label: 'Verify members', icon: Crown },
     { id: 'bulk', label: 'Bulk catalog', icon: Upload },
+    { id: 'notify', label: 'Broadcast', icon: Megaphone },
     { id: 'requests', label: 'Change requests', icon: MessageSquare },
     { id: 'log', label: 'Activity log', icon: History },
     { id: 'admins', label: 'Admins', icon: ShieldCheck },
@@ -121,6 +123,7 @@ export default function AdminPage() {
       {tab === 'cigars' && <CigarQueue />}
       {tab === 'members' && <MemberVerify />}
       {tab === 'bulk' && <BulkCatalogTool />}
+      {tab === 'notify' && <SystemNotify />}
       {tab === 'lounges' && <LoungeQueue />}
       {tab === 'claims' && <ClaimsQueue />}
       {tab === 'certify' && <CertifyQueue />}

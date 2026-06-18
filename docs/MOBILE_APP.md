@@ -151,3 +151,30 @@ Ships via Vercel deploy (the apps load the hosted site); no native rebuild.
 Cigar and lounge pages mount `ProtectMedia`, which blocks right-click/save,
 "copy image address", and drag-to-save on images (and disables image selection).
 Best-effort only — it stops casual copying, not a determined user with dev tools.
+
+## UI fixes + notifications (this pass)
+
+- **Login gate** is now a fully opaque standalone opening screen (JS-gated, no CSS
+  display class) — fixes the iOS overlay bleed and the Android no-show. Uses /logo.svg.
+- **iOS keyboard zoom**: NativeShell locks the viewport (`maximum-scale=1, user-scalable=no`)
+  on native only; the website stays zoomable.
+- **Home tiles** recolored to the ember/gold scheme; **top logo** → /logo.svg.
+- **Bottom nav** is full-width (`grid w-full grid-cols-6`) so tabs space evenly and
+  stay fixed on screen. Tabs: Home · Search · Cigars · Humidor · Lounges · Feed.
+- **Humidor** now opens to the user's collection; the **Feed** moved to its own page
+  (/feed) — a top-nav link on the site and a bottom tab in the app.
+- **Carousels** got vertical padding (AutoScrollRow) so hover rings/highlights aren't
+  cropped (Featured Lounges, Recently Added, etc.). **Cigar images are rounded** site-wide.
+
+### Notifications (run `supabase/migrations/phase68.sql`)
+- In-app notifications power the bell with a **red unread badge**.
+- **Admins**: a **Broadcast** tab sends a system-wide notification (`broadcast_notification`);
+  submissions for review now alert all admins (`notify_admins`, red badge).
+- **Members**: a **Settings → Notifications** page (/settings) toggles per-type prefs.
+- **Native push**: NativeShell registers for push and stores the device token in
+  `device_tokens`. **Delivery to the OS still needs setup you must do**: add APNs
+  (iOS) + FCM (Android) credentials to the native projects, and a sender (a Supabase
+  Edge Function / cron) that reads `device_tokens` and calls APNs/FCM for events
+  (followed-lounge inventory, new nearby lounge, daily top-rated, likes/comments,
+  broadcasts). The in-app side and token capture are wired; the push send is the
+  remaining server piece.

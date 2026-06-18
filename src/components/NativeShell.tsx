@@ -22,6 +22,11 @@ export function NativeShell() {
       document.documentElement.classList.add('native-app');
       document.documentElement.classList.add(`native-${Capacitor.getPlatform()}`);
 
+      // Lock the viewport so focusing an input doesn't zoom the app and leave it
+      // zoomed (a common iOS WKWebView behavior). Web keeps its zoomable meta.
+      const vp = document.querySelector('meta[name="viewport"]');
+      if (vp) vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+
       // Status bar: light text on our dark UI.
       try {
         const { StatusBar, Style } = await import('@capacitor/status-bar');
@@ -36,6 +41,34 @@ export function NativeShell() {
         const { SplashScreen } = await import('@capacitor/splash-screen');
         await SplashScreen.hide();
       } catch { /* ignore */ }
+
+      // Register for push notifications and store the device token (best-effort;
+      // requires APNs/FCM to be configured in the native projects to deliver).
+      try {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+        const perm = await PushNotifications.requestPermissions();
+        if (perm.receive === 'granted') {
+          await PushNotifications.register();
+          PushNotifications.addListener('registration', async (token) => {
+            try {
+              const { supabaseBrowser } = await import('@/lib/supabase');
+              const { getSession } = await import('@/lib/auth');
+              const uid = getSession()?.uuid;
+              if (uid) {
+                await supabaseBrowser().from('device_tokens').upsert(
+                  { token: token.value, user_id: uid, platform: Capacitor.getPlatform(), updated_at: new Date().toISOString() },
+                  { onConflict: 'token' },
+                );
+              }
+            } catch { /* ignore */ }
+          });
+          // Tapping a push opens the app; route if it carries a path.
+          PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+            const path = action.notification.data?.path;
+            if (typeof path === 'string' && path.startsWith('/')) window.location.assign(path);
+          });
+        }
+      } catch { /* plugin not configured */ }
 
       // Android hardware back: go back in history, exit at the root.
       try {

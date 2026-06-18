@@ -77,7 +77,7 @@ export function AutoScrollRow({
   return (
     <div
       ref={ref}
-      className={cn('flex gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden', className)}
+      className={cn('flex gap-4 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden', className)}
     >
       <div className="flex shrink-0 gap-4">{children}</div>
       {loop && (

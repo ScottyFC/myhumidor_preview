@@ -12,13 +12,13 @@ interface Feat { slug: string; brand: string; name: string; image_url?: string |
 
 const TILES: { label: string; href: string; icon: typeof Flame; tint: string }[] = [
   { label: 'Top Rated', href: '/top', icon: Flame, tint: 'text-ember-400' },
-  { label: 'For You', href: '/top', icon: Heart, tint: 'text-rose-400' },
-  { label: 'Lounges', href: '/lounges', icon: Store, tint: 'text-amber-300' },
-  { label: 'Map', href: '/map', icon: MapPin, tint: 'text-sky-300' },
-  { label: 'Add Cigar', href: '/submit', icon: Plus, tint: 'text-emerald-300' },
-  { label: 'Concierge', href: '/top', icon: Sparkles, tint: 'text-violet-300' },
-  { label: 'Aficionados', href: '/profile', icon: Crown, tint: 'text-ember-300' },
-  { label: 'My Humidor', href: '/humidor', icon: Box, tint: 'text-ember-200' },
+  { label: 'For You', href: '/top', icon: Heart, tint: 'text-ember-400' },
+  { label: 'Lounges', href: '/lounges', icon: Store, tint: 'text-ember-400' },
+  { label: 'Map', href: '/map', icon: MapPin, tint: 'text-ember-400' },
+  { label: 'Add Cigar', href: '/submit', icon: Plus, tint: 'text-ember-400' },
+  { label: 'Concierge', href: '/top', icon: Sparkles, tint: 'text-ember-400' },
+  { label: 'Aficionados', href: '/profile', icon: Crown, tint: 'text-ember-400' },
+  { label: 'My Humidor', href: '/humidor', icon: Box, tint: 'text-ember-400' },
 ];
 
 const CHIPS: { label: string; href: string }[] = [

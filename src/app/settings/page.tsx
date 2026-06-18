@@ -1,0 +1,68 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Loader2, Check } from 'lucide-react';
+import { subscribeAuth } from '@/lib/auth';
+import { getNotifySettings, saveNotifySettings, type NotifySettings } from '@/lib/notifications';
+
+const TOGGLES: { key: keyof NotifySettings; label: string; hint: string }[] = [
+  { key: 'notify_follows', label: 'New followers', hint: 'When someone follows you' },
+  { key: 'notify_likes', label: 'Likes', hint: 'When someone likes your review or check-in' },
+  { key: 'notify_comments', label: 'Comments', hint: 'When someone comments on your activity' },
+  { key: 'notify_lounges', label: 'Lounge posts', hint: 'Updates from lounges you follow' },
+  { key: 'notify_inventory', label: 'New inventory', hint: 'When a lounge you follow adds a cigar' },
+  { key: 'notify_new_lounges', label: 'New lounges nearby', hint: 'When a lounge opens in your area' },
+  { key: 'notify_daily_top', label: 'Daily top-rated', hint: 'A daily pick of the highest-rated cigars' },
+  { key: 'notify_system', label: 'Announcements', hint: 'Important updates from MyHumidor' },
+];
+
+export default function SettingsPage() {
+  const router = useRouter();
+  const [userId, setUserId] = useState<string | null | undefined>(undefined);
+  const [s, setS] = useState<NotifySettings | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => subscribeAuth((sess) => setUserId(sess?.uuid ?? null)), []);
+  useEffect(() => {
+    if (userId === undefined) return;
+    if (!userId) { router.replace('/register?next=/settings'); return; }
+    getNotifySettings(userId).then(setS);
+  }, [userId, router]);
+
+  async function toggle(key: keyof NotifySettings) {
+    if (!s || !userId) return;
+    const next = { ...s, [key]: !s[key] };
+    setS(next); setSaved(false);
+    const ok = await saveNotifySettings(userId, { [key]: next[key] });
+    if (ok) { setSaved(true); setTimeout(() => setSaved(false), 1500); }
+  }
+
+  if (!s) return <div className="mx-auto max-w-2xl px-6 pt-16 text-center text-smoke-400"><Loader2 className="mx-auto animate-spin text-ember-400" /></div>;
+
+  return (
+    <div className="mx-auto max-w-2xl px-6 pt-10">
+      <h1 className="font-display text-4xl tracking-tightest">Notifications</h1>
+      <p className="mt-1 flex items-center gap-2 text-sm text-smoke-400">
+        Choose what you’re notified about. {saved && <span className="inline-flex items-center gap-1 text-ember-100"><Check size={12} strokeWidth={2} /> Saved</span>}
+      </p>
+
+      <div className="mt-6 divide-y divide-ember-400/10 overflow-hidden rounded-xl border-[0.5px] border-ember-400/15">
+        {TOGGLES.map((t) => (
+          <button key={t.key} onClick={() => toggle(t.key)} className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left hover:bg-char/40">
+            <div className="min-w-0">
+              <div className="text-sm font-medium text-paper">{t.label}</div>
+              <div className="text-xs text-smoke-400">{t.hint}</div>
+            </div>
+            <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${s[t.key] ? 'bg-ember-400' : 'bg-smoke-700'}`}>
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-paper transition ${s[t.key] ? 'left-[22px]' : 'left-0.5'}`} />
+            </span>
+          </button>
+        ))}
+      </div>
+      <p className="mt-4 text-xs text-smoke-500">
+        These control in-app notifications now, and push notifications once enabled on your device.
+      </p>
+    </div>
+  );
+}
