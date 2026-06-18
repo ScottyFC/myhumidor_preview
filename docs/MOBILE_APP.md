@@ -178,3 +178,33 @@ Best-effort only — it stops casual copying, not a determined user with dev too
   (followed-lounge inventory, new nearby lounge, daily top-rated, likes/comments,
   broadcasts). The in-app side and token capture are wired; the push send is the
   remaining server piece.
+
+## Native/UX pass (group 6)
+
+**iOS zoom + responsiveness.** globals.css `.native-app` now forces 16px form
+controls (the real cause of iOS focus-zoom), locks text auto-sizing, sets
+`touch-action: manipulation` (no double-tap zoom), and clamps horizontal overflow
+(`overflow-x:hidden; max-width:100%`) — a wider-than-viewport element was making
+iOS rescale the whole page when navigating (e.g. tapping the top-left profile
+button). Media is capped to `max-width:100%`.
+
+**Maps location.** `src/lib/geo.ts#getUserLocation()` uses `@capacitor/geolocation`
+on native (so the OS prompt fires in the webview) and the browser API on web; the
+map's "near me" now calls it. **You must add the native permission strings** (these
+live in the native projects, which I can't edit here):
+  - iOS `ios/App/App/Info.plist`: `NSLocationWhenInUseUsageDescription` = e.g. "MyHumidor uses your location to find lounges near you."
+  - Android `android/app/src/main/AndroidManifest.xml`: `ACCESS_COARSE_LOCATION` + `ACCESS_FINE_LOCATION`.
+  Then `npm run cap:sync`.
+
+**Per-page color variation.** `PageAccent` sets `--page-accent` per route; a faint
+top ambient glow (globals.css `body::before`) shifts warmth by section (cigars →
+copper, lounges → leather, humidor → aged gold, feed → smoke, etc.). Works on web
+and in the app. Subtle by design (≈6% alpha).
+
+**System banner notifications + sound.** `NotificationBanner` (in layout) slides a
+banner in when a new notification arrives, plays `public/sounds/notify.wav` (your
+TorchWhoosh), links via `notificationHref`, and auto-dismisses. It seeds a baseline
+on load so old notifications don't replay.
+  - NOTE: this is the **in-app** banner + sound. For the sound on an **OS-level push**
+    (lock screen), the WAV must be bundled into the native apps and named in the push
+    payload (`sound` field) — part of the APNs/FCM sender work still to be done.

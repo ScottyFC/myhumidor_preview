@@ -169,3 +169,24 @@ video {
 
 /* Image-copy deterrent on cigar/lounge pages (ProtectMedia toggles this). */
 .no-img-copy img { -webkit-user-drag: none; -webkit-touch-callout: none; user-select: none; }
+
+/* ── Native: stop iOS focus-zoom + navigation rescaling ──────────────────────
+   1) 16px form controls so focusing an input never triggers iOS zoom.
+   2) lock text auto-sizing and disable double-tap zoom.
+   3) prevent horizontal overflow (a wider-than-viewport element makes iOS
+      rescale the whole page — e.g. when navigating to /profile). */
+.native-app { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; }
+html.native-app, .native-app body { max-width: 100%; overflow-x: hidden; }
+.native-app input, .native-app textarea, .native-app select { font-size: 16px; }
+.native-app img, .native-app video, .native-app canvas, .native-app svg { max-width: 100%; }
+
+/* ── Per-page ambient accent (set by PageAccent) ────────────────────────────── */
+:root { --page-accent: 240, 195, 85; }
+body::before {
+  content: ''; position: fixed; inset: 0 0 auto 0; height: 220px; z-index: 0; pointer-events: none;
+  background: radial-gradient(120% 100% at 50% 0%, rgba(var(--page-accent), 0.06), transparent 70%);
+  transition: background 400ms ease;
+}
+
+/* Notification banner slide-in */
+@keyframes mh-slide-down { from { transform: translateY(-120%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

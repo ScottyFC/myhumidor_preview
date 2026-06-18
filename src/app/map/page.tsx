@@ -1,5 +1,6 @@
 'use client';
 
+import { getUserLocation } from '@/lib/geo';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -103,30 +104,26 @@ export default function MapPage() {
   }
 
   const findNearMe = useCallback(() => {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setGeo('unsupported');
-      return;
-    }
     setGeo('locating');
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const user = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setCoords(user);
-        setGeo('ready');
-        setLoadingList(true);
-        try {
-          const res = await fetch(`/api/stores/nearby?lat=${user.lat}&lng=${user.lng}&limit=24`);
-          const data = await res.json();
-          const items: NearbyStore[] = data.items ?? [];
-          setLounges(items);
-          plot(user, items);
-        } finally {
-          setLoadingList(false);
-        }
-      },
-      () => setGeo('denied'),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
+    getUserLocation().then(async (loc) => {
+      if ('error' in loc) {
+        setGeo(loc.error === 'unsupported' ? 'unsupported' : 'denied');
+        return;
+      }
+      const user = { lat: loc.lat, lng: loc.lng };
+      setCoords(user);
+      setGeo('ready');
+      setLoadingList(true);
+      try {
+        const res = await fetch(`/api/stores/nearby?lat=${user.lat}&lng=${user.lng}&limit=24`);
+        const data = await res.json();
+        const items: NearbyStore[] = data.items ?? [];
+        setLounges(items);
+        plot(user, items);
+      } finally {
+        setLoadingList(false);
+      }
+    });
   }, [plot]);
 
   // If arriving from a lounge profile (?lat=&lng=), center there and load nearby.
