@@ -1,3 +1,27 @@
+## Batch — dup fix, mojibake, usernames, toolbar/search (run phase69.sql)
+
+- **Duplicate submissions (real fix):** `pushToCatalog` is now idempotent — it looks up an existing `catalog_cigars` row by brand+name (case-insensitive) and reuses it instead of inserting a second. Submit input is trimmed/space-collapsed. (Pre-existing dupes still need cleanup — see admin helper TODO.)
+- **Mojibake names** ("Brian,Äôs" → "Brian’s"): `fixMojibake()` (src/lib/text.ts) is applied at catalog load (`allCigars`) so brand/name are clean everywhere server-side, plus belt-and-suspenders in `CigarName`. The /top ranked tiles now use `CigarName` (live join), so renames show there too.
+- **Usernames:** handle now derives from **display name** (spaces/punct stripped), not email (phase69 `handle_new_user`). Signup **rejects taken usernames** via `handle_available(p_handle)` RPC before creating the account.
+- **Toolbar:** removed **Inventory** (it's in the dashboard); **Verify → Plans** (links to certification plans) + new **My Plan** dropdown item (`/dashboard/plan`).
+- **New Members** list excludes retailer accounts (consumer-only).
+- **Lounge page:** website shows a "Website" hyperlink instead of the raw URL.
+- **Search page:** reworded subtitle; **Popular searches** now rotate a random 7 from a larger pool each load.
+- **Bottom tab bar** taller with safe-area bottom padding.
+
+> Run `supabase/migrations/phase69.sql`.
+## Fixes — search duplicates (root + display) + new-brand pages
+
+**No migration.**
+
+The remaining duplicate came from a submitted cigar matching a static one under a *different slug* (e.g. brand "Deadwood Tobacco Co." vs static "Deadwood Tobacco"), which dodged the slug-based checks. Fixed at two levels:
+- **Display dedup is now by brand+name** (not slug) in the search dropdown (`SearchAutocomplete`), the full results page (`SearchClient`), and the brand page. This also collapses any *already-created* duplicate rows, so the visible double disappears immediately.
+- **Prevention**: `/api/catalog-exists` now also matches a normalized **brand+name** against the static catalog (`cigarExistsByBrandName`), and `submitCigar` passes brand+name — so a duplicate can't be pushed even under a different slug.
+
+**New-brand pages now render.** The brand page was pulling an unordered `limit(500)` from `catalog_cigars` and filtering in JS, so a new brand's cigar could fall outside the cap → 404. It now queries by **slug prefix** (`slug = {brand} OR slug ilike {brand}-%`), which targets exactly that brand's cigars regardless of table size, e.g. /brands/deadwood-tobacco-co.
+
+> Existing duplicate rows in `catalog_cigars` are now *hidden* everywhere by the brand+name dedup, but the rows still exist. To physically remove them, use the admin Remove action (sets an override + best-effort delete) or a bulk CSV with `removed=true` on the `-xxxxxx`-suffixed slugs. I can add an admin "find duplicate catalog rows" helper if useful.
+
 ## Fixes — notification links + duplicate submissions
 
 **No migration.**

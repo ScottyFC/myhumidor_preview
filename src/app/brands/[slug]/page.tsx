@@ -23,7 +23,9 @@ export default async function BrandPage({ params }: PageProps) {
   const { slug } = await params;
   const { brand, cigars } = cigarsByBrand(slug);
 
-  // Merge any user-submitted cigars for this brand from the database.
+  // Merge any user-submitted cigars for this brand from the database. Query by
+  // slug prefix (cigar slugs start with the brand slug) so we never miss a new
+  // brand's cigars behind an arbitrary row cap.
   const merged: CatalogCigar[] = [...cigars];
   if (isSupabaseConfigured) {
     try {
@@ -31,6 +33,7 @@ export default async function BrandPage({ params }: PageProps) {
       const { data } = await sb
         .from('catalog_cigars')
         .select('id, brand, name, country, price, size, slug')
+        .or(`slug.eq.${slug},slug.ilike.${slug}-%`)
         .limit(500);
       for (const r of data ?? []) {
         if (brandSlug(r.brand as string) !== slug) continue;
@@ -66,7 +69,12 @@ export default async function BrandPage({ params }: PageProps) {
   const finalLabel = pooled[0]?.brand ?? label;
   if (!finalLabel || pooled.length === 0) notFound();
 
-  pooled.sort((a, b) => a.name.localeCompare(b.name));
+  // Collapse any duplicate rows (e.g. a static cigar plus a re-submitted DB copy
+  // under a different slug) by normalized brand+name.
+  const dKey = (c: typeof pooled[number]) => `${(c.brand || '').toLowerCase().trim()}|${(c.name || '').toLowerCase().trim()}`;
+  const dseen = new Set<string>();
+  const deduped = pooled.filter((c) => { const k = dKey(c); if (dseen.has(k)) return false; dseen.add(k); return true; });
+  deduped.sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="mx-auto max-w-5xl px-6 pt-10">
@@ -82,18 +90,18 @@ export default async function BrandPage({ params }: PageProps) {
         <div>
           <h1 className="font-display text-5xl tracking-tightest">{finalLabel}</h1>
           <p className="mt-1 text-sm text-smoke-400">
-            {pooled.length} {pooled.length === 1 ? 'cigar' : 'cigars'} on MyHumidor
+            {deduped.length} {deduped.length === 1 ? 'cigar' : 'cigars'} on MyHumidor
           </p>
         </div>
       </div>
 
-      <BrandCsvDownload brand={finalLabel} rows={pooled.map((c) => ({
+      <BrandCsvDownload brand={finalLabel} rows={deduped.map((c) => ({
         slug: c.slug, brand: c.brand, name: c.name, country: c.country,
         price: c.price ?? null, image_url: c.image_url ?? null, buy_url: c.buyUrl ?? null,
       }))} />
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {pooled.map((c) => (
+        {deduped.map((c) => (
           <Link
             key={c.slug}
             href={`/cigars/${c.slug}`}

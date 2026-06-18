@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { resolveCigarMeta } from '@/lib/cigar-images';
+import { fixMojibake } from '@/lib/text';
 
 type Mode = 'name' | 'brand' | 'full';
+
+
 
 /**
  * Renders a cigar's current name/brand, live-joined from the catalog/overrides
@@ -14,7 +17,7 @@ type Mode = 'name' | 'brand' | 'full';
 export function CigarName({
   slug, name, brand, mode = 'name', className,
 }: { slug?: string; name?: string; brand?: string; mode?: Mode; className?: string }) {
-  const initial = mode === 'brand' ? (brand ?? '') : mode === 'full' ? [brand, name].filter(Boolean).join(' ') : (name ?? '');
+  const initial = fixMojibake(mode === 'brand' ? (brand ?? '') : mode === 'full' ? [brand, name].filter(Boolean).join(' ') : (name ?? ''));
   const [label, setLabel] = useState(initial);
 
   useEffect(() => {
@@ -22,7 +25,7 @@ export function CigarName({
     return resolveCigarMeta(slug, (m) => {
       const b = m.brand ?? brand;
       const n = m.name ?? name;
-      setLabel(mode === 'brand' ? (b ?? '') : mode === 'full' ? [b, n].filter(Boolean).join(' ') : (n ?? ''));
+      setLabel(fixMojibake(mode === 'brand' ? (b ?? '') : mode === 'full' ? [b, n].filter(Boolean).join(' ') : (n ?? '')));
     });
   }, [slug, name, brand, mode]);
 

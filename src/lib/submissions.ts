@@ -257,6 +257,7 @@ export async function submitCigar(input: {
   notes?: string; photoDataUrl?: string; buyUrl?: string;
 }): Promise<SubmitResult> {
   start();
+  input = { ...input, brand: input.brand.trim().replace(/\s+/g, ' '), name: input.name.trim().replace(/\s+/g, ' ') };
   const slug = slugify(`${input.brand} ${input.name}`);
   if (!isSupabaseConfigured) {
     addSubmission({ brand: input.brand, name: input.name, country: input.country ?? '', size: input.size ?? '', price: input.price ?? null, notes: input.notes, photoDataUrl: input.photoDataUrl });
@@ -280,7 +281,7 @@ export async function submitCigar(input: {
     // pushed again, or it shows twice (static copy + new DB copy).
     let inStatic = false;
     try {
-      const res = await fetch(`/api/catalog-exists?slug=${encodeURIComponent(slug)}`);
+      const res = await fetch(`/api/catalog-exists?slug=${encodeURIComponent(slug)}&brand=${encodeURIComponent(input.brand)}&name=${encodeURIComponent(input.name)}`);
       inStatic = !!(await res.json())?.exists;
     } catch { /* ignore — fall back to DB-only check */ }
     const inCatalog = !!inCatalogRow || inStatic;
@@ -345,12 +346,27 @@ export async function submitCigar(input: {
  *  approving the same item can't create duplicates. */
 async function pushToCatalog(sub: Submission): Promise<string | null> {
   try {
+    const brand = sub.brand.trim().replace(/\s+/g, ' ');
+    const name = sub.name.trim().replace(/\s+/g, ' ');
+    const sb = supabaseBrowser();
+    // Idempotent: if a catalog row for this brand+name already exists (case-
+    // insensitive), reuse it instead of inserting a second copy. This stops the
+    // duplicates a double-submit would otherwise create.
+    const { data: existing } = await sb
+      .from('catalog_cigars')
+      .select('id')
+      .ilike('brand', brand)
+      .ilike('name', name)
+      .limit(1)
+      .maybeSingle();
+    if (existing?.id) return existing.id as string;
+
     const id = newUuid();
-    const slug = `${slugify(`${sub.brand} ${sub.name}`)}-${id.slice(0, 6)}`;
-    const { error } = await supabaseBrowser().from('catalog_cigars').insert({
+    const slug = `${slugify(`${brand} ${name}`)}-${id.slice(0, 6)}`;
+    const { error } = await sb.from('catalog_cigars').insert({
       id,
-      brand: sub.brand,
-      name: sub.name,
+      brand,
+      name,
       country: sub.country || null,
       size: sub.size || null,
       price: sub.price,

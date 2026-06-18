@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
-import { findCatalogCigarBySlug } from '@/lib/catalog';
+import { findCatalogCigarBySlug, cigarExistsByBrandName } from '@/lib/catalog';
 
 /**
- * GET /api/catalog-exists?slug=padron-1964
- * True if the slug is already in the static catalog. Used at submit time so a
- * cigar that already exists isn't pushed into catalog_cigars as a duplicate
- * (which made it show twice — once from static, once from the new DB row).
+ * GET /api/catalog-exists?slug=…&brand=…&name=…
+ * True if the cigar is already in the static catalog — by slug OR by a
+ * normalized brand+name match (so a duplicate can't slip in under a slightly
+ * different slug, which made cigars show twice).
  */
 export async function GET(request: Request) {
-  const slug = (new URL(request.url).searchParams.get('slug') ?? '').trim();
-  if (!slug) return NextResponse.json({ exists: false });
-  const c = findCatalogCigarBySlug(slug);
-  return NextResponse.json({ exists: !!c, slug });
+  const p = new URL(request.url).searchParams;
+  const slug = (p.get('slug') ?? '').trim();
+  const brand = (p.get('brand') ?? '').trim();
+  const name = (p.get('name') ?? '').trim();
+  const exists = (!!slug && !!findCatalogCigarBySlug(slug)) || cigarExistsByBrandName(brand, name);
+  return NextResponse.json({ exists, slug });
 }

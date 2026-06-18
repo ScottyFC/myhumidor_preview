@@ -106,6 +106,7 @@ export async function recentMembers(limit = 8): Promise<RecentMember[]> {
     const { data } = await supabaseBrowser()
       .from('profiles')
       .select('handle, display_name, avatar_url, account_type, created_at')
+      .eq('account_type', 'consumer')
       .order('created_at', { ascending: false })
       .limit(limit);
     return (data ?? []).map((p) => ({

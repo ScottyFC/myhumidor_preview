@@ -44,8 +44,11 @@ export function SearchAutocomplete({ className }: { className?: string }) {
         ]);
         if (id !== reqId.current) return;
         const staticItems: CatalogCigar[] = c.items ?? [];
-        const seen = new Set(staticItems.map((x) => x.slug));
-        const merged = [...dbCigars.filter((x) => !seen.has(x.slug)), ...staticItems].slice(0, 6);
+        const key = (x: { brand?: string; name?: string }) => `${(x.brand || '').toLowerCase().trim()}|${(x.name || '').toLowerCase().trim()}`;
+        const seenC = new Set<string>();
+        const merged = [...staticItems, ...dbCigars]
+          .filter((x) => { const k = key(x); if (seenC.has(k)) return false; seenC.add(k); return true; })
+          .slice(0, 6);
         const cigars: Suggestion[] = merged.map((x: CatalogCigar) => ({
           type: 'cigar' as const,
           href: `/cigars/${x.slug}`,

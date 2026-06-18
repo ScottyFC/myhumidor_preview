@@ -6,6 +6,7 @@ import { Flame, Star, TrendingUp } from 'lucide-react';
 import { topCigarsThisWeek, highestRatedCigars, type RatedCigar } from '@/lib/db';
 import { BrandTile } from '@/components/BrandTile';
 import { CigarThumb } from '@/components/CigarThumb';
+import { CigarName } from '@/components/CigarName';
 
 export function TopCigarsSections() {
   const [week, setWeek] = useState<RatedCigar[]>([]);
@@ -66,8 +67,8 @@ function RankRow({
                 {i + 1}
               </span>
             </div>
-            <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100">{c.name}</div>
-            <div className="truncate text-xs text-smoke-400">{c.brand} · {c.size}</div>
+            <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100"><CigarName slug={c.slug} name={c.name} /></div>
+            <div className="truncate text-xs text-smoke-400"><CigarName slug={c.slug} brand={c.brand} mode="brand" /> · {c.size}</div>
             <div className="mt-1 inline-flex items-center gap-1 text-xs text-ember-100">
               <Star size={11} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
               <span className="tabular">{c.avgOverall.toFixed(1)}</span>

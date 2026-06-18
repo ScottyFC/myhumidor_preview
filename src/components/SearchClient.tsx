@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Loader2, Star, MapPin, Phone, BadgeCheck, Plus } from 'lucide-react';
@@ -56,10 +56,13 @@ export function SearchClient() {
         ]);
         if (id === reqId.current) {
           // Merge static catalog (ranked) with live DB results so newly
-          // approved cigars show up immediately. Dedup by slug.
+          // approved cigars show up immediately. Dedup by brand+name (a DB copy
+          // of a static cigar has a different slug, so slug-dedup missed it).
           const staticItems: CatalogCigar[] = cRes.items ?? [];
-          const seen = new Set(staticItems.map((c) => c.slug));
-          const extras = dbCigars.filter((c) => !seen.has(c.slug));
+          const key = (c: CatalogCigar) => `${(c.brand || '').toLowerCase().trim()}|${(c.name || '').toLowerCase().trim()}`;
+          const seen = new Set(staticItems.map(key));
+          const extras: CatalogCigar[] = [];
+          for (const c of dbCigars) { const k = key(c); if (seen.has(k)) continue; seen.add(k); extras.push(c); }
           setCigars([...extras, ...staticItems]);
           setCigarTotal((cRes.total ?? 0) + extras.length);
           setStores(sRes.items ?? []);
@@ -82,8 +85,8 @@ export function SearchClient() {
         <div className="eyebrow mb-2">Search</div>
         <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">Find a cigar</h1>
         <p className="mt-3 max-w-2xl text-smoke-200">
-          Search 23,500+ cigars and 700+ shops. Rate what you&apos;ve smoked, add to your humidor,
-          and find who carries it.
+          Search through thousands of Cigars and Lounges. Rate what you&apos;ve smoked, add to your humidor,
+          and find who carries it. You can also search for your fellow smokers.
         </p>
       </header>
 
@@ -295,7 +298,12 @@ function Empty({ loading, label }: { loading: boolean; label: string }) {
 }
 
 function Suggestions({ onPick }: { onPick: (q: string) => void }) {
-  const picks = ['Padron', 'Opus X', 'My Father', 'Liga Privada', 'Oliva', 'Davidoff', 'Tampa'];
+  const POOL = [
+    'Padron', 'Opus X', 'My Father', 'Liga Privada', 'Oliva', 'Davidoff', 'Arturo Fuente',
+    'Cohiba', 'Montecristo', 'Rocky Patel', 'Ashton', 'Drew Estate', 'Plasencia', 'Tatuaje',
+    'Maduro', 'Connecticut', 'Nicaragua', 'Robusto', 'Toro', 'Churchill', 'Tampa', 'Miami',
+  ];
+  const picks = useMemo(() => [...POOL].sort(() => Math.random() - 0.5).slice(0, 7), []);
   return (
     <div>
       <div className="eyebrow mb-3">Popular searches</div>

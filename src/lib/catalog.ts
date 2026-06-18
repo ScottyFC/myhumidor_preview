@@ -1,3 +1,4 @@
+import { fixMojibake } from '@/lib/text';
 /**
  * Server-only catalog access for the full datasets loaded from Cigars.csv and
  * stores.csv (23.5k cigars, 713 stores). The JSON lives in src/data and is read
@@ -26,7 +27,13 @@ function load<T>(file: string): T[] {
 }
 
 export function allCigars(): CatalogCigar[] {
-  if (!cigarsCache) cigarsCache = load<CatalogCigar>('cigars.json');
+  if (!cigarsCache) {
+    cigarsCache = load<CatalogCigar>('cigars.json').map((c) => ({
+      ...c,
+      brand: fixMojibake(c.brand),
+      name: fixMojibake(c.name),
+    }));
+  }
   return cigarsCache;
 }
 
@@ -240,4 +247,16 @@ export function nearestStores(lat: number, lng: number, limit = 20): NearbyStore
     .map((s) => ({ ...s, distanceMi: haversineMi(lat, lng, s.lat as number, s.lng as number) }))
     .sort((a, b) => a.distanceMi - b.distanceMi)
     .slice(0, limit);
+}
+
+/** True if a cigar with this brand+name already exists in the static catalog
+ *  (normalized match) — used to prevent duplicate submissions slipping in under
+ *  a slightly different slug. */
+export function cigarExistsByBrandName(brand: string, name: string): boolean {
+  const nb = (brand || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const nn = (name || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  if (!nb || !nn) return false;
+  return allCigars().some((c) =>
+    (c.brand || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() === nb &&
+    (c.name || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() === nn);
 }

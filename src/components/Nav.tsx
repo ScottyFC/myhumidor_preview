@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings, Bell, Package, Newspaper } from 'lucide-react';
+import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings, Bell, Package, Newspaper, CreditCard } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
@@ -21,7 +21,6 @@ const CONSUMER_TABS = [
 ];
 
 const LOUNGE_TABS = [
-  { href: '/dashboard', label: 'Inventory', icon: Package },
   { href: '/feed', label: 'Feed', icon: Newspaper },
   { href: '/top', label: 'Cigars', icon: Flame },
   { href: '/search', label: 'Search', icon: Search },
@@ -115,9 +114,9 @@ export function Nav() {
               {isLounge && (
                 <>
                   {!loungeDone && (
-                    <Link href="/verify" className="btn-ghost text-xs" title="Verify & certify your lounge">
+                    <Link href="/verify" className="btn-ghost text-xs" title="View certification plans">
                       <ShieldCheck size={14} strokeWidth={1.5} className="text-ember-400" />
-                      <span className="hidden sm:inline">Verify</span>
+                      <span className="hidden sm:inline">Plans</span>
                     </Link>
                   )}
                   <Link href="/dashboard" className="btn-ghost text-xs">
@@ -153,9 +152,12 @@ export function Nav() {
                           </MenuItem>
                           {!loungeDone && (
                             <MenuItem href="/verify" icon={<ShieldCheck size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
-                              Verify lounge
+                              Plans
                             </MenuItem>
                           )}
+                          <MenuItem href="/dashboard/plan" icon={<CreditCard size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                            My Plan
+                          </MenuItem>
                           <MenuItem href="/submit" icon={<Cigarette size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                             Add a Cigar
                           </MenuItem>

@@ -141,7 +141,7 @@ export default async function LoungePage({ params }: PageProps) {
                 rel="noopener noreferrer"
                 className="truncate hover:text-ember-100"
               >
-                {lounge.website.replace(/^https?:\/\//, '')}
+                Website
               </a>
             </div>
           )}

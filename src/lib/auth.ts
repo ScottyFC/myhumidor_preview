@@ -177,6 +177,17 @@ export async function signUpEmail(input: SignUpInput): Promise<AuthResult> {
     return {};
   }
   const sb = supabaseBrowser();
+  // Handle = display name with spaces/punctuation stripped. Reject if taken so
+  // two members can't share a username (the DB unique constraint is the backstop).
+  const handle = (input.displayName || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (handle) {
+    try {
+      const { data: available } = await sb.rpc('handle_available', { p_handle: handle });
+      if (available === false) {
+        return { error: `The username “${handle}” is taken. Try a different display name.` };
+      }
+    } catch { /* if the check fails, fall through; the unique constraint still guards */ }
+  }
   const { data, error } = await sb.auth.signUp({
     email: input.email,
     password: input.password,
@@ -185,6 +196,7 @@ export async function signUpEmail(input: SignUpInput): Promise<AuthResult> {
       data: {
         account_type: input.type,
         display_name: input.displayName,
+        handle,
         lounge_name: input.loungeName,
         city: input.city,
         state: input.state,

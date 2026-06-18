@@ -41,7 +41,7 @@ export function MobileTabBar() {
 
   return (
     <nav className="native-only native-tabbar fixed inset-x-0 bottom-0 z-40 border-t border-ember-400/15 bg-ink/95 backdrop-blur-lg">
-      <div className="grid w-full grid-cols-6">
+      <div className="grid w-full grid-cols-6 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
         {tabs.map((t) => {
           const active = t.match(pathname);
           const Icon = t.icon;
@@ -50,7 +50,7 @@ export function MobileTabBar() {
               key={t.href}
               href={t.href}
               className={cn(
-                'flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors',
+                'flex flex-col items-center gap-1 pt-3 pb-2 text-[10px] font-medium transition-colors',
                 active ? 'text-ember-300' : 'text-smoke-400 active:text-ember-100'
               )}
             >
