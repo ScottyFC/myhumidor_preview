@@ -93,6 +93,34 @@ export function subscribeNotifications(cb: () => void): () => void {
   return subscribeTable('notifications', cb);
 }
 
+/** Where a notification should navigate when tapped (or null for no link). */
+export function notificationHref(n: AppNotification): string | null {
+  const id = n.entityId;
+  switch (n.type) {
+    case 'submission':
+      return '/admin'; // admins review submissions in the panel
+    case 'lounge_post':
+    case 'inventory':
+    case 'lounge_new':
+    case 'check_in':
+      return id ? `/lounges/${id}` : '/lounges';
+    case 'like':
+    case 'comment':
+      if (n.entityType === 'lounge' && id) return `/lounges/${id}`;
+      // Only link cigars when the id is a slug (not a uuid) so we never 404.
+      if (n.entityType === 'cigar' && id && !/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(id)) return `/cigars/${id}`;
+      return null;
+    case 'follow':
+      return '/profile';
+    case 'top_daily':
+      return id ? `/cigars/${id}` : '/top';
+    case 'system':
+      return '/';
+    default:
+      return null;
+  }
+}
+
 export function describeNotification(n: AppNotification): string {
   const who = n.actorName;
   const what = n.entityName ? ` ${n.entityName}` : '';

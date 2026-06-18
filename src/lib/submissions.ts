@@ -275,7 +275,15 @@ export async function submitCigar(input: {
 
   const sb = supabaseBrowser();
   try {
-    const { data: inCatalog } = await sb.from('catalog_cigars').select('slug').eq('slug', slug).maybeSingle();
+    const { data: inCatalogRow } = await sb.from('catalog_cigars').select('slug').eq('slug', slug).maybeSingle();
+    // Also check the large static catalog — a cigar already there must NOT be
+    // pushed again, or it shows twice (static copy + new DB copy).
+    let inStatic = false;
+    try {
+      const res = await fetch(`/api/catalog-exists?slug=${encodeURIComponent(slug)}`);
+      inStatic = !!(await res.json())?.exists;
+    } catch { /* ignore — fall back to DB-only check */ }
+    const inCatalog = !!inCatalogRow || inStatic;
 
     const { data: pendingRows } = await sb
       .from('cigar_submissions')

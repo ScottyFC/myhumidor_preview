@@ -1,3 +1,10 @@
+## Fixes — notification links + duplicate submissions
+
+**No migration.**
+
+- **Notifications are now tappable** and route to the right place: `notificationHref(n)` → submissions go to `/admin` (review queue), lounge posts/inventory/new-lounge/check-ins to `/lounges/{slug}`, follows to `/profile`, daily-top to the cigar or `/top`, system to home, and likes/comments to the cigar/lounge when a usable slug is present (uuid ids are skipped to avoid 404s). The bell renders each item as a link that closes the menu on tap.
+- **Duplicate submissions fixed:** `submitCigar` only checked `catalog_cigars` for an existing cigar, not the large static catalog — so a cigar already in static got auto-approved and pushed as a new DB row, appearing twice (static copy + DB copy). It now also checks the static catalog via `/api/catalog-exists?slug=`; if the cigar already exists, it is not pushed again.
+
 ## Fix — duplicate email on signup (and a note on usernames)
 
 `signUpEmail` now blocks registering an email that already exists. With Supabase email confirmation enabled, `auth.signUp` returns a *fake success* for an existing email (anti-enumeration): a user object with an empty `identities` array and no session, so the app was showing "check your email" and the person thought a new account was created. We now detect `data.user.identities.length === 0` and return "An account with this email already exists. Please sign in instead." (Confirmation-OFF already errors with "User already registered", which was surfaced.) No migration.

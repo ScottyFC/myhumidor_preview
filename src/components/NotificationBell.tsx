@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Bell } from 'lucide-react';
 import { subscribeAuth } from '@/lib/auth';
 import {
-  getNotifications, markAllRead, subscribeNotifications, describeNotification, type AppNotification,
+  getNotifications, markAllRead, subscribeNotifications, describeNotification, notificationHref, type AppNotification,
 } from '@/lib/notifications';
 
 function ago(iso: string): string {
@@ -62,12 +63,29 @@ export function NotificationBell() {
               <div className="px-4 py-8 text-center text-sm text-smoke-400">You’re all caught up.</div>
             ) : (
               <div className="max-h-96 overflow-y-auto">
-                {items.map((n) => (
-                  <div key={n.id} className="border-b border-ember-400/5 px-4 py-2.5 text-sm text-smoke-200 last:border-0">
-                    {describeNotification(n)}
-                    <span className="ml-1 text-xs text-smoke-500">· {ago(n.createdAt)}</span>
-                  </div>
-                ))}
+                {items.map((n) => {
+                  const href = notificationHref(n);
+                  const inner = (
+                    <>
+                      {describeNotification(n)}
+                      <span className="ml-1 text-xs text-smoke-500">· {ago(n.createdAt)}</span>
+                    </>
+                  );
+                  return href ? (
+                    <Link
+                      key={n.id}
+                      href={href}
+                      onClick={() => setOpen(false)}
+                      className="block border-b border-ember-400/5 px-4 py-2.5 text-sm text-smoke-200 transition last:border-0 hover:bg-ember-400/10 hover:text-paper"
+                    >
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div key={n.id} className="border-b border-ember-400/5 px-4 py-2.5 text-sm text-smoke-200 last:border-0">
+                      {inner}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
