@@ -3,6 +3,7 @@ import { Tv, Lock, Package } from 'lucide-react';
 import { LiveStream } from '@/components/LiveStream';
 import { LoungeDashboard } from '@/components/LoungeDashboard';
 import { DeviceManager } from '@/components/DeviceManager';
+import { LoungeDetailsEditor } from '@/components/LoungeDetailsEditor';
 import { CertificationTiers } from '@/components/CertificationTiers';
 
 export const metadata = {
@@ -38,6 +39,11 @@ export default function DashboardPage() {
           On your screen now
         </div>
         <LiveStream />
+      </section>
+
+      {/* Hours, food badge & menu */}
+      <section className="mt-10 border-t border-ember-400/10 pt-8">
+        <LoungeDetailsEditor />
       </section>
 
       {/* Screens & credits (register a TV per screen, see earnings) */}

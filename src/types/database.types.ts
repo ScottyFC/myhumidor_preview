@@ -1481,6 +1481,9 @@ export type Database = {
           boost_until: string | null
           cert_tier: string
           certified: boolean
+          hours_json: Json | null
+          serves_food: boolean
+          menu_url: string | null
           city: string
           created_at: string
           credits: number
@@ -1509,6 +1512,9 @@ export type Database = {
           boost_until?: string | null
           cert_tier?: string
           certified?: boolean
+          hours_json?: Json | null
+          serves_food?: boolean
+          menu_url?: string | null
           city: string
           created_at?: string
           credits?: number
@@ -1537,6 +1543,9 @@ export type Database = {
           boost_until?: string | null
           cert_tier?: string
           certified?: boolean
+          hours_json?: Json | null
+          serves_food?: boolean
+          menu_url?: string | null
           city?: string
           created_at?: string
           credits?: number
@@ -2515,11 +2524,23 @@ export type Database = {
         Args: { p_slug: string; p_brand?: string | null; p_name?: string | null; p_country?: string | null; p_price?: number | null; p_image_url?: string | null; p_buy_url?: string | null; p_removed?: boolean }
         Returns: string
       }
+      update_lounge_details: {
+        Args: { p_slug: string; p_hours_json?: Json | null; p_serves_food?: boolean | null; p_menu_url?: string | null }
+        Returns: undefined
+      }
       admin_set_certified: {
         Args: { p_slug: string; p_on: boolean }
         Returns: undefined
       }
       admin_assign_owner: {
+        Args: { p_slug: string; p_handle: string }
+        Returns: string
+      }
+      admin_set_certification: {
+        Args: { p_slug: string; p_on: boolean }
+        Returns: undefined
+      }
+      admin_set_lounge_owner: {
         Args: { p_slug: string; p_handle: string }
         Returns: string
       }

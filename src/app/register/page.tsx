@@ -44,9 +44,12 @@ export default function RegisterPage() {
     if (claim) { setClaimSlug(claim); setType('retailer'); setMode('signup'); }
   }, []);
 
-  function finish() {
+  function finish(signup = false) {
     if (claimSlug) { router.push(`/lounges/${claimSlug}`); return; }
-    router.push(type === 'retailer' ? '/dashboard' : '/humidor');
+    // Retailer signup flows straight into plans/certification (one process);
+    // returning retailers go to their dashboard.
+    if (type === 'retailer') { router.push(signup ? '/verify' : '/dashboard'); return; }
+    router.push('/humidor');
   }
 
   async function manual() {
@@ -84,7 +87,7 @@ export default function RegisterPage() {
         setBusy(null);
         return;
       }
-      finish();
+      finish(true);
     } else {
       const res = await signInEmail(email.trim(), password);
       if (res.error) {

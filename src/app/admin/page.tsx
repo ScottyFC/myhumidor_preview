@@ -8,6 +8,7 @@ import { AdManager } from '@/components/AdManager';
 import { MemberVerify } from '@/components/MemberVerify';
 import { BulkCatalogTool } from '@/components/BulkCatalogTool';
 import { SystemNotify } from '@/components/SystemNotify';
+import { LoungeCertControl } from '@/components/LoungeCertControl';
 import { LoungeOwnerControls } from '@/components/LoungeOwnerControls';
 import { AnalyticsPanel } from '@/components/AnalyticsPanel';
 import { subscribeAuth, type Session } from '@/lib/auth';
@@ -129,7 +130,12 @@ export default function AdminPage() {
       {tab === 'owners' && <LoungeOwnerControls />}
       {tab === 'lounges' && <LoungeQueue />}
       {tab === 'claims' && <ClaimsQueue />}
-      {tab === 'certify' && <CertifyQueue />}
+      {tab === 'certify' && (
+        <div className="space-y-8">
+          <LoungeCertControl />
+          <CertifyQueue />
+        </div>
+      )}
       {tab === 'requests' && <ChangeRequestQueue />}
       {tab === 'ads' && <AdManager />}
       {tab === 'log' && <ActivityLog />}

@@ -142,3 +142,23 @@ export async function publishMenu(slug: string, items: InventoryItem[], localId?
     return false;
   }
 }
+
+/* ── Add-to-inventory from a cigar page (single item, no prune) ─────────────── */
+
+/** Upsert one cigar into a lounge's inventory without disturbing the rest. */
+export async function addOneToInventory(
+  loungeSlug: string,
+  item: { cigarId: string; slug?: string; brand: string; name: string; size?: string; price: number | null; quantity: number },
+  publish: boolean,
+): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  const lid = await loungeIdForSlug(loungeSlug);
+  if (!lid) return false;
+  const { error } = await supabaseBrowser().from('inventory_items').upsert({
+    lounge_id: lid, cigar_id: item.cigarId, slug: item.slug ?? null,
+    brand: item.brand, name: item.name, size: item.size ?? null,
+    price: item.price, quantity: item.quantity, published: publish,
+  }, { onConflict: 'lounge_id,cigar_id' });
+  if (error) { console.error('[inventory] add one failed:', error.message); return false; }
+  return true;
+}

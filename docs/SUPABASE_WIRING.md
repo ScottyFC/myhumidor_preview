@@ -1,3 +1,32 @@
+## Group 3 (part 1) — lounge tooling (run phase71.sql)
+
+- **Add to My Inventory from the cigar page.** Certified-lounge owners in retailer
+  mode see "Add to My Inventory" instead of "Add to My Humidor" (`CigarPrimaryAction`).
+  It opens a mini manager (price + quantity + "Publish to my shop now") that upserts
+  one `inventory_items` row via `addOneToInventory` (keys on the catalog uuid; doesn't
+  prune the rest of the menu). Non-certified / non-owners see the normal humidor button.
+- **Opening hours** on the dashboard (`LoungeDetailsEditor`, per-day) → `lounges.hours_json`,
+  shown as a structured schedule on the lounge page.
+- **Food badge + menu PDF** (certified only): dashboard toggle + PDF upload (to the
+  `submissions` bucket) → `lounges.serves_food` / `menu_url`; a "Serves food · View menu"
+  line shows on certified lounge pages. Writes go through `update_lounge_details`
+  (owner/admin, SECURITY DEFINER).
+
+### Deferred to group 3 (part 2) — the chains/staff system
+Still to build (it's a multi-table system, own session): chains / "see our other
+stores", multi-lounge owners adding & self-assigning locations, staff roles with
+access levels (posting/inventory/etc.), and bulk-claim requests routed to the
+**super-admin** queue for approval. The `profiles.owns_multiple` flag (phase70) is
+the entry point captured at signup.
+
+> Run `supabase/migrations/phase71.sql`. (Earlier this session: phase69, phase70.)
+## Group 1 — retailer/identity (run phase70.sql)
+
+- **Combined retailer signup → plans.** Retailer signup now flows straight into certification: the email-confirm callback sends retailers to `/verify`, and the immediate (no-confirmation) path routes retailer *signups* to `/verify` while returning retailers still land on `/dashboard`. The "I own multiple lounges" checkbox was already wired (stored as `owns_multiple` in user metadata) for later multi-lounge config.
+- **Account switch in Settings.** `/settings` now has an **Account** section: retailer-capable users (own a lounge or signed up as retailer, via `canRetail`) get a **Cigar Aficionado ↔ Retailer** toggle (`setAccountMode`); everyone else gets a "Link a retailer account" CTA → `/register?type=retailer`. The switch flips `Session.type`/`publicId` live.
+- **Admin lounge controls** (Admin → Certify tab, `LoungeCertControl`): certify / **remove certification** (`admin_set_certification(slug,on)`, keeps `cert_tier` in sync) and **assign an owner by handle** (`admin_set_lounge_owner(slug,handle)` → sets `lounges.owner_id` and promotes that account to retailer/`lounge_owner`). Both are admin/super-admin only (SECURITY DEFINER + `_is_admin()`).
+
+> Run `supabase/migrations/phase70.sql`.
 ## Group 1 — retailer/identity (run phase70.sql)
 
 - **Account switching.** A single auth account can now act as both Aficionado and

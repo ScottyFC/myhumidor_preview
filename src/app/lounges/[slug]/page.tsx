@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ProtectMedia } from '@/components/ProtectMedia';
-import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation, ShoppingBag, UtensilsCrossed } from 'lucide-react';
 import { EliteBanner } from '@/components/EliteBanner';
 import { VenueTag } from '@/components/VenueTag';
 import type { CatalogStore } from '@/types';
@@ -27,6 +27,9 @@ interface PageProps {
 interface LoungeView extends CatalogStore {
   inventoryCount?: number;
   certified?: boolean;
+  hoursJson?: Record<string, string>;
+  servesFood?: boolean;
+  menuUrl?: string;
 }
 
 export default async function LoungePage({ params }: PageProps) {
@@ -39,7 +42,7 @@ export default async function LoungePage({ params }: PageProps) {
     const sb = await supabaseServer();
     const { data } = await sb
       .from('lounges')
-      .select('id, slug, name, address, city, state, phone, email, website, image_url, verified, certified, venue_type, lat, lng')
+      .select('id, slug, name, address, city, state, phone, email, website, image_url, verified, certified, venue_type, lat, lng, hours_json, serves_food, menu_url')
       .eq('slug', slug)
       .single();
     if (data) {
@@ -47,6 +50,7 @@ export default async function LoungePage({ params }: PageProps) {
         id: data.id, slug: data.slug, name: data.name, address: data.address ?? '',
         city: data.city ?? '', state: data.state ?? '', phone: data.phone ?? undefined,
         website: data.website ?? undefined, email: data.email ?? undefined,
+        hoursJson: (data.hours_json as Record<string,string> | null) ?? undefined, servesFood: !!data.serves_food, menuUrl: data.menu_url ?? undefined,
         image_url: data.image_url ?? null, verified: data.verified ?? false,
         certified: data.certified ?? false, venue_type: (data.venue_type as 'lounge'|'retail'|'both') ?? 'lounge', lat: data.lat ?? 0, lng: data.lng ?? 0,
       } as LoungeView;
@@ -143,6 +147,23 @@ export default async function LoungePage({ params }: PageProps) {
               >
                 Website
               </a>
+            </div>
+          )}
+          {lounge.hoursJson && Object.values(lounge.hoursJson).some(Boolean) && (
+            <div className="flex items-start gap-2">
+              <Clock size={14} strokeWidth={1.5} className="mt-0.5 text-ember-400" />
+              <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
+                {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].filter((d) => lounge.hoursJson?.[d]).map((d) => (
+                  <span key={d} className="contents"><span className="text-smoke-400">{d}</span><span className="text-smoke-200">{lounge.hoursJson![d]}</span></span>
+                ))}
+              </div>
+            </div>
+          )}
+          {lounge.certified && lounge.servesFood && (
+            <div className="flex items-center gap-2">
+              <UtensilsCrossed size={14} strokeWidth={1.5} className="text-ember-400" />
+              <span className="text-smoke-200">Serves food</span>
+              {lounge.menuUrl && <a href={lounge.menuUrl} target="_blank" rel="noopener noreferrer" className="text-ember-400 underline">· View menu</a>}
             </div>
           )}
           {lounge.hours && (

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ProtectMedia } from '@/components/ProtectMedia';
+import { CigarPrimaryAction } from '@/components/CigarPrimaryAction';
 import { ArrowLeft, MapPin, ShoppingBag, ExternalLink } from 'lucide-react';
 import { getCigarSocial } from '@/lib/mock-data';
 import { findCatalogCigarBySlug, featuredLounges, moreFromBrand, similarCigars, brandSlug } from '@/lib/catalog';
@@ -180,7 +181,7 @@ export default async function CigarPage({ params }: PageProps) {
                 </div>
               </div>
               <div className="mt-5">
-                <AddToCollection variant="full" seed={{ cigarId: view.id, slug, brand: view.brand, name: view.headline, size: view.vitola }} />
+                <CigarPrimaryAction seed={{ cigarId: view.id, slug, brand: view.brand, name: view.headline, size: view.vitola, price: view.msrp ?? null }} />
               </div>
             </div>
           ) : (
@@ -190,7 +191,7 @@ export default async function CigarPage({ params }: PageProps) {
                 This cigar is in the catalog but no one has rated it yet. Be the first.
               </p>
               <div className="mt-4">
-                <AddToCollection variant="full" seed={{ cigarId: view.id, slug, brand: view.brand, name: view.headline, size: view.vitola }} />
+                <CigarPrimaryAction seed={{ cigarId: view.id, slug, brand: view.brand, name: view.headline, size: view.vitola, price: view.msrp ?? null }} />
               </div>
             </div>
           )}

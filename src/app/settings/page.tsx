@@ -1,9 +1,11 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Check } from 'lucide-react';
-import { subscribeAuth } from '@/lib/auth';
+import { subscribeAuth, canRetail, setAccountMode, type Session } from '@/lib/auth';
+import type { AccountType } from '@/lib/ids';
 import { getNotifySettings, saveNotifySettings, type NotifySettings } from '@/lib/notifications';
 
 const TOGGLES: { key: keyof NotifySettings; label: string; hint: string }[] = [
@@ -20,10 +22,13 @@ const TOGGLES: { key: keyof NotifySettings; label: string; hint: string }[] = [
 export default function SettingsPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null | undefined>(undefined);
+  const [session, setSession] = useState<Session | null>(null);
+  const [retailCapable, setRetailCapable] = useState(false);
   const [s, setS] = useState<NotifySettings | null>(null);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => subscribeAuth((sess) => setUserId(sess?.uuid ?? null)), []);
+  useEffect(() => subscribeAuth((sess) => { setSession(sess); setUserId(sess?.uuid ?? null); }), []);
+  useEffect(() => { if (session) canRetail(session.uuid, session.baseType).then(setRetailCapable); }, [session]);
   useEffect(() => {
     if (userId === undefined) return;
     if (!userId) { router.replace('/register?next=/settings'); return; }
@@ -42,7 +47,38 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 pt-10">
-      <h1 className="font-display text-4xl tracking-tightest">Notifications</h1>
+      <h1 className="font-display text-4xl tracking-tightest">Settings</h1>
+
+      {session && (
+        <section className="mt-6">
+          <h2 className="font-display text-xl">Account</h2>
+          {retailCapable ? (
+            <>
+              <p className="mt-1 text-sm text-smoke-400">Switch how you use MyHumidor. Your humidor and retailer tools stay separate.</p>
+              <div className="mt-3 inline-flex rounded-xl border-[0.5px] border-ember-400/20 bg-char/40 p-1">
+                {(['consumer', 'retailer'] as AccountType[]).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setAccountMode(m)}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition ${session.type === m ? 'bg-ember-400 text-paper' : 'text-smoke-300 hover:text-paper'}`}
+                  >
+                    {m === 'consumer' ? 'Cigar Aficionado' : 'Retailer'}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-smoke-400">Run a cigar lounge or shop? Link a retailer account to manage inventory, posts, and certification.</p>
+              <Link href="/register?type=retailer" className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-ember-400 px-4 py-2 text-xs font-semibold text-paper hover:bg-ember-600">
+                Link a retailer account
+              </Link>
+            </>
+          )}
+        </section>
+      )}
+
+      <h2 className="mt-10 font-display text-xl">Notifications</h2>
       <p className="mt-1 flex items-center gap-2 text-sm text-smoke-400">
         Choose what you’re notified about. {saved && <span className="inline-flex items-center gap-1 text-ember-100"><Check size={12} strokeWidth={2} /> Saved</span>}
       </p>

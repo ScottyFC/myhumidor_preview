@@ -35,6 +35,8 @@ export async function GET(request: Request) {
       .eq('id', data.user.id);
   }
 
-  // After confirming their email, land the user on the home page.
-  return NextResponse.redirect(`${origin}/`);
+  // After confirming their email, retailers continue to plans/certification;
+  // members land on the home page.
+  const dest = (type === 'retailer' || type === 'lounge') ? '/verify' : '/';
+  return NextResponse.redirect(`${origin}${dest}`);
 }
