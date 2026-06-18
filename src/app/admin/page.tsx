@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin, MessageSquare, History, KeyRound, ChevronDown, Megaphone, BarChart3, Crown, Upload } from 'lucide-react';
+import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin, MessageSquare, History, KeyRound, ChevronDown, Megaphone, BarChart3, Crown, Upload, UserCog } from 'lucide-react';
 import { AdManager } from '@/components/AdManager';
 import { MemberVerify } from '@/components/MemberVerify';
 import { BulkCatalogTool } from '@/components/BulkCatalogTool';
 import { SystemNotify } from '@/components/SystemNotify';
+import { LoungeOwnerControls } from '@/components/LoungeOwnerControls';
 import { AnalyticsPanel } from '@/components/AnalyticsPanel';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { isAdmin, isBootstrapAdmin, listAdmins, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
@@ -31,7 +32,7 @@ import {
 } from '@/lib/submissions';
 import { cn } from '@/lib/utils';
 
-type Tab = 'cigars' | 'lounges' | 'claims' | 'certify' | 'requests' | 'log' | 'ads' | 'admins' | 'analytics' | 'members' | 'bulk' | 'notify';
+type Tab = 'cigars' | 'lounges' | 'claims' | 'certify' | 'requests' | 'log' | 'ads' | 'admins' | 'analytics' | 'members' | 'bulk' | 'notify' | 'owners';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -81,6 +82,7 @@ export default function AdminPage() {
     { id: 'members', label: 'Verify members', icon: Crown },
     { id: 'bulk', label: 'Bulk catalog', icon: Upload },
     { id: 'notify', label: 'Broadcast', icon: Megaphone },
+    { id: 'owners', label: 'Cert & owners', icon: UserCog },
     { id: 'requests', label: 'Change requests', icon: MessageSquare },
     { id: 'log', label: 'Activity log', icon: History },
     { id: 'admins', label: 'Admins', icon: ShieldCheck },
@@ -124,6 +126,7 @@ export default function AdminPage() {
       {tab === 'members' && <MemberVerify />}
       {tab === 'bulk' && <BulkCatalogTool />}
       {tab === 'notify' && <SystemNotify />}
+      {tab === 'owners' && <LoungeOwnerControls />}
       {tab === 'lounges' && <LoungeQueue />}
       {tab === 'claims' && <ClaimsQueue />}
       {tab === 'certify' && <CertifyQueue />}

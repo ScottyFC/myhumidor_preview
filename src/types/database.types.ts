@@ -2515,6 +2515,14 @@ export type Database = {
         Args: { p_slug: string; p_brand?: string | null; p_name?: string | null; p_country?: string | null; p_price?: number | null; p_image_url?: string | null; p_buy_url?: string | null; p_removed?: boolean }
         Returns: string
       }
+      admin_set_certified: {
+        Args: { p_slug: string; p_on: boolean }
+        Returns: undefined
+      }
+      admin_assign_owner: {
+        Args: { p_slug: string; p_handle: string }
+        Returns: string
+      }
       handle_available: {
         Args: { p_handle: string }
         Returns: boolean

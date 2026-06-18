@@ -30,6 +30,7 @@ export default function RegisterPage() {
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
   const [linkError, setLinkError] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [ownsMultiple, setOwnsMultiple] = useState(false);
 
   // Surfaced when a confirmation link is expired/already used (callback redirect).
   useEffect(() => {
@@ -71,6 +72,7 @@ export default function RegisterPage() {
         loungeName: type === 'retailer' ? loungeName.trim() : undefined,
         city: city.trim() || undefined,
         state: state.trim() || undefined,
+        ownsMultiple: type === 'retailer' ? ownsMultiple : undefined,
       });
       if (res.error) {
         setError(res.error);
@@ -161,6 +163,10 @@ export default function RegisterPage() {
               <Input label="City" value={city} onChange={setCity} placeholder="Tampa" />
               <Input label="State" value={state} onChange={setState} placeholder="FL" />
             </div>
+            <label className="flex cursor-pointer items-start gap-2.5 rounded-md border-[0.5px] border-ember-400/20 bg-char/40 p-3">
+              <input type="checkbox" checked={ownsMultiple} onChange={(e) => setOwnsMultiple(e.target.checked)} className="mt-0.5 accent-ember-400" />
+              <span className="text-xs text-smoke-200">I own multiple lounges. <span className="text-smoke-400">You can add and assign your other locations later from your dashboard.</span></span>
+            </label>
           </>
         )}
         <Input label="Email" value={email} onChange={setEmail} type="email" placeholder="you@email.com" />

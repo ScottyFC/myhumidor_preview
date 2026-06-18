@@ -8,6 +8,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import { subscribeAuth, signOut, type Session } from '@/lib/auth';
+import { AccountSwitcher } from '@/components/AccountSwitcher';
 import { getMyLounges } from '@/lib/lounges-owner';
 import { isAdmin, onAdminsChange } from '@/lib/admin';
 
@@ -175,6 +176,8 @@ export function Nav() {
                           </MenuItem>
                         </>
                       )}
+                      <div className="my-1 border-t border-ember-400/10" />
+                      <AccountSwitcher onNavigate={() => setMenuOpen(false)} />
                       <MenuItem href="/account" icon={<Settings size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                         Account Settings
                       </MenuItem>

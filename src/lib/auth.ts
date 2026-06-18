@@ -19,7 +19,8 @@ export type AuthProvider = 'password' | 'google' | 'apple';
 export interface Session {
   uuid: string;
   publicId: string;
-  type: AccountType;
+  type: AccountType;       // active mode (may be switched)
+  baseType: AccountType;   // the account's real type
   email: string;
   displayName: string;
   provider: AuthProvider;
@@ -37,10 +38,44 @@ export interface SignUpInput {
   loungeName?: string;
   city?: string;
   state?: string;
+  ownsMultiple?: boolean;
 }
 
 const KEY = 'myhumidor:session';
 const EVENT = 'myhumidor:auth-change';
+
+const MODE_KEY = 'myhumidor:mode';
+
+/** The user's chosen active mode, if they've switched (retailer-capable only). */
+export function getAccountMode(): AccountType | null {
+  if (typeof window === 'undefined') return null;
+  const m = localStorage.getItem(MODE_KEY);
+  return m === 'retailer' || m === 'consumer' ? m : null;
+}
+
+/** Switch the active account mode (Aficionado ↔ Retailer) and re-notify. */
+export function setAccountMode(mode: AccountType | null) {
+  try {
+    if (mode) localStorage.setItem(MODE_KEY, mode); else localStorage.removeItem(MODE_KEY);
+  } catch { /* ignore */ }
+  if (isSupabaseConfigured && currentSession) {
+    const active = mode ?? currentSession.baseType;
+    currentSession = { ...currentSession, type: active, publicId: publicIdFromUuid(currentSession.uuid, active) };
+    authListeners.forEach((cb) => { try { cb(currentSession); } catch { /* ignore */ } });
+  }
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(EVENT));
+}
+
+/** Whether the user may act as a retailer (owns a lounge or signed up as one). */
+export async function canRetail(uuid: string, baseType: AccountType): Promise<boolean> {
+  if (baseType === 'retailer') return true;
+  if (!isSupabaseConfigured) return false;
+  try {
+    const { data } = await supabaseBrowser().from('lounges').select('id').eq('owner_id', uuid).limit(1);
+    return (data ?? []).length > 0;
+  } catch { return false; }
+}
+
 
 /* ─────────────────────────── DEMO (localStorage) ─────────────────────────── */
 
@@ -86,6 +121,7 @@ function demoSession(input: {
     uuid,
     publicId,
     type: input.type,
+    baseType: input.type,
     email: input.email,
     displayName: input.displayName,
     provider: input.provider,
@@ -101,11 +137,13 @@ function demoSession(input: {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function sessionFromUser(user: any): Session {
   const meta = user.user_metadata ?? {};
-  const type: AccountType = (meta.account_type === 'retailer' || meta.account_type === 'lounge') ? 'retailer' : 'consumer';
+  const baseType: AccountType = (meta.account_type === 'retailer' || meta.account_type === 'lounge') ? 'retailer' : 'consumer';
+  const type: AccountType = getAccountMode() ?? baseType;
   return {
     uuid: user.id,
     publicId: publicIdFromUuid(user.id, type),
     type,
+    baseType,
     email: user.email ?? '',
     displayName: meta.display_name || meta.name || (user.email?.split('@')[0] ?? 'You'),
     provider: (user.app_metadata?.provider as AuthProvider) ?? 'password',
@@ -197,6 +235,7 @@ export async function signUpEmail(input: SignUpInput): Promise<AuthResult> {
         account_type: input.type,
         display_name: input.displayName,
         handle,
+        owns_multiple: input.ownsMultiple ?? false,
         lounge_name: input.loungeName,
         city: input.city,
         state: input.state,
@@ -250,6 +289,7 @@ export async function signInOAuth(provider: 'google' | 'apple', type: AccountTyp
 }
 
 export async function signOut() {
+  try { localStorage.removeItem(MODE_KEY); } catch { /* ignore */ }
   if (!isSupabaseConfigured) {
     demoClear();
     return;

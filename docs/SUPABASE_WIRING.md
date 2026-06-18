@@ -1,3 +1,24 @@
+## Group 1 — retailer/identity (run phase70.sql)
+
+- **Account switching.** A single auth account can now act as both Aficionado and
+  Retailer. `auth.ts` gained `baseType` (real type) + an active-mode override
+  (`getAccountMode`/`setAccountMode`, localStorage), and `canRetail(uuid, baseType)`
+  (true if they own a lounge or signed up as a retailer). The user dropdown shows an
+  **AccountSwitcher**: retailer-capable users get "Switch to Retailer/Aficionado";
+  plain consumers get "Link a retailer account" → /verify. Mode is cleared on sign-out.
+  Ownership/RLS is unchanged (same auth.uid()), so dashboards/owner checks still work.
+- **Admin: certify toggle + assign owner.** New admin tab **Cert & owners**
+  (`LoungeOwnerControls`): grant/remove certification (`admin_set_certified`) and
+  assign a lounge owner by member handle (`admin_assign_owner`), which converts that
+  member to a retailer/lounge_owner account.
+- **"I own multiple lounges"** checkbox on retailer signup → captured in user
+  metadata (`owns_multiple`) + `profiles.owns_multiple` column for later multi-lounge
+  setup.
+- The separate verify signup is gone: retailers sign up once (consumer/retailer
+  toggle) and verify/certify via **Plans**; the old Verify button was replaced by
+  Plans + a My Plan dropdown entry in the previous batch.
+
+> Run `supabase/migrations/phase70.sql`.
 ## Batch — dup fix, mojibake, usernames, toolbar/search (run phase69.sql)
 
 - **Duplicate submissions (real fix):** `pushToCatalog` is now idempotent — it looks up an existing `catalog_cigars` row by brand+name (case-insensitive) and reuses it instead of inserting a second. Submit input is trimmed/space-collapsed. (Pre-existing dupes still need cleanup — see admin helper TODO.)
