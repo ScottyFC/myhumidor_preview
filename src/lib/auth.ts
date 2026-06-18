@@ -192,6 +192,14 @@ export async function signUpEmail(input: SignUpInput): Promise<AuthResult> {
     },
   });
   if (error) return { error: error.message };
+  // Supabase returns a "fake" success for an already-registered email (to avoid
+  // user enumeration): a user object with an empty identities array and no
+  // session. Treat that as a clear, friendly error instead of pretending to
+  // create a duplicate account.
+  const identities = data.user?.identities;
+  if (data.user && Array.isArray(identities) && identities.length === 0) {
+    return { error: 'An account with this email already exists. Please sign in instead.' };
+  }
   // If email confirmation is on, there's no session yet.
   return { needsConfirmation: !data.session };
 }

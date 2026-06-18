@@ -1,3 +1,11 @@
+## Fix — duplicate email on signup (and a note on usernames)
+
+`signUpEmail` now blocks registering an email that already exists. With Supabase email confirmation enabled, `auth.signUp` returns a *fake success* for an existing email (anti-enumeration): a user object with an empty `identities` array and no session, so the app was showing "check your email" and the person thought a new account was created. We now detect `data.user.identities.length === 0` and return "An account with this email already exists. Please sign in instead." (Confirmation-OFF already errors with "User already registered", which was surfaced.) No migration.
+
+Usernames (handles) were already safe: `profiles.handle` is `unique not null` and the `handle_new_user()` trigger dedupes (`base`, `base1`, `base2`, …), so two signups can never share a handle. Handles are derived from the email local-part, not user-chosen, so there's no handle field to collide.
+
+> Make sure Supabase Auth keeps **"Confirm email" ON** and isn't set to allow multiple identities per email; the client guard relies on the standard signUp response.
+
 ## Live-join cigar names (no rebuild, no re-save)
 
 The snapshot propagation only runs when an override is *saved*, so edits made before phase67 (or rows with a null slug) kept showing the old name. Display now **live-joins** the name/brand from the catalog/overrides by slug — no migration.
