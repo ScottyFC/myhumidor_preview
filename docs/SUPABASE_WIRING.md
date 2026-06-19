@@ -1,3 +1,26 @@
+## CAO + Camacho brand normalization (static catalog — redeploy)
+
+Normalized the static catalog to match Supabase: every CAO* brand → **`CAO`** (361
+cigars) and every Camacho* brand → **`Camacho`** (276), collapsing all the
+`"CAO  <line>"` / `"Camacho <line>"` variants into the single house brand, and
+de-spaced 296 product names. Per-cigar `slug`s are unchanged, so cigar URLs,
+humidor entries, ratings, and overrides stay valid; only the brand grouping
+consolidates (all under `/brands/cao` and `/brands/camacho`).
+
+This edits `src/data/cigars.json` (build-time), so it takes effect on the next
+**Vercel deploy**. (Old fragmented brand-page URLs like `/brands/cao-brazilia` will
+no longer exist by design.)
+## Remove logo.dev (run phase76.sql)
+
+logo.dev is gone entirely: the `/api/brand-logo` fallback chain is now product →
+static product image → brand_images (admin uploads) → optional Google CSE → monogram,
+with all LOGODEV keys, the `img.logo.dev` URL builder, and `fromLogoDev` removed. The
+"Autofill from logo.dev" button is removed from the admin image tool. `phase76.sql`
+purges any already-populated logo.dev URLs (`delete from brand_images` / `null out
+catalog_cigars.image_url` / `catalog_overrides.image_url` where the URL contains
+`logo.dev`), so those fall back to real images or a monogram.
+
+> Run `supabase/migrations/phase76.sql`.
 ## Sign-in/sign-up + mobile batch (no migration)
 
 - **Remember me** on sign-in (default on). Unchecking sets an `mh:ephemeral` flag;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ImagePlus, Loader2, Check, Sparkles, Link2, Upload } from 'lucide-react';
+import { ImagePlus, Loader2, Check, Link2, Upload } from 'lucide-react';
 import { subscribeAuth } from '@/lib/auth';
 import { isAdmin } from '@/lib/admin';
 import { isSupabaseConfigured, supabaseBrowser } from '@/lib/supabase';
@@ -14,7 +14,7 @@ type Scope = 'cigar' | 'brand';
  * Admin-only image control on a cigar page. Admins can set or OVERWRITE the
  * cigar/label photo either by direct file upload or by pasting an image URL,
  * and choose whether it applies to just this cigar (set_cigar_image) or the
- * whole brand (set_brand_image). Also offers a one-click logo.dev autofill.
+ * whole brand (set_brand_image).
  */
 export function CigarImageUpload({ slug, brand }: { slug: string; brand: string }) {
   const [admin, setAdmin] = useState(false);
@@ -124,17 +124,6 @@ export function CigarImageUpload({ slug, brand }: { slug: string; brand: string 
           </button>
         </div>
       )}
-
-      <div className="mt-2">
-        <button onClick={() => run(async () => {
-          const res = await fetch(`/api/brand-logo?brand=${encodeURIComponent(brand)}`);
-          const d = await res.json();
-          if (!d.url) throw new Error('No logo found for this brand on logo.dev.');
-          return d.url as string;
-        })} disabled={busy} className="btn-ghost text-[11px] text-smoke-300">
-          <Sparkles size={12} strokeWidth={1.5} /> Autofill from logo.dev
-        </button>
-      </div>
 
       {done !== null && (
         <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-ember-100">
