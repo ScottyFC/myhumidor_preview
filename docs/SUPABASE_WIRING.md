@@ -1,3 +1,47 @@
+## Group 3 part 2 + profile-removal sync (run phase74.sql)
+
+**Profile removal now syncs.** `profiles.id` cascades from `auth.users`, so deleting
+the *auth* user fully removes the account. The gap was deleting only the *profiles*
+row — the auth user could still log in. Auth resolution now verifies the profile
+exists on every state change (`verifyProfileExists`) and signs the user out if it's
+gone. (To fully delete someone: delete their `auth.users` row, which cascades.)
+
+**Chains / staff / multi-lounge (certified-only):**
+- `lounge_staff` (can_post / can_inventory / can_edit) + dashboard **Staff access**
+  manager: owner adds members by handle with scoped access, lists/removes them
+  (`set_lounge_staff` / `remove_lounge_staff`). `can_manage_lounge(slug, scope)`
+  helper is available to gate staff-permitted actions.
+- `chains` table + `lounges.chain_id` for grouping locations (assignment/"other
+  locations" display is the remaining lighter piece).
+- **Bulk-claim → super-admin queue:** dashboard "Claim multiple lounges" inserts a
+  `lounge_claim_requests` row (pending); a **Claim requests** admin tab
+  (`ClaimRequestsQueue`) lets a **super_admin** approve (assigns every listed lounge
+  to the requester + promotes them to retailer/owner via `approve_claim_request`)
+  or reject. Approval is super-admin-only, enforced in the RPC.
+
+Remaining lighter follow-ups: assigning lounges to a chain + showing "our other
+locations", and enforcing staff scopes via RLS on inventory/posts (the helper exists;
+the RPCs/owner checks are in place).
+
+> Run `supabase/migrations/phase74.sql`.
+## Nearby-lounge search — "Where to buy near you" (no migration)
+
+On a cigar page, a **Where to buy near you** card shows **certified lounges within
+25 miles that carry this cigar** (published inventory), each linking to the lounge
+page with its address + the distance and price.
+
+- Route `GET /api/cigars/{slug}/nearby?lat=&lng=` joins `inventory_items`
+  (matched by slug, `published=true`) to `lounges!inner(...)`, keeps only
+  `certified` lounges with coordinates, computes `haversineMi`, filters ≤25 mi,
+  sorts by distance. Certified-only is enforced server-side.
+- `WhereToBuyNearby` requests location only on tap (privacy) via the cross-platform
+  `getUserLocation()` helper, so it works in the apps too (with the location
+  permission strings added natively).
+
+Notes: matches inventory by **slug**, so a lounge's items must carry the slug
+(the add-to-inventory flow stores it). Currently surfaced on the cigar detail page;
+inline "carried nearby" hints in the search list would be a follow-up (needs
+per-result inventory lookups + location).
 ## Group 2 — Plans & billing (run phase73.sql)
 
 A real **My Plan** page (`/dashboard/plan`): tier cards (Starter $49 / Pro $99 /

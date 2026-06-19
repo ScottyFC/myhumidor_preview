@@ -15,6 +15,7 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { StockNearYou } from '@/components/StockNearYou';
 import { CigarPhotos } from '@/components/CigarPhotos';
 import { CigarReviews } from '@/components/CigarReviews';
+import { WhereToBuyNearby } from '@/components/WhereToBuyNearby';
 import { CigarEditForm } from '@/components/CigarEditForm';
 import { applyOverride } from '@/lib/overrides';
 import { CigarImageUpload } from '@/components/CigarImageUpload';
@@ -204,6 +205,11 @@ export default async function CigarPage({ params }: PageProps) {
         <RatingForm
           seed={{ cigarId: view.id, slug, brand: view.brand, name: view.headline, size: view.vitola }}
         />
+      </div>
+
+      {/* ─── Where to buy near you (certified lounges ≤25mi) ──────────── */}
+      <div className="mt-8">
+        <WhereToBuyNearby slug={slug} />
       </div>
 
       {/* ─── Community: likes + comments ──────────────────────────────── */}

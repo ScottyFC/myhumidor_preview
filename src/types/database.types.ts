@@ -347,6 +347,24 @@ export type Database = {
         }
         Relationships: []
       }
+      chains: {
+        Row: { id: string; name: string; owner_id: string | null; created_at: string }
+        Insert: { id?: string; name: string; owner_id?: string | null; created_at?: string }
+        Update: { id?: string; name?: string; owner_id?: string | null; created_at?: string }
+        Relationships: []
+      }
+      lounge_staff: {
+        Row: { lounge_id: string; user_id: string; can_post: boolean; can_inventory: boolean; can_edit: boolean; added_by: string | null; created_at: string }
+        Insert: { lounge_id: string; user_id: string; can_post?: boolean; can_inventory?: boolean; can_edit?: boolean; added_by?: string | null; created_at?: string }
+        Update: { lounge_id?: string; user_id?: string; can_post?: boolean; can_inventory?: boolean; can_edit?: boolean; added_by?: string | null; created_at?: string }
+        Relationships: []
+      }
+      lounge_claim_requests: {
+        Row: { id: string; requester_id: string; requester_name: string | null; lounge_slugs: string[]; note: string | null; status: string; reviewed_by: string | null; created_at: string }
+        Insert: { id?: string; requester_id: string; requester_name?: string | null; lounge_slugs?: string[]; note?: string | null; status?: string; reviewed_by?: string | null; created_at?: string }
+        Update: { id?: string; requester_id?: string; requester_name?: string | null; lounge_slugs?: string[]; note?: string | null; status?: string; reviewed_by?: string | null; created_at?: string }
+        Relationships: []
+      }
       invites: {
         Row: { token: string; email: string; account_type: string; skip_verification: boolean; accepted: boolean; accepted_by: string | null; created_by: string | null; created_at: string; expires_at: string }
         Insert: { token: string; email: string; account_type?: string; skip_verification?: boolean; accepted?: boolean; accepted_by?: string | null; created_by?: string | null; created_at?: string; expires_at?: string }
@@ -1494,6 +1512,7 @@ export type Database = {
           stripe_subscription_id: string | null
           plan_status: string | null
           plan_renews_at: string | null
+          chain_id: string | null
           city: string
           created_at: string
           credits: number
@@ -1529,6 +1548,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           plan_status?: string | null
           plan_renews_at?: string | null
+          chain_id?: string | null
           city: string
           created_at?: string
           credits?: number
@@ -1564,6 +1584,7 @@ export type Database = {
           stripe_subscription_id?: string | null
           plan_status?: string | null
           plan_renews_at?: string | null
+          chain_id?: string | null
           city?: string
           created_at?: string
           credits?: number
@@ -2541,6 +2562,26 @@ export type Database = {
       set_catalog_override: {
         Args: { p_slug: string; p_brand?: string | null; p_name?: string | null; p_country?: string | null; p_price?: number | null; p_image_url?: string | null; p_buy_url?: string | null; p_removed?: boolean }
         Returns: string
+      }
+      set_lounge_staff: {
+        Args: { p_slug: string; p_handle: string; p_can_post: boolean; p_can_inventory: boolean; p_can_edit: boolean }
+        Returns: undefined
+      }
+      remove_lounge_staff: {
+        Args: { p_slug: string; p_user: string }
+        Returns: undefined
+      }
+      can_manage_lounge: {
+        Args: { p_slug: string; p_scope?: string }
+        Returns: boolean
+      }
+      approve_claim_request: {
+        Args: { p_id: string }
+        Returns: number
+      }
+      reject_claim_request: {
+        Args: { p_id: string }
+        Returns: undefined
       }
       billing_set_tier_by_customer: {
         Args: { p_customer: string; p_tier: string; p_subscription?: string | null; p_status?: string | null; p_renews_at?: string | null }

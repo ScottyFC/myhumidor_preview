@@ -180,7 +180,25 @@ function wireAuthListener() {
     currentSession = sess ? sessionFromUser(sess.user) : null;
     authResolved = true;
     authListeners.forEach((cb) => { try { cb(currentSession); } catch { /* ignore */ } });
+    // Sync deletions: if the auth user still exists but its profile row was
+    // removed in Supabase, treat the account as deleted and sign out.
+    if (currentSession) verifyProfileExists(currentSession.uuid);
   });
+}
+
+let lastVerified: string | null = null;
+async function verifyProfileExists(uuid: string) {
+  if (lastVerified === uuid) return;
+  lastVerified = uuid;
+  try {
+    const { data, error } = await supabaseBrowser().from('profiles').select('id').eq('id', uuid).maybeSingle();
+    if (!error && !data) {
+      // Profile gone → account removed. Drop the session everywhere.
+      await supabaseBrowser().auth.signOut();
+      currentSession = null;
+      authListeners.forEach((cb) => { try { cb(null); } catch { /* ignore */ } });
+    }
+  } catch { /* network blip — leave session as-is */ }
 }
 
 export function subscribeAuth(cb: (s: Session | null) => void): () => void {
@@ -291,6 +309,7 @@ export async function signInOAuth(provider: 'google' | 'apple', type: AccountTyp
 
 export async function signOut() {
   try { localStorage.removeItem(MODE_KEY); } catch { /* ignore */ }
+  lastVerified = null;
   if (!isSupabaseConfigured) {
     demoClear();
     return;
