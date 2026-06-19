@@ -11,8 +11,8 @@ type Tab = { href: string; label: string; icon: typeof Home; match: (p: string) 
 
 const CONSUMER: Tab[] = [
   { href: '/', label: 'Home', icon: Home, match: (p) => p === '/' },
-  { href: '/search', label: 'Search', icon: Search, match: (p) => p.startsWith('/search') },
   { href: '/top', label: 'Cigars', icon: Cigarette, match: (p) => p.startsWith('/top') || p.startsWith('/cigars') || p.startsWith('/brands') },
+  { href: '/search', label: 'Search', icon: Search, match: (p) => p.startsWith('/search') },
   { href: '/humidor', label: 'Humidor', icon: Box, match: (p) => p.startsWith('/humidor') },
   { href: '/lounges', label: 'Lounges', icon: Store, match: (p) => p.startsWith('/lounges') || p.startsWith('/map') },
   { href: '/feed', label: 'Feed', icon: Newspaper, match: (p) => p.startsWith('/feed') },
@@ -20,8 +20,8 @@ const CONSUMER: Tab[] = [
 
 const LOUNGE: Tab[] = [
   { href: '/', label: 'Home', icon: Home, match: (p) => p === '/' },
-  { href: '/search', label: 'Search', icon: Search, match: (p) => p.startsWith('/search') },
   { href: '/top', label: 'Cigars', icon: Cigarette, match: (p) => p.startsWith('/top') || p.startsWith('/cigars') || p.startsWith('/brands') },
+  { href: '/search', label: 'Search', icon: Search, match: (p) => p.startsWith('/search') },
   { href: '/dashboard', label: 'Inventory', icon: Package, match: (p) => p.startsWith('/dashboard') },
   { href: '/lounges', label: 'Lounges', icon: Store, match: (p) => p.startsWith('/lounges') || p.startsWith('/map') },
   { href: '/feed', label: 'Feed', icon: Newspaper, match: (p) => p.startsWith('/feed') },
@@ -38,6 +38,9 @@ export function MobileTabBar() {
   useEffect(() => subscribeAuth(setSession), []);
 
   const tabs = session?.type === 'retailer' ? LOUNGE : CONSUMER;
+
+  // No tab bar on the login / auth / legal screens.
+  if (['/register', '/auth', '/terms', '/privacy'].some((r) => pathname.startsWith(r))) return null;
 
   return (
     <nav className="native-only native-tabbar fixed inset-x-0 bottom-0 z-40 border-t border-ember-400/15 bg-ink/95 backdrop-blur-lg">

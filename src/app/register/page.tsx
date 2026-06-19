@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { User, Store, Loader2, Check, MailCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signUpEmail, signInEmail, resendConfirmation, type AuthProvider } from '@/lib/auth';
+import { Recaptcha } from '@/components/Recaptcha';
 import type { AccountType } from '@/lib/ids';
 
 type Mode = 'signup' | 'signin';
@@ -21,6 +22,8 @@ export default function RegisterPage() {
   // manual fields
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [confirm, setConfirm] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [loungeName, setLoungeName] = useState('');
@@ -77,10 +80,20 @@ export default function RegisterPage() {
       if (type === 'consumer' && !displayName.trim()) return setError('Choose a display name.');
       if (type === 'retailer' && !loungeName.trim()) return setError('Enter your lounge name.');
       if (!agreed) return setError('Please agree to the terms to create an account.');
+      if (!captchaToken) return setError('Please complete the “I’m not a robot” check.');
     }
     setBusy('password');
 
     if (mode === 'signup') {
+      // Verify the reCAPTCHA server-side before creating the account.
+      try {
+        const v = await fetch('/api/recaptcha/verify', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: captchaToken }),
+        }).then((r) => r.json());
+        if (!v.ok) { setBusy(null); return setError('reCAPTCHA check failed. Please try again.'); }
+      } catch { /* network issue — let signup proceed rather than hard-block */ }
+
       const res = await signUpEmail({
         type,
         email: email.trim(),
@@ -118,7 +131,7 @@ export default function RegisterPage() {
       }
       finish(true);
     } else {
-      const res = await signInEmail(email.trim(), password);
+      const res = await signInEmail(email.trim(), password, remember);
       if (res.error) {
         setError(res.error);
         setBusy(null);
@@ -210,6 +223,15 @@ export default function RegisterPage() {
         <Input label="Password" value={password} onChange={setPassword} type="password" placeholder="••••••••" />
         {mode === 'signup' && (
           <Input label="Confirm password" value={confirm} onChange={setConfirm} type="password" placeholder="••••••••" />
+        )}
+        {mode === 'signup' && (
+          <Recaptcha onToken={setCaptchaToken} />
+        )}
+        {mode === 'signin' && (
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-smoke-300">
+            <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="accent-ember-400" />
+            Remember me on this device
+          </label>
         )}
 
         {error && <div className="text-xs text-red-400">{error}</div>}

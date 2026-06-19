@@ -9,9 +9,13 @@ import { markSmoked } from '@/lib/collection';
 import { createCheckIn } from '@/lib/checkins';
 
 const TASTING_NOTES = [
-  'Cocoa', 'Coffee', 'Leather', 'Pepper', 'Earth',
-  'Cedar', 'Cream', 'Nuts', 'Citrus', 'Sweet',
-  'Spice', 'Floral', 'Toast', 'Caramel', 'Vanilla',
+  'Cocoa', 'Coffee', 'Espresso', 'Chocolate', 'Leather',
+  'Pepper', 'Spice', 'Cinnamon', 'Clove', 'Earth',
+  'Cedar', 'Oak', 'Wood', 'Cream', 'Buttery',
+  'Nuts', 'Almond', 'Citrus', 'Fruit', 'Raisin',
+  'Sweet', 'Honey', 'Caramel', 'Toffee', 'Molasses',
+  'Vanilla', 'Floral', 'Hay', 'Grass', 'Toast',
+  'Bread', 'Tea', 'Tobacco', 'Barnyard', 'Mineral', 'Char',
 ];
 
 interface Seed {

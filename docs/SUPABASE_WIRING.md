@@ -1,3 +1,25 @@
+## Sign-in/sign-up + mobile batch (no migration)
+
+- **Remember me** on sign-in (default on). Unchecking sets an `mh:ephemeral` flag;
+  on the next browser launch (no per-session marker) the app signs out. Works with
+  the cookie-based Supabase session without changing client storage.
+- **Mobile tabs reordered** — Search now sits right after Cigars (Home · Cigars ·
+  Search · Humidor/Inventory · Lounges · Feed), both consumer and retailer bars.
+- **Mobile settings menu** — a gear in the native top bar opens Account settings
+  (`/account`), Notifications (`/settings`), and **Log out**.
+- **More rating flavors** — the rating tasting-note chips expanded from 15 to ~36
+  (espresso, oak, clove, toffee, molasses, barnyard, etc.).
+- **Toolbar hidden on auth screens (mobile)** — `MobileTopBar` and `MobileTabBar`
+  return null on `/register`, `/auth`, `/terms`, `/privacy`.
+- **reCAPTCHA v2 on sign-up** (web + mobile). `Recaptcha` (explicit render, reliable
+  in the webview) gates the signup submit; the token is verified server-side at
+  `/api/recaptcha/verify` using `SECRET_reCAPTCHA_KEY`. Site key is hardcoded with a
+  `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` override. If the secret is unset the route doesn't
+  block signups; on a verify network error the client lets signup proceed.
+
+Caveats: the reCAPTCHA verify call runs on Vercel's runtime (it can reach Google) —
+it can't be exercised in the build sandbox. The "remember me" sign-out fires on the
+next app/browser launch, not instantly on close.
 ## Retailer signup → verify → plan wizard (no migration)
 
 Retailer signup now flows into a multi-step onboarding (retailers already land on

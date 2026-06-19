@@ -173,6 +173,7 @@ let authWired = false;
 function wireAuthListener() {
   if (authWired) return;
   authWired = true;
+  enforceEphemeralSession();
   const sb = supabaseBrowser();
   // onAuthStateChange fires INITIAL_SESSION right after registration (reading
   // from storage), so this resolves the initial state without a getSession call.
@@ -274,7 +275,8 @@ export async function signUpEmail(input: SignUpInput): Promise<AuthResult> {
   return { needsConfirmation: !data.session, userId: data.user?.id };
 }
 
-export async function signInEmail(email: string, password: string): Promise<AuthResult> {
+export async function signInEmail(email: string, password: string, remember = true): Promise<AuthResult> {
+  setRememberPreference(remember);
   if (!isSupabaseConfigured) {
     const existing = demoGet();
     demoSet(
@@ -285,6 +287,31 @@ export async function signInEmail(email: string, password: string): Promise<Auth
   const sb = supabaseBrowser();
   const { error } = await sb.auth.signInWithPassword({ email, password });
   return { error: error?.message };
+}
+
+const EPHEMERAL_KEY = 'mh:ephemeral';
+const ALIVE_KEY = 'mh:session-alive';
+
+/** Records whether the session should survive the browser closing. */
+function setRememberPreference(remember: boolean) {
+  try {
+    if (remember) localStorage.removeItem(EPHEMERAL_KEY);
+    else localStorage.setItem(EPHEMERAL_KEY, '1');
+    sessionStorage.setItem(ALIVE_KEY, '1');
+  } catch { /* ignore */ }
+}
+
+/** If the user opted out of "Remember me", drop the session when the browser is
+ *  reopened (no sessionStorage marker = a fresh browser session). */
+function enforceEphemeralSession() {
+  try {
+    const ephemeral = localStorage.getItem(EPHEMERAL_KEY) === '1';
+    const aliveThisSession = sessionStorage.getItem(ALIVE_KEY) === '1';
+    if (ephemeral && !aliveThisSession) {
+      supabaseBrowser().auth.signOut();
+    }
+    sessionStorage.setItem(ALIVE_KEY, '1');
+  } catch { /* ignore */ }
 }
 
 export async function signInOAuth(provider: 'google' | 'apple', type: AccountType): Promise<AuthResult> {
