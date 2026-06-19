@@ -1,3 +1,23 @@
+## Group 5 — invites (run phase72.sql)
+
+- **Invite links prefill the email.** Admin **Invites** tab (`InviteManager`)
+  creates an invite (email + account type + "skip verification") → an `invites`
+  row (random token) → a shareable link `/register?invite={token}`. The register
+  page reads `?invite=` (or `?email=`), fetches `/api/invite/{token}`, and prefills
+  the email + sets the account type, showing a "You've been invited" banner.
+- **Manual invites skip the verification email.** On signup with a valid invite,
+  the register page calls `/api/invite/accept` { token, userId }; the service-role
+  client confirms the account (`auth.admin.updateUserById(..., email_confirm:true)`)
+  after validating the token's email matches the new user, marks the invite
+  accepted, and the page signs them straight in — no confirmation email.
+- `signUpEmail` now returns `userId` so the accept step can target the new account.
+
+**Requires `SUPABASE_SERVICE_KEY`** set as a server env var in Vercel (the existing
+`supabaseService()` client) — without it, invited users fall back to the normal
+verification email. Auto-emailing the invite link needs a mail provider (not wired;
+the admin copies/sends the link for now).
+
+> Run `supabase/migrations/phase72.sql`.
 ## Group 4 — discovery + removed account switcher (no migration)
 
 - **Removed the Aficionado↔Retailer switcher** (it was confusing). The dropdown

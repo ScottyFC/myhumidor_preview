@@ -207,6 +207,7 @@ export function subscribeAuth(cb: (s: Session | null) => void): () => void {
 export interface AuthResult {
   error?: string;
   needsConfirmation?: boolean;
+  userId?: string;
 }
 
 export async function signUpEmail(input: SignUpInput): Promise<AuthResult> {
@@ -252,7 +253,7 @@ export async function signUpEmail(input: SignUpInput): Promise<AuthResult> {
     return { error: 'An account with this email already exists. Please sign in instead.' };
   }
   // If email confirmation is on, there's no session yet.
-  return { needsConfirmation: !data.session };
+  return { needsConfirmation: !data.session, userId: data.user?.id };
 }
 
 export async function signInEmail(email: string, password: string): Promise<AuthResult> {

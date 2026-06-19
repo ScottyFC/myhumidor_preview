@@ -347,6 +347,12 @@ export type Database = {
         }
         Relationships: []
       }
+      invites: {
+        Row: { token: string; email: string; account_type: string; skip_verification: boolean; accepted: boolean; accepted_by: string | null; created_by: string | null; created_at: string; expires_at: string }
+        Insert: { token: string; email: string; account_type?: string; skip_verification?: boolean; accepted?: boolean; accepted_by?: string | null; created_by?: string | null; created_at?: string; expires_at?: string }
+        Update: { token?: string; email?: string; account_type?: string; skip_verification?: boolean; accepted?: boolean; accepted_by?: string | null; created_by?: string | null; created_at?: string; expires_at?: string }
+        Relationships: []
+      }
       device_tokens: {
         Row: { token: string; user_id: string; platform: string | null; updated_at: string }
         Insert: { token: string; user_id: string; platform?: string | null; updated_at?: string }

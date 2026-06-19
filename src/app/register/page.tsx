@@ -31,6 +31,9 @@ export default function RegisterPage() {
   const [linkError, setLinkError] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [ownsMultiple, setOwnsMultiple] = useState(false);
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteSkip, setInviteSkip] = useState(false);
+  const [invited, setInvited] = useState(false);
 
   // Surfaced when a confirmation link is expired/already used (callback redirect).
   useEffect(() => {
@@ -38,6 +41,18 @@ export default function RegisterPage() {
     const q = new URLSearchParams(window.location.search);
     if (q.get('error')) { setLinkError(true); setMode('signin'); }
     if (q.get('mode') === 'signup') setMode('signup');
+    const prefEmail = q.get('email'); if (prefEmail) setEmail(prefEmail);
+    const inv = q.get('invite');
+    if (inv) {
+      setMode('signup');
+      fetch(`/api/invite/${inv}`).then((r) => r.json()).then((d) => {
+        if (d?.valid) {
+          setInviteToken(inv); setInviteSkip(!!d.skipVerification); setInvited(true);
+          if (d.email) setEmail(d.email);
+          if (d.accountType === 'retailer') setType('retailer');
+        }
+      }).catch(() => {});
+    }
     // Retailer signup deep-links (claim/submit flows) preselect the retailer tab.
     if (q.get('type') === 'retailer' || q.get('type') === 'lounge') { setType('retailer'); setMode('signup'); }
     const claim = q.get('claim');
@@ -82,6 +97,20 @@ export default function RegisterPage() {
         setBusy(null);
         return;
       }
+      // Invited (manual) users skip the verification email: confirm them and
+      // sign them straight in.
+      if (inviteToken && inviteSkip && res.userId) {
+        try {
+          const accept = await fetch('/api/invite/accept', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: inviteToken, userId: res.userId }),
+          }).then((r) => r.json());
+          if (accept?.ok && accept?.confirmed) {
+            const signin = await signInEmail(email.trim(), password);
+            if (!signin.error) { finish(true); return; }
+          }
+        } catch { /* fall through to normal confirmation */ }
+      }
       if (res.needsConfirmation) {
         setVerifyEmail(email.trim());
         setBusy(null);
@@ -116,6 +145,11 @@ export default function RegisterPage() {
         <h1 className="font-display mt-5 text-4xl tracking-tightest">
           {mode === 'signup' ? 'Create your account' : 'Welcome back'}
         </h1>
+        {invited && (
+          <p className="mx-auto mt-3 inline-block rounded-full border-[0.5px] border-ember-400/30 bg-ember-400/10 px-3 py-1 text-xs text-ember-100">
+            You’ve been invited{inviteSkip ? ' — no email confirmation needed' : ''}. Just set a password to finish.
+          </p>
+        )}
         <p className="mt-2 text-sm text-smoke-300">
           {mode === 'signup'
             ? 'Track cigars, build your humidor, and discover what’s next.'
