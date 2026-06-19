@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CreditCard, Check, Loader2, ExternalLink } from 'lucide-react';
 import { getMyLounges, setCertTier, type MyLounge } from '@/lib/lounges-owner';
@@ -8,7 +8,7 @@ import { PLAN_TIERS, startCheckout, openBillingPortal, type Tier } from '@/lib/b
 
 const ORDER = ['none', 'starter', 'pro', 'premier'];
 
-export default function MyPlanPage() {
+function MyPlanInner() {
   const router = useRouter();
   const sp = useSearchParams();
   const [lounge, setLounge] = useState<MyLounge | null>(null);
@@ -102,5 +102,13 @@ export default function MyPlanPage() {
         <a href="/verify" className="ml-auto inline-flex items-center gap-1 text-xs text-ember-200 hover:text-ember-400">Compare plans <ExternalLink size={11} /></a>
       </div>
     </div>
+  );
+}
+
+export default function MyPlanPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-3xl px-6 pt-16 text-center text-smoke-400">Loading…</div>}>
+      <MyPlanInner />
+    </Suspense>
   );
 }
