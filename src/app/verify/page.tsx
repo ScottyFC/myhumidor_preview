@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { ShieldCheck, Check, Loader2, Lock } from 'lucide-react';
 import { subscribeAuth } from '@/lib/auth';
 import { requestVerification } from '@/lib/lounge-submissions';
-import { getMyLounges, type MyLounge } from '@/lib/lounges-owner';
+import { getMyLounges, setCertTier, submitClaim, type MyLounge } from '@/lib/lounges-owner';
+import { PLAN_TIERS, startCheckout, type Tier } from '@/lib/billing';
 import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 
 export default function VerifyPage() {
@@ -20,6 +21,13 @@ export default function VerifyPage() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState('');
+  const [step, setStep] = useState<'details' | 'plan'>('details');
+  const [referral, setReferral] = useState('');
+  const [matchedSlug, setMatchedSlug] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<{ slug: string; name: string; address: string; city: string; state: string; phone?: string; website?: string }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [planBusy, setPlanBusy] = useState<string | null>(null);
 
   useEffect(() => subscribeAuth((s) => { setSignedIn(!!s); setIsLounge(s?.type === 'retailer'); }), []);
   useEffect(() => {
@@ -31,6 +39,24 @@ export default function VerifyPage() {
 
   function set<K extends keyof typeof f>(k: K, v: string) { setF((p) => ({ ...p, [k]: v })); }
 
+  async function searchLounges() {
+    if (!query.trim()) return;
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/stores?q=${encodeURIComponent(query.trim())}&limit=6`);
+      const data = await res.json();
+      setResults((data.items ?? []).map((s2: { slug: string; name: string; address?: string; city?: string; state?: string; phone?: string; website?: string }) => ({
+        slug: s2.slug, name: s2.name, address: s2.address ?? '', city: s2.city ?? '', state: s2.state ?? '', phone: s2.phone, website: s2.website,
+      })));
+    } finally { setSearching(false); }
+  }
+
+  function prefill(r: { slug: string; name: string; address: string; city: string; state: string; phone?: string; website?: string }) {
+    setMatchedSlug(r.slug);
+    setF((p) => ({ ...p, name: r.name, address: r.address, city: r.city, state: r.state, phone: r.phone || p.phone, website: r.website || p.website }));
+    setResults([]); setQuery(r.name);
+  }
+
   async function submit() {
     if (!f.name.trim()) return setErr('Enter your lounge’s legal business name.');
     if (!signedIn) return setErr('Please sign in with your lounge account first.');
@@ -38,12 +64,57 @@ export default function VerifyPage() {
     const res = await requestVerification({
       name: f.name.trim(), address: f.address.trim(), city: f.city.trim(), state: f.state.trim(),
       phone: f.phone.trim(), email: f.email.trim(), website: f.website.trim(),
-      businessLicense: f.businessLicense.trim(), contactName: f.contactName.trim(), notes: f.notes.trim(),
+      businessLicense: f.businessLicense.trim(), contactName: f.contactName.trim(),
+      notes: [f.notes.trim(), referral.trim() ? `Referral code: ${referral.trim()}` : ''].filter(Boolean).join('\n'),
       lat: coords?.lat, lng: coords?.lng,
     });
+    if (res.ok && matchedSlug) {
+      // Existing lounge — also file a claim so an admin can assign ownership.
+      try { await submitClaim({ loungeSlug: matchedSlug, loungeName: f.name.trim(), claimantName: f.contactName.trim() || f.name.trim(), roleRequested: 'owner', email: f.email.trim(), phone: f.phone.trim() }); } catch { /* non-blocking */ }
+    }
     setBusy(false);
-    if (res.ok) setDone(true);
+    if (res.ok) setStep('plan');
     else setErr(res.error || 'Could not submit your request. Please try again.');
+  }
+
+  async function choosePlan(tier: Tier) {
+    setPlanBusy(tier); setErr('');
+    const lounge = mine[0];
+    if (lounge) {
+      const res = await startCheckout(lounge.slug, tier);
+      if (res.url) { window.location.href = res.url; return; }
+      if (res.fallback) await setCertTier(lounge.loungeId, tier);
+    }
+    // New lounges (still pending verification) record the choice; it's applied
+    // once the lounge is approved/assigned.
+    setPlanBusy(null);
+    setDone(true);
+  }
+
+  if (step === 'plan' && !done) {
+    return (
+      <div className="mx-auto max-w-4xl px-6 pt-10">
+        <div className="mb-2 inline-flex items-center gap-2 text-ember-400"><ShieldCheck size={18} strokeWidth={1.5} /><span className="eyebrow">Choose your plan</span></div>
+        <h1 className="font-display text-4xl tracking-tightest">Pick a plan</h1>
+        <p className="mt-2 max-w-xl text-sm text-smoke-200">Your details are in for review. Choose a certification plan now, or start free and upgrade later.</p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {PLAN_TIERS.map((t) => (
+            <div key={t.id} className="rounded-2xl border-[0.5px] border-ember-400/15 bg-char/40 p-5">
+              <div className="font-display text-lg">{t.name}</div>
+              <div className="mt-1 font-display text-3xl text-ember-100">{t.price}</div>
+              <p className="mt-1 text-xs text-smoke-400">{t.blurb}</p>
+              <ul className="mt-3 space-y-1.5">
+                {t.features.map((ft) => <li key={ft} className="flex items-start gap-1.5 text-xs text-smoke-200"><Check size={12} className="mt-0.5 shrink-0 text-ember-400" /> {ft}</li>)}
+              </ul>
+              <button onClick={() => choosePlan(t.id)} disabled={!!planBusy} className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-ember-400 px-3 py-2 text-xs font-semibold text-paper hover:bg-ember-600 disabled:opacity-60">
+                {planBusy === t.id ? <Loader2 size={13} className="animate-spin" /> : null} Choose {t.name}
+              </button>
+            </div>
+          ))}
+        </div>
+        <button onClick={() => setDone(true)} className="mt-5 text-sm text-smoke-400 underline hover:text-smoke-200">Start free for now</button>
+      </div>
+    );
   }
 
   if (done) {
@@ -87,6 +158,31 @@ export default function VerifyPage() {
         </div>
       )}
 
+      <div className="mt-6 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
+        <label className="mb-1 block text-xs text-smoke-400">Already listed? Search and pre-fill</label>
+        <div className="flex gap-2">
+          <input
+            value={query} onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') searchLounges(); }}
+            placeholder="Search your lounge by name…"
+            className="flex-1 rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-3 py-2 text-sm text-paper placeholder:text-smoke-400 focus:border-ember-400 focus:outline-none"
+          />
+          <button onClick={searchLounges} disabled={searching} className="btn-ghost text-xs">{searching ? <Loader2 size={13} className="animate-spin" /> : 'Search'}</button>
+        </div>
+        {results.length > 0 && (
+          <ul className="mt-2 divide-y divide-ember-400/10 rounded-md border-[0.5px] border-ember-400/15">
+            {results.map((r) => (
+              <li key={r.slug}>
+                <button onClick={() => prefill(r)} className="block w-full px-3 py-2 text-left text-sm text-smoke-200 hover:bg-ember-400/10 hover:text-paper">
+                  {r.name} <span className="text-xs text-smoke-500">{[r.city, r.state].filter(Boolean).join(', ')}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {matchedSlug && <p className="mt-1.5 text-[11px] text-ember-100">✓ Pre-filled from our directory — we’ll file your ownership claim with this submission.</p>}
+      </div>
+
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field full label="Legal business name" v={f.name} onChange={(v) => set('name', v)} placeholder="Your lounge, LLC" />
         <div className="sm:col-span-2">
@@ -121,11 +217,19 @@ export default function VerifyPage() {
         </div>
       </div>
 
+      <div className="mt-4 max-w-xs">
+        <label className="mb-1 block text-xs text-smoke-400">Referral code <span className="text-smoke-600">(optional)</span></label>
+        <input
+          value={referral} onChange={(e) => setReferral(e.target.value)} placeholder="e.g. CIGARTV"
+          className="w-full rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-3 py-2 text-sm text-paper placeholder:text-smoke-400 focus:border-ember-400 focus:outline-none"
+        />
+      </div>
+
       {err && <p className="mt-3 text-sm text-red-400">{err}</p>}
 
       <div className="mt-5 flex items-center gap-3">
         <button onClick={submit} disabled={busy} className="btn-primary">
-          {busy ? <><Loader2 size={14} className="animate-spin" /> Submitting…</> : <>Submit for review</>}
+          {busy ? <><Loader2 size={14} className="animate-spin" /> Submitting…</> : <>Continue to plan →</>}
         </button>
         <Link href="/dashboard" className="btn-ghost text-xs">Cancel</Link>
       </div>

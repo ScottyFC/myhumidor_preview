@@ -1,3 +1,19 @@
+## Retailer signup → verify → plan wizard (no migration)
+
+Retailer signup now flows into a multi-step onboarding (retailers already land on
+`/verify` after creating their account):
+1. **Account** — lounge name + email + password (existing register step).
+2. **Business details** (`/verify`) — verifiable details via `requestVerification`,
+   now with a **"search and pre-fill"** box (queries `/api/stores`; picking a result
+   fills the form and files an ownership **claim** via `submitClaim` so an admin can
+   assign it), plus an optional **referral code** field (captured in the request
+   notes as "Referral code: …" — the feature itself is for later).
+3. **Plan** — after submitting details, a plan-selection step (PLAN_TIERS) → Stripe
+   checkout if configured, else the free tier is applied (or "Start free for now").
+   For a brand-new lounge still pending verification, the choice is recorded and
+   applied once the lounge is approved/assigned.
+
+No new tables — reuses `requestVerification`, `submitClaim`, and the billing lib.
 ## Chain display + staff RLS enforcement (run phase75.sql)
 
 **Staff RLS enforced.** `can_manage_lounge_id(lounge_id, scope)` powers the policies:
