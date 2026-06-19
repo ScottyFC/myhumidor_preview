@@ -39,7 +39,7 @@ export function MobileTopBar() {
 
   return (
     <header className="native-only native-topbar fixed inset-x-0 top-0 z-40 items-center justify-between border-b border-ember-400/15 bg-ink/95 px-3 backdrop-blur-lg">
-      <div className="flex h-14 w-full items-center justify-between">
+      <div className="relative flex h-14 w-full items-center justify-between">
         <div className="flex min-w-0 items-center gap-1">
           {!isRoot && (
             <button onClick={() => router.back()} aria-label="Back" className="-ml-1 flex h-9 w-9 items-center justify-center rounded-full text-smoke-200 active:bg-ember-400/10">
@@ -51,7 +51,7 @@ export function MobileTopBar() {
           </Link>
         </div>
 
-        <Link href="/" aria-label="MyHumidor home" className="flex items-center">
+        <Link href="/" aria-label="MyHumidor home" className="absolute left-1/2 flex -translate-x-1/2 items-center">
           <img src="/logo.svg" alt="MyHumidor" className="h-7 w-auto" />
         </Link>
 

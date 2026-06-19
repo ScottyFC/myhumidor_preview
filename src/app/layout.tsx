@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Nav } from '@/components/Nav';
 import { Analytics } from '@/components/Analytics';
 import { NativeShell } from '@/components/NativeShell';
+import { SplashVideo } from '@/components/SplashVideo';
 import { MobileTopBar } from '@/components/MobileTopBar';
 import { MobileTabBar } from '@/components/MobileTabBar';
 import { NativeAuthGate } from '@/components/NativeAuthGate';
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <MobileTopBar />
         <Analytics />
         <NativeShell />
+        <SplashVideo />
         <main className="pb-32">{children}</main>
         <MobileTabBar />
         <NativeAuthGate />

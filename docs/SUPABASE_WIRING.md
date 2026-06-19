@@ -1,3 +1,18 @@
+## Admin overview + app splash + centered logo (no migration)
+
+- **Admin Overview** — a new default first tab on the admin page (`AdminOverview`)
+  showing pending counts across every queue (cigar submissions, lounge submissions,
+  lounge claims, bulk claim requests, change requests) with a total banner; each card
+  navigates to its queue. Also fixed a latent bug where "Lounge claims" and "Claim
+  requests" shared the tab id `claims` (the bulk one is now `claimreqs`).
+- **App splash video** — `public/AppSplash.mp4` plays full-screen once when the
+  native app opens (`SplashVideo`, native-only, fades out, tap-to-skip), then hands
+  off to the app. Muted + playsInline (mobile blocks unmuted autoplay).
+- **Centered mobile logo** — the top-bar wordmark is now absolutely centered, so it
+  no longer drifts left when the right side (bell + settings) is wider than the left.
+
+The splash video is served from `public/` (the app loads it from the deployed site),
+so it ships on the next Vercel deploy; no native rebuild needed for it to appear.
 ## Lounge/account batch (run phase77.sql)
 
 1. **No ratings for retailers** — the rating form shows a "member feature" note to

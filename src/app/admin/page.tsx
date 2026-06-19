@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin, MessageSquare, History, KeyRound, ChevronDown, Megaphone, BarChart3, Crown, Upload, UserCog, Mail, Building2 } from 'lucide-react';
+import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin, MessageSquare, History, KeyRound, ChevronDown, Megaphone, BarChart3, Crown, Upload, UserCog, Mail, Building2, Inbox } from 'lucide-react';
 import { AdManager } from '@/components/AdManager';
 import { MemberVerify } from '@/components/MemberVerify';
 import { BulkCatalogTool } from '@/components/BulkCatalogTool';
@@ -12,6 +12,7 @@ import { LoungeCertControl } from '@/components/LoungeCertControl';
 import { LoungeOwnerControls } from '@/components/LoungeOwnerControls';
 import { InviteManager } from '@/components/InviteManager';
 import { ClaimRequestsQueue } from '@/components/ClaimRequestsQueue';
+import { AdminOverview } from '@/components/AdminOverview';
 import { AnalyticsPanel } from '@/components/AnalyticsPanel';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { isAdmin, isBootstrapAdmin, listAdmins, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
@@ -35,13 +36,13 @@ import {
 } from '@/lib/submissions';
 import { cn } from '@/lib/utils';
 
-type Tab = 'cigars' | 'lounges' | 'claims' | 'certify' | 'requests' | 'log' | 'ads' | 'admins' | 'analytics' | 'members' | 'bulk' | 'notify' | 'owners' | 'invites' | 'claims';
+type Tab = 'overview' | 'cigars' | 'lounges' | 'claims' | 'certify' | 'requests' | 'log' | 'ads' | 'admins' | 'analytics' | 'members' | 'bulk' | 'notify' | 'owners' | 'invites' | 'claimreqs';
 
 export default function AdminPage() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [state, setState] = useState<'checking' | 'ok' | 'denied'>('checking');
-  const [tab, setTab] = useState<Tab>('cigars');
+  const [tab, setTab] = useState<Tab>('overview');
 
   useEffect(() => {
     return subscribeAuth((s) => {
@@ -76,6 +77,7 @@ export default function AdminPage() {
   }
 
   const tabs: { id: Tab; label: string; icon: typeof Cigarette }[] = [
+    { id: 'overview', label: 'Overview', icon: Inbox },
     { id: 'cigars', label: 'Cigar submissions', icon: Cigarette },
     { id: 'lounges', label: 'Lounge submissions', icon: Store },
     { id: 'claims', label: 'Lounge claims', icon: KeyRound },
@@ -87,7 +89,7 @@ export default function AdminPage() {
     { id: 'notify', label: 'Broadcast', icon: Megaphone },
     { id: 'owners', label: 'Cert & owners', icon: UserCog },
     { id: 'invites', label: 'Invites', icon: Mail },
-    { id: 'claims', label: 'Claim requests', icon: Building2 },
+    { id: 'claimreqs', label: 'Claim requests', icon: Building2 },
     { id: 'requests', label: 'Change requests', icon: MessageSquare },
     { id: 'log', label: 'Activity log', icon: History },
     { id: 'admins', label: 'Admins', icon: ShieldCheck },
@@ -126,6 +128,7 @@ export default function AdminPage() {
         })}
       </div>
 
+      {tab === 'overview' && <AdminOverview onNavigate={(t) => setTab(t as Tab)} />}
       {tab === 'analytics' && <AnalyticsPanel />}
       {tab === 'cigars' && <CigarQueue />}
       {tab === 'members' && <MemberVerify />}
@@ -133,7 +136,7 @@ export default function AdminPage() {
       {tab === 'notify' && <SystemNotify />}
       {tab === 'owners' && <LoungeOwnerControls />}
       {tab === 'invites' && <InviteManager />}
-      {tab === 'claims' && <ClaimRequestsQueue />}
+      {tab === 'claimreqs' && <ClaimRequestsQueue />}
       {tab === 'lounges' && <LoungeQueue />}
       {tab === 'claims' && <ClaimsQueue />}
       {tab === 'certify' && (
