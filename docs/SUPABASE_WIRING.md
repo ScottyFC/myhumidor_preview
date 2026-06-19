@@ -1,3 +1,19 @@
+## Chain display + staff RLS enforcement (run phase75.sql)
+
+**Staff RLS enforced.** `can_manage_lounge_id(lounge_id, scope)` powers the policies:
+- `inventory_items` — owner, admin, or staff with `can_inventory` may write.
+- `lounge_posts` — existing members/admins, plus staff with `can_post`.
+- `update_lounge_details` now allows staff with `can_edit` (via `can_manage_lounge`).
+So the staff scopes set in the dashboard actually gate inventory/posting/edits now.
+
+**Chains / other locations.** `approve_claim_request` now also creates (or reuses)
+the requester's chain and stamps `chain_id` on every claimed lounge. The lounge page
+shows an **"Our other locations"** row of sibling lounges (same `chain_id`).
+
+Remaining tiny optional: a manual "group my lounges into a chain" control for owners
+who didn't come through a bulk claim (auto-grouping covers the bulk-claim path).
+
+> Run `supabase/migrations/phase75.sql` (after phase74).
 ## Group 3 part 2 + profile-removal sync (run phase74.sql)
 
 **Profile removal now syncs.** `profiles.id` cascades from `auth.users`, so deleting

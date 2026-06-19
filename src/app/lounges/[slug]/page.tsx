@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ProtectMedia } from '@/components/ProtectMedia';
-import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation, ShoppingBag, UtensilsCrossed } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation, ShoppingBag, UtensilsCrossed, Building2 } from 'lucide-react';
 import { EliteBanner } from '@/components/EliteBanner';
 import { VenueTag } from '@/components/VenueTag';
 import type { CatalogStore } from '@/types';
@@ -30,6 +30,7 @@ interface LoungeView extends CatalogStore {
   hoursJson?: Record<string, string>;
   servesFood?: boolean;
   menuUrl?: string;
+  chainId?: string;
 }
 
 export default async function LoungePage({ params }: PageProps) {
@@ -42,7 +43,7 @@ export default async function LoungePage({ params }: PageProps) {
     const sb = await supabaseServer();
     const { data } = await sb
       .from('lounges')
-      .select('id, slug, name, address, city, state, phone, email, website, image_url, verified, certified, venue_type, lat, lng, hours_json, serves_food, menu_url')
+      .select('id, slug, name, address, city, state, phone, email, website, image_url, verified, certified, venue_type, lat, lng, hours_json, serves_food, menu_url, chain_id')
       .eq('slug', slug)
       .single();
     if (data) {
@@ -53,10 +54,20 @@ export default async function LoungePage({ params }: PageProps) {
         hoursJson: (data.hours_json as Record<string,string> | null) ?? undefined, servesFood: !!data.serves_food, menuUrl: data.menu_url ?? undefined,
         image_url: data.image_url ?? null, verified: data.verified ?? false,
         certified: data.certified ?? false, venue_type: (data.venue_type as 'lounge'|'retail'|'both') ?? 'lounge', lat: data.lat ?? 0, lng: data.lng ?? 0,
+        chainId: data.chain_id ?? undefined,
       } as LoungeView;
     }
   }
   if (!lounge) notFound();
+
+  // Other locations in the same chain.
+  let otherLocations: { slug: string; name: string; city: string | null; state: string | null }[] = [];
+  if (lounge.chainId && isSupabaseConfigured) {
+    const sb = await supabaseServer();
+    const { data: sibs } = await sb.from('lounges')
+      .select('slug, name, city, state').eq('chain_id', lounge.chainId).neq('slug', slug).limit(8);
+    otherLocations = (sibs ?? []) as typeof otherLocations;
+  }
 
   const fullAddress = [lounge.address, lounge.city, lounge.state].filter(Boolean).join(', ');
 
@@ -175,6 +186,19 @@ export default async function LoungePage({ params }: PageProps) {
           <div className="pt-1"><LoungeFollow loungeId={lounge.id} /></div>
         </div>
       </header>
+
+      {otherLocations.length > 0 && (
+        <section className="border-b border-ember-400/15 py-6">
+          <div className="eyebrow mb-3 flex items-center gap-2"><Building2 size={13} strokeWidth={1.5} className="text-ember-400" /> Our other locations</div>
+          <div className="flex flex-wrap gap-2">
+            {otherLocations.map((o) => (
+              <Link key={o.slug} href={`/lounges/${o.slug}`} className="rounded-full border-[0.5px] border-ember-400/20 px-3.5 py-1.5 text-sm text-smoke-200 transition hover:border-ember-400/50 hover:text-paper">
+                {o.name}{(o.city || o.state) ? <span className="text-smoke-500"> · {[o.city, o.state].filter(Boolean).join(', ')}</span> : null}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Menu / inventory */}
       <section className="border-b border-ember-400/15 py-8">
