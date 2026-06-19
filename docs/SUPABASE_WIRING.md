@@ -1,3 +1,29 @@
+## Group 4 — discovery + removed account switcher (no migration)
+
+- **Removed the Aficionado↔Retailer switcher** (it was confusing). The dropdown
+  entry and `AccountSwitcher` are gone; the active type is always the account's
+  real type, so actual retailer accounts still get retailer features (e.g.
+  add-to-inventory) and consumers get the humidor — just no toggle.
+- **Inventory picker now searches the live DB** (merges `catalog_cigars` via
+  `searchCatalogCigarsRemote` with the static catalog), so recently-added cigars
+  appear when building inventory.
+- **Featured Brands** rail added to the home page (`featuredBrands()` +
+  `FeaturedBrands`), rotating with the same cadence as featured cigars.
+- **Flavor profile selector** added to cigar submission (up to 8 notes) →
+  stored on `catalog_cigars.flavor_tags` when the cigar is pushed.
+- **Catalog refresh cadence** increased: featured/browse rotation moved from
+  daily to every 3 hours.
+- **Cigar Concierge** is now conversational and never dead-ends: with no keyword
+  match it recommends featured picks and asks a friendly follow-up instead of
+  "I couldn't find…". The LLM prompt is warmer and accepts an optional `liked`
+  list (the member's highly-rated cigars) for personalised recs.
+
+### Deferred (group 4 leftover)
+- **"Who carries it nearby (≤25 mi, certified)" on search/cigar pages** — needs a
+  geo + inventory join + the user's location; its own focused pass.
+- Wiring the concierge client to actually send the member's `liked` cigars (small
+  follow-up; the API already accepts it).
+- Featured Brands on the cigar detail page (added on home this pass).
 ## Group 3 (part 1) — lounge tooling (run phase71.sql)
 
 - **Add to My Inventory from the cigar page.** Certified-lounge owners in retailer

@@ -158,9 +158,9 @@ export function catalogStats() {
 }
 
 /** Featured cigars for the home carousel — one per brand so logos don't repeat. */
-/** Day-of-epoch — changes once per day, so featured picks rotate daily. */
+/** Rotates every 3 hours, so featured/browse picks refresh through the day. */
 function daySeed(): number {
-  return Math.floor(Date.now() / 86_400_000);
+  return Math.floor(Date.now() / (3 * 3600_000));
 }
 
 export function featuredCigars(limit = 12): CatalogCigar[] {
@@ -175,6 +175,29 @@ export function featuredCigars(limit = 12): CatalogCigar[] {
   const picks: CatalogCigar[] = [];
   for (let i = 0; i < brands.length && picks.length < limit; i += step) {
     picks.push(brands[(i + offset) % brands.length]);
+  }
+  return picks;
+}
+
+export interface FeaturedBrand { brand: string; slug: string; count: number; image_url?: string }
+
+/** Brands for a "Featured brands" rail — rotates with the same cadence as featured cigars. */
+export function featuredBrands(limit = 12): FeaturedBrand[] {
+  const counts = new Map<string, { count: number; image?: string }>();
+  for (const c of allCigars()) {
+    const e = counts.get(c.brand) ?? { count: 0, image: undefined };
+    e.count++;
+    if (!e.image && c.image_url) e.image = c.image_url;
+    counts.set(c.brand, e);
+  }
+  const brands = [...counts.entries()].filter(([, e]) => e.count >= 3);
+  if (brands.length === 0) return [];
+  const offset = daySeed() % brands.length;
+  const step = Math.max(1, Math.floor(brands.length / limit));
+  const picks: FeaturedBrand[] = [];
+  for (let i = 0; i < brands.length && picks.length < limit; i += step) {
+    const [brand, e] = brands[(i + offset) % brands.length];
+    picks.push({ brand, slug: brandSlug(brand), count: e.count, image_url: e.image });
   }
   return picks;
 }

@@ -23,6 +23,7 @@ export interface Submission {
   price: number | null;
   photoDataUrl?: string; // demo: data URL. Supabase: Storage URL.
   notes?: string;
+  flavorTags?: string[];
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   reviewedAt?: string;
@@ -254,7 +255,7 @@ export interface SubmitResult {
  */
 export async function submitCigar(input: {
   brand: string; name: string; country?: string; size?: string; price?: number | null;
-  notes?: string; photoDataUrl?: string; buyUrl?: string;
+  notes?: string; photoDataUrl?: string; buyUrl?: string; flavorTags?: string[];
 }): Promise<SubmitResult> {
   start();
   input = { ...input, brand: input.brand.trim().replace(/\s+/g, ' '), name: input.name.trim().replace(/\s+/g, ' ') };
@@ -303,7 +304,7 @@ export async function submitCigar(input: {
     if (autoApprove) {
       catalogId = await pushToCatalog({
         id: '', brand: input.brand, name: input.name, country: input.country ?? '', size: input.size ?? '',
-        price: input.price ?? null, photoDataUrl: input.photoDataUrl, status: 'approved', createdAt: new Date().toISOString(),
+        price: input.price ?? null, photoDataUrl: input.photoDataUrl, flavorTags: input.flavorTags, status: 'approved', createdAt: new Date().toISOString(),
       } as Submission);
     }
 
@@ -372,6 +373,7 @@ async function pushToCatalog(sub: Submission): Promise<string | null> {
       price: sub.price,
       slug,
       image_url: sub.photoDataUrl ?? null,
+      flavor_tags: sub.flavorTags ?? [],
     });
     if (error) {
       console.error('[submissions] catalog push failed:', error.message);

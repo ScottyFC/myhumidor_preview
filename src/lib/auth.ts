@@ -138,7 +138,7 @@ function demoSession(input: {
 function sessionFromUser(user: any): Session {
   const meta = user.user_metadata ?? {};
   const baseType: AccountType = (meta.account_type === 'retailer' || meta.account_type === 'lounge') ? 'retailer' : 'consumer';
-  const type: AccountType = getAccountMode() ?? baseType;
+  const type: AccountType = baseType;
   return {
     uuid: user.id,
     publicId: publicIdFromUuid(user.id, type),

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { allCigars } from '@/lib/catalog';
+import { allCigars, featuredCigars } from '@/lib/catalog';
 import type { CatalogCigar } from '@/types';
 
 /**
@@ -111,7 +111,7 @@ function retrieve(p: Parsed, limit = 6): Array<CatalogCigar & { reasons: string[
   return out;
 }
 
-async function claudeReply(query: string, picks: Array<CatalogCigar & { reasons: string[] }>): Promise<string | null> {
+async function claudeReply(query: string, picks: Array<CatalogCigar & { reasons: string[] }>, opts?: { general?: boolean; liked?: string[] }): Promise<string | null> {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return null;
   try {
@@ -122,9 +122,15 @@ async function claudeReply(query: string, picks: Array<CatalogCigar & { reasons:
       headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 300,
-        system: 'You are the MyHumidor Cigar Concierge — warm, knowledgeable, concise (2-3 sentences). Never invent cigars; only discuss the provided picks.',
-        messages: [{ role: 'user', content: `Member asked: "${query}"\n\nCatalog picks:\n${list}\n\nWrite a short, friendly response introducing these picks.` }],
+        max_tokens: 320,
+        system: 'You are the MyHumidor Cigar Concierge — a warm, knowledgeable cigar expert. Be conversational and concise (2-4 sentences), like a good tobacconist recommending based on flavor, strength, budget, and the member\'s taste. Never invent cigars; only mention the provided picks. Asking one clarifying question is welcome.',
+        messages: [{ role: 'user', content:
+          `Member asked: "${query}"` +
+          (opts?.liked?.length ? `\n\nThe member has rated these highly: ${opts.liked.join(', ')}. Use their taste to personalise.` : '') +
+          `\n\nCatalog picks:\n${list}\n\n` +
+          (opts?.general
+            ? 'The request was open-ended, so converse naturally: acknowledge what they said, suggest 1-2 of these picks as a starting point, and ask ONE friendly follow-up question (flavor, strength, budget, or occasion) to narrow it down.'
+            : 'Introduce these picks warmly and say briefly why they fit.') }],
       }),
     });
     if (!res.ok) return null;
@@ -136,21 +142,24 @@ async function claudeReply(query: string, picks: Array<CatalogCigar & { reasons:
 
 export async function POST(req: Request) {
   try {
-    const { query } = (await req.json()) as { query?: string };
-    if (!query?.trim()) return NextResponse.json({ reply: 'Tell me what you\'re in the mood for.', picks: [] });
+    const { query, liked } = (await req.json()) as { query?: string; liked?: string[] };
+    if (!query?.trim()) return NextResponse.json({ reply: 'Tell me what you\'re in the mood for — a flavor, a budget, an occasion, or a brand you already love.', picks: [] });
 
     const parsed = parse(query);
-    const picks = retrieve(parsed);
+    let picks = retrieve(parsed);
+    let general = false;
 
+    // No clean keyword match → don't dead-end. Recommend from featured picks and
+    // let the concierge converse / ask a follow-up instead of "I couldn't find…".
     if (picks.length === 0) {
-      return NextResponse.json({
-        reply: "I couldn't find a clean match for that in the catalog. Try naming a flavor (cocoa, pepper, cream…), a country, a budget, or a brand you already enjoy.",
-        picks: [],
-      });
+      general = true;
+      picks = featuredCigars(6).map((c) => ({ ...c, reasons: [] as string[] }));
     }
 
-    const ai = await claudeReply(query, picks);
-    const reply = ai ?? buildTemplateReply(parsed, picks);
+    const ai = await claudeReply(query, picks, { general, liked: Array.isArray(liked) ? liked.slice(0, 12) : [] });
+    const reply = ai ?? (general
+      ? `I don't have your exact request pinned down yet, but here are a few worth a look: ${picks.slice(0, 3).map((x) => `${x.brand} ${x.name}`).join('; ')}. Tell me a flavor, strength, or budget and I'll tighten it up.`
+      : buildTemplateReply(parsed, picks));
     return NextResponse.json({ reply, picks: picks.map((p) => ({
       slug: p.slug, brand: p.brand, name: p.name, country: p.country, size: p.size,
       price: p.price ?? null, image_url: p.image_url ?? null, reasons: p.reasons,

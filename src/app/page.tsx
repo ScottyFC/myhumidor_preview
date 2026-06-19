@@ -1,12 +1,13 @@
 import Link from 'next/link';
-import { ArrowRight, MapPin, Tv, Flame, BadgeCheck } from 'lucide-react';
-import { featuredCigars, featuredLounges, allCigars, allStores } from '@/lib/catalog';
+import { ArrowRight, MapPin, Tv, Flame, BadgeCheck, Award } from 'lucide-react';
+import { featuredCigars, featuredLounges, featuredBrands, allCigars, allStores } from '@/lib/catalog';
 import { boostedLounges } from '@/lib/featured-server';
 import { applyOverrides } from '@/lib/overrides';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandTile } from '@/components/BrandTile';
 import { CigarThumb } from '@/components/CigarThumb';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
+import { FeaturedBrands } from '@/components/FeaturedBrands';
 import { AutoScrollRow } from '@/components/AutoScrollRow';
 import { AficionadoSection } from '@/components/AficionadoSection';
 import { NativeHome } from '@/components/NativeHome';
@@ -21,6 +22,7 @@ export default async function HomePage() {
   const browse = allFeatured.slice(12, 17);
   const boosted = await boostedLounges(4);
   const baseLounges = featuredLounges(8);
+  const brands = featuredBrands(14);
   // Credit-boosted lounges lead the carousel; fill the rest with the daily picks.
   const seen = new Set(boosted.map((l) => l.slug));
   const lounges = [...boosted, ...baseLounges.filter((l) => !seen.has(l.slug))].slice(0, 8);
@@ -113,6 +115,19 @@ export default async function HomePage() {
             </Link>
           ))}
         </AutoScrollRow>
+      </section>
+
+      <Rule />
+
+      {/* ─── FEATURED BRANDS ──────────────────────────────────────────── */}
+      <section className="py-10">
+        <SectionHeader
+          title="Featured Brands"
+          subtitle="Houses worth exploring"
+          href="/search"
+          icon={<Award size={14} strokeWidth={1.5} className="text-ember-400" />}
+        />
+        <FeaturedBrands brands={brands} />
       </section>
 
       <Rule />

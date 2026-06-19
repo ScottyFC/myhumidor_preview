@@ -1,5 +1,6 @@
 'use client';
 
+import { searchCatalogCigarsRemote } from '@/lib/db';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
@@ -502,12 +503,17 @@ function CatalogSearch({
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/cigars?q=${encodeURIComponent(q)}&limit=12`);
-        const data = await res.json();
-        if (id === reqId.current) {
-          setResults(data.items ?? []);
-          setTotal(data.total ?? 0);
-        }
+        const [staticRes, dbCigars] = await Promise.all([
+          fetch(`/api/cigars?q=${encodeURIComponent(q)}&limit=12`).then((r) => r.json()),
+          searchCatalogCigarsRemote(q, 8),
+        ]);
+        if (id !== reqId.current) return;
+        const staticItems: CatalogCigar[] = staticRes.items ?? [];
+        const key = (x: CatalogCigar) => `${x.brand}|${x.name}`.toLowerCase().replace(/\s+/g, ' ').trim();
+        const seen = new Set<string>();
+        const merged = [...staticItems, ...dbCigars].filter((x) => { const k = key(x); if (seen.has(k)) return false; seen.add(k); return true; });
+        setResults(merged.slice(0, 12));
+        setTotal(Math.max(staticRes.total ?? 0, merged.length));
       } finally {
         if (id === reqId.current) setLoading(false);
       }

@@ -8,6 +8,13 @@ import { cn } from '@/lib/utils';
 import { submitCigar, type SubmitResult } from '@/lib/submissions';
 import { subscribeAuth } from '@/lib/auth';
 
+const FLAVOR_NOTES = [
+  'Earth', 'Leather', 'Cedar', 'Oak', 'Pepper', 'Spice', 'Coffee', 'Espresso',
+  'Cocoa', 'Chocolate', 'Cream', 'Nuts', 'Almond', 'Caramel', 'Honey', 'Vanilla',
+  'Citrus', 'Floral', 'Hay', 'Toast', 'Fruit', 'Raisin', 'Molasses', 'Tobacco',
+  'Barnyard', 'Mineral', 'Char', 'Sweet',
+];
+
 const COMMON_SIZES = [
   'Robusto', 'Toro', 'Churchill', 'Corona', 'Torpedo', 'Figurado',
   'Lonsdale', 'Gordo', 'Petit Corona', 'Double Corona', 'Perfecto', 'Lancero',
@@ -75,6 +82,8 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
     reader.readAsDataURL(file);
   }
 
+  const [flavors, setFlavors] = useState<string[]>([]);
+  const toggleFlavor = (f: string) => setFlavors((cur) => cur.includes(f) ? cur.filter((x) => x !== f) : cur.length >= 8 ? cur : [...cur, f]);
   const valid = brand.trim() && name.trim() && size.trim();
 
   async function submit() {
@@ -94,6 +103,7 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
       photoDataUrl: photo,
       notes: notes.trim() || undefined,
       buyUrl: buyUrl.trim() || undefined,
+      flavorTags: flavors.length ? flavors : undefined,
     });
     setSubmitting(false);
     setResult(res);
@@ -187,6 +197,24 @@ export function SubmitCigar({ initialName = '' }: { initialName?: string }) {
             <option value="">Select…</option>
             {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
+        </Field>
+        <Field label={`Flavor profile${flavors.length ? ` (${flavors.length})` : ''}`}>
+          <div className="flex flex-wrap gap-1.5">
+            {FLAVOR_NOTES.map((f) => {
+              const on = flavors.includes(f);
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => toggleFlavor(f)}
+                  className={`rounded-full border-[0.5px] px-3 py-1 text-xs transition ${on ? 'border-ember-400 bg-ember-400/15 text-ember-100' : 'border-ember-400/20 text-smoke-300 hover:border-ember-400/50'}`}
+                >
+                  {f}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1 text-[11px] text-smoke-500">Pick up to 8 notes that describe the smoke.</p>
         </Field>
         <Field label="MSRP (USD)">
           <input value={price} onChange={(e) => setPrice(e.target.value)} type="number" min="0" step="0.25" className={inputCls} placeholder="12.50" />
