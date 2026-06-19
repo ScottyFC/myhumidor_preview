@@ -1513,6 +1513,8 @@ export type Database = {
           plan_status: string | null
           plan_renews_at: string | null
           chain_id: string | null
+          hide_email: boolean
+          banner_url: string | null
           city: string
           created_at: string
           credits: number
@@ -1549,6 +1551,8 @@ export type Database = {
           plan_status?: string | null
           plan_renews_at?: string | null
           chain_id?: string | null
+          hide_email?: boolean
+          banner_url?: string | null
           city: string
           created_at?: string
           credits?: number
@@ -1585,6 +1589,8 @@ export type Database = {
           plan_status?: string | null
           plan_renews_at?: string | null
           chain_id?: string | null
+          hide_email?: boolean
+          banner_url?: string | null
           city?: string
           created_at?: string
           credits?: number
@@ -2588,7 +2594,7 @@ export type Database = {
         Returns: undefined
       }
       update_lounge_details: {
-        Args: { p_slug: string; p_hours_json?: Json | null; p_serves_food?: boolean | null; p_menu_url?: string | null }
+        Args: { p_slug: string; p_hours_json?: Json | null; p_serves_food?: boolean | null; p_menu_url?: string | null; p_hide_email?: boolean | null; p_banner_url?: string | null }
         Returns: undefined
       }
       admin_set_certified: {

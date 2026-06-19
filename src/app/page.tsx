@@ -209,7 +209,7 @@ export default async function HomePage() {
 
       {/* ─── RECENTLY ADDED ──────────────────────────────────────────────── */}
       <section className="py-12">
-        <RecentlyAdded cigars members />
+        <RecentlyAdded cigars />
       </section>
 
       <Rule />

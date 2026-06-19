@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Clock, UtensilsCrossed, Upload, Loader2, Check } from 'lucide-react';
+import { Clock, UtensilsCrossed, Upload, Loader2, Check, Mail, Image as ImageIcon } from 'lucide-react';
 import { supabaseBrowser, isSupabaseConfigured } from '@/lib/supabase';
-import { getMyLounges, updateLoungeDetails, uploadMenuPdf, type LoungeHours } from '@/lib/lounges-owner';
+import { getMyLounges, updateLoungeDetails, uploadMenuPdf, uploadBannerImage, type LoungeHours } from '@/lib/lounges-owner';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -16,6 +16,8 @@ export function LoungeDetailsEditor() {
   const [hours, setHours] = useState<LoungeHours>({});
   const [servesFood, setServesFood] = useState(false);
   const [menuUrl, setMenuUrl] = useState<string | null>(null);
+  const [hideEmail, setHideEmail] = useState(false);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -27,11 +29,13 @@ export function LoungeDetailsEditor() {
       setSlug(l.slug); setName(l.name); setCertified(!!l.certified);
       if (isSupabaseConfigured) {
         const { data } = await supabaseBrowser().from('lounges')
-          .select('hours_json, serves_food, menu_url').eq('slug', l.slug).single();
+          .select('hours_json, serves_food, menu_url, hide_email, banner_url').eq('slug', l.slug).single();
         if (data) {
           setHours((data.hours_json as LoungeHours) ?? {});
           setServesFood(!!data.serves_food);
           setMenuUrl(data.menu_url ?? null);
+          setHideEmail(!!data.hide_email);
+          setBannerUrl(data.banner_url ?? null);
         }
       }
     })();
@@ -41,7 +45,7 @@ export function LoungeDetailsEditor() {
 
   async function save() {
     setBusy(true); setSaved(false);
-    const ok = await updateLoungeDetails(slug!, { hoursJson: hours, servesFood: certified ? servesFood : undefined, menuUrl: certified ? menuUrl : undefined });
+    const ok = await updateLoungeDetails(slug!, { hoursJson: hours, servesFood: certified ? servesFood : undefined, menuUrl: certified ? menuUrl : undefined, hideEmail: certified ? hideEmail : undefined, bannerUrl: certified ? bannerUrl : undefined });
     setBusy(false);
     if (ok) { setSaved(true); setTimeout(() => setSaved(false), 1500); }
   }
@@ -52,6 +56,14 @@ export function LoungeDetailsEditor() {
     const url = await uploadMenuPdf(file);
     setBusy(false);
     if (url) setMenuUrl(url);
+  }
+
+  async function onBanner(file?: File) {
+    if (!file) return;
+    setBusy(true);
+    const url = await uploadBannerImage(file);
+    setBusy(false);
+    if (url) setBannerUrl(url);
   }
 
   return (
@@ -90,6 +102,24 @@ export function LoungeDetailsEditor() {
               {menuUrl && <a href={menuUrl} target="_blank" rel="noreferrer" className="ml-3 text-xs text-ember-400 underline">View current menu</a>}
             </div>
           )}
+
+          <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm text-smoke-200">
+            <input type="checkbox" checked={hideEmail} onChange={(e) => setHideEmail(e.target.checked)} className="accent-ember-400" />
+            <Mail size={14} className="text-ember-400" /> Hide my email address on my public page
+          </label>
+
+          <div className="mt-4">
+            <div className="mb-1 text-sm text-smoke-200">Banner image</div>
+            {bannerUrl && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={bannerUrl} alt="Banner preview" className="mb-2 aspect-[3/1] w-full rounded-lg border-[0.5px] border-ember-400/15 object-cover" />
+            )}
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/30 px-3 py-2 text-xs text-ember-100 hover:bg-ember-400/10">
+              <ImageIcon size={13} /> {bannerUrl ? 'Replace banner' : 'Upload banner'}
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => onBanner(e.target.files?.[0])} />
+            </label>
+            <p className="mt-1 text-[11px] text-smoke-500">Wide image (3:1) shown at the top of your lounge page.</p>
+          </div>
         </div>
       ) : (
         <p className="mt-4 text-xs text-smoke-500">Food badge and menu uploads are available on certified lounges.</p>

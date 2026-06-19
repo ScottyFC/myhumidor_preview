@@ -29,7 +29,7 @@ export function MobileTopBar() {
   // No top bar on the login / auth / legal screens.
   if (AUTH_ROUTES.some((r) => pathname.startsWith(r))) return null;
 
-  const isRoot = ['/', '/search', '/humidor', '/lounges', '/profile', '/dashboard', '/top', '/map'].includes(pathname);
+  const isRoot = ['/', '/search', '/humidor', '/lounges', '/profile', '/dashboard', '/top'].includes(pathname);
 
   async function logout() {
     setMenuOpen(false);

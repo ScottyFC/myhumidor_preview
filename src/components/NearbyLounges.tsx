@@ -47,11 +47,6 @@ export function NearbyLounges() {
             {state === 'locating' ? <Loader2 size={14} className="animate-spin" /> : <LocateFixed size={14} strokeWidth={1.5} />}
             Find lounges near me
           </button>
-          {origin && (
-            <Link href={`/map?lat=${origin.lat}&lng=${origin.lng}`} className="btn-ghost shrink-0 text-sm">
-              Open map
-            </Link>
-          )}
         </div>
       </div>
 

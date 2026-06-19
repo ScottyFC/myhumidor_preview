@@ -16,7 +16,6 @@ const CONSUMER_TABS = [
   { href: '/feed', label: 'Feed', icon: Newspaper },
   { href: '/top', label: 'Cigars', icon: Flame },
   { href: '/search', label: 'Search', icon: Search },
-  { href: '/map', label: 'Map', icon: MapPin },
   { href: '/lounges', label: 'Lounges', icon: Store },
 ];
 
@@ -24,7 +23,6 @@ const LOUNGE_TABS = [
   { href: '/feed', label: 'Feed', icon: Newspaper },
   { href: '/top', label: 'Cigars', icon: Flame },
   { href: '/search', label: 'Search', icon: Search },
-  { href: '/map', label: 'Map', icon: MapPin },
   { href: '/lounges', label: 'Lounges', icon: Store },
 ];
 

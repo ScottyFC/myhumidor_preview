@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Clock, Sparkles, BadgeCheck, Gift, ShieldOff, Crown, Check } from 'lucide-react';
 import { subscribeAficionado } from '@/lib/aficionado';
+import { subscribeAuth } from '@/lib/auth';
 
 const PERKS = [
   { icon: Clock, title: 'Aging Tracker', body: 'Know exactly when each cigar enters its prime smoking window.' },
@@ -16,7 +17,12 @@ const PERKS = [
 
 export function AficionadoSection() {
   const [member, setMember] = useState(false);
+  const [isRetailer, setIsRetailer] = useState(false);
   useEffect(() => subscribeAficionado(setMember), []);
+  useEffect(() => subscribeAuth((s) => setIsRetailer(s?.type === 'retailer')), []);
+
+  // Aficionado is a member-only upgrade — never shown to retailer accounts.
+  if (isRetailer) return null;
 
   return (
     <section className="py-12">

@@ -9,6 +9,7 @@ import { findCatalogStoreBySlug } from '@/lib/catalog';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 import { BrandTile } from '@/components/BrandTile';
 import { LoungeMenu } from '@/components/LoungeMenu';
+import { ViewMenuLink } from '@/components/ViewMenuLink';
 import { AdminOnlyId } from '@/components/AdminOnlyId';
 import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
 import { LoungePosts } from '@/components/LoungePosts';
@@ -31,6 +32,8 @@ interface LoungeView extends CatalogStore {
   servesFood?: boolean;
   menuUrl?: string;
   chainId?: string;
+  hideEmail?: boolean;
+  bannerUrl?: string;
 }
 
 export default async function LoungePage({ params }: PageProps) {
@@ -43,7 +46,7 @@ export default async function LoungePage({ params }: PageProps) {
     const sb = await supabaseServer();
     const { data } = await sb
       .from('lounges')
-      .select('id, slug, name, address, city, state, phone, email, website, image_url, verified, certified, venue_type, lat, lng, hours_json, serves_food, menu_url, chain_id')
+      .select('id, slug, name, address, city, state, phone, email, website, image_url, verified, certified, venue_type, lat, lng, hours_json, serves_food, menu_url, chain_id, hide_email, banner_url')
       .eq('slug', slug)
       .single();
     if (data) {
@@ -55,6 +58,7 @@ export default async function LoungePage({ params }: PageProps) {
         image_url: data.image_url ?? null, verified: data.verified ?? false,
         certified: data.certified ?? false, venue_type: (data.venue_type as 'lounge'|'retail'|'both') ?? 'lounge', lat: data.lat ?? 0, lng: data.lng ?? 0,
         chainId: data.chain_id ?? undefined,
+        hideEmail: !!data.hide_email, bannerUrl: data.banner_url ?? undefined,
       } as LoungeView;
     }
   }
@@ -82,6 +86,13 @@ export default async function LoungePage({ params }: PageProps) {
       </Link>
 
       {/* Header */}
+      {lounge.certified && lounge.bannerUrl && (
+        <div className="relative mb-5 aspect-[3/1] w-full overflow-hidden rounded-2xl border-[0.5px] border-ember-400/15">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={lounge.bannerUrl} alt={`${lounge.name} banner`} className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent" />
+        </div>
+      )}
       {lounge.certified && <EliteBanner kind="certified" />}
       <header className="border-b border-ember-400/15 pb-8">
         <div className="flex items-center gap-4">
@@ -128,12 +139,14 @@ export default async function LoungePage({ params }: PageProps) {
           {lounge.lat != null && lounge.lng != null && (lounge.lat !== 0 || lounge.lng !== 0) && (
             <div className="flex items-center gap-2">
               <Navigation size={14} strokeWidth={1.5} className="text-ember-400" />
-              <Link
-                href={`/map?lat=${lounge.lat}&lng=${lounge.lng}&name=${encodeURIComponent(lounge.name)}`}
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress || `${lounge.lat},${lounge.lng}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-ember-100 underline-offset-2 hover:underline"
               >
-                View on the map
-              </Link>
+                View on Google Maps
+              </a>
             </div>
           )}
           {lounge.phone && (
@@ -141,7 +154,7 @@ export default async function LoungePage({ params }: PageProps) {
               <Phone size={14} strokeWidth={1.5} className="text-ember-400" /> {lounge.phone}
             </div>
           )}
-          {lounge.email && (
+          {lounge.email && !lounge.hideEmail && (
             <div className="flex items-center gap-2">
               <Mail size={14} strokeWidth={1.5} className="text-ember-400" />
               <a href={`mailto:${lounge.email}`} className="hover:text-ember-100">{lounge.email}</a>
@@ -174,7 +187,7 @@ export default async function LoungePage({ params }: PageProps) {
             <div className="flex items-center gap-2">
               <UtensilsCrossed size={14} strokeWidth={1.5} className="text-ember-400" />
               <span className="text-smoke-200">Serves food</span>
-              {lounge.menuUrl && <a href={lounge.menuUrl} target="_blank" rel="noopener noreferrer" className="text-ember-400 underline">· View menu</a>}
+              {lounge.menuUrl && <ViewMenuLink url={lounge.menuUrl} />}
             </div>
           )}
           {lounge.hours && (

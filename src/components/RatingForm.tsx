@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useAuthGate } from '@/lib/use-auth-gate';
+import { subscribeAuth } from '@/lib/auth';
 import { Star, Check, ImagePlus, X, MapPin, Loader2 } from 'lucide-react';
 import { computeOverall, cn } from '@/lib/utils';
 import { setRating, uploadRatingPhoto } from '@/lib/ratings';
@@ -32,6 +33,8 @@ interface Props {
 
 export function RatingForm({ seed }: Props) {
   const gate = useAuthGate();
+  const [isRetailer, setIsRetailer] = useState(false);
+  useEffect(() => subscribeAuth((s) => setIsRetailer(s?.type === 'retailer')), []);
   const [flavor, setFlavor] = useState(0);
   const [burn, setBurn] = useState(0);
   const [appearance, setAppearance] = useState(0);
@@ -117,6 +120,14 @@ export function RatingForm({ seed }: Props) {
         <Check className="mx-auto text-ember-400" size={32} strokeWidth={1.5} />
         <div className="font-display mt-3 text-lg">Rating saved</div>
         <div className="text-sm text-smoke-400 mt-1 tabular">Overall: {overall.toFixed(1)} / 5</div>
+      </div>
+    );
+  }
+
+  if (isRetailer) {
+    return (
+      <div className="rounded-lg border-[0.5px] border-ember-400/15 bg-char/40 p-5 text-sm text-smoke-400">
+        Ratings are a member feature. Lounge accounts manage their listing and inventory from the dashboard.
       </div>
     );
   }

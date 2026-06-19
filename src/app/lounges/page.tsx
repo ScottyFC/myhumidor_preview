@@ -28,8 +28,7 @@ export default async function LoungesPage() {
         <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">Lounges</h1>
         <p className="mt-3 max-w-2xl text-smoke-200">
           {stores.toLocaleString()} cigar lounges and shops across the country. Tap one for its
-          profile, hours, and menu. Find the closest ones on the{' '}
-          <Link href="/map" className="text-ember-100 underline-offset-2 hover:underline">map</Link>.
+          profile, hours, and menu.
         </p>
       </header>
 

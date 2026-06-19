@@ -1,3 +1,33 @@
+## Lounge/account batch (run phase77.sql)
+
+1. **No ratings for retailers** — the rating form shows a "member feature" note to
+   lounge accounts instead of the form.
+2. **Auto-login after email confirmation** — the `/auth/callback` route now handles
+   both `code` (PKCE/OAuth) and `token_hash` (`verifyOtp`) email links, so clicking
+   the confirmation link signs the user in and lands retailers on `/verify`.
+3. **Hide email on lounge page** (certified) — `lounges.hide_email` + a dashboard
+   toggle; the public page omits the email when set.
+4. **Food menu for registered users** — `ViewMenuLink` shows "View menu" to signed-in
+   users and "Sign in to view menu" otherwise.
+5. **Lounge banner image** (certified) — `lounges.banner_url` + dashboard upload
+   (to the submissions bucket); shown as a 3:1 hero on the lounge page.
+6. **Map feature removed** — `/map` page deleted; map tab/tile/links gone; the lounge
+   page now links out to **Google Maps** (`/maps/search?query=<address>`). Mapbox
+   *geocoding* for address autocomplete is kept (it's not a map view).
+7. **Plans hidden once selected** — `CertificationTiers` hides on the dashboard when
+   `cert_tier <> none` (managed thereafter from My Plan).
+8. **Verify button hidden once verified** — already gated by `loungeDone`
+   (verified/certified) in the toolbar.
+9. **Aficionado upgrade hidden for retailers** — `AficionadoSection` returns null for
+   retailer accounts.
+10. **New Members moved to Feed** — removed from home; now on `/feed` for all users.
+
+`update_lounge_details` extended with `p_hide_email` + `p_banner_url`.
+Caveats: the `verifyOtp` callback path runs on Vercel (can't be tested in-sandbox) —
+also set the email redirect/allow URLs to `/auth/callback` in Supabase Auth settings.
+Banner/menu uploads need the `submissions` storage bucket to exist and be public.
+
+> Run `supabase/migrations/phase77.sql`.
 ## CAO + Camacho brand normalization (static catalog — redeploy)
 
 Normalized the static catalog to match Supabase: every CAO* brand → **`CAO`** (361

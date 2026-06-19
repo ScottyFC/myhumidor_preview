@@ -11,7 +11,7 @@ import { usePathname } from 'next/navigation';
  */
 const ACCENTS: { test: (p: string) => boolean; rgb: string }[] = [
   { test: (p) => p.startsWith('/top') || p.startsWith('/cigars') || p.startsWith('/brands'), rgb: '193, 116, 60' }, // ember/copper
-  { test: (p) => p.startsWith('/lounges') || p.startsWith('/map'), rgb: '176, 141, 87' },                           // leather
+  { test: (p) => p.startsWith('/lounges'), rgb: '176, 141, 87' },                           // leather
   { test: (p) => p.startsWith('/humidor'), rgb: '212, 175, 110' },                                                  // aged gold
   { test: (p) => p.startsWith('/feed'), rgb: '150, 134, 122' },                                                     // smoke
   { test: (p) => p.startsWith('/search'), rgb: '203, 162, 92' },                                                    // amber

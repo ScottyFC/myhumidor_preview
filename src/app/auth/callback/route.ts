@@ -9,34 +9,43 @@ import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const type = searchParams.get('type'); // 'consumer' | 'retailer'
+  const tokenHash = searchParams.get('token_hash');
+  const otpType = searchParams.get('type') as 'signup' | 'email' | 'recovery' | 'invite' | 'magiclink' | null;
+  const type = searchParams.get('type'); // also used as account type ('consumer'|'retailer')
 
-  if (!isSupabaseConfigured || !code) {
+  if (!isSupabaseConfigured || (!code && !tokenHash)) {
     return NextResponse.redirect(`${origin}/register`);
   }
 
   const supabase = await supabaseServer();
-  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
-  if (error || !data.user) {
-    return NextResponse.redirect(`${origin}/register?error=auth`);
+  // Email-confirmation links use token_hash; OAuth/PKCE uses code. Handle both so
+  // the user is always signed in after clicking the confirmation link.
+  let userId: string | undefined;
+  let userMeta: Record<string, unknown> | undefined;
+  if (tokenHash && (otpType === 'signup' || otpType === 'email' || otpType === 'invite' || otpType === 'magiclink' || otpType === 'recovery')) {
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: otpType });
+    if (error || !data.user) return NextResponse.redirect(`${origin}/register?error=auth`);
+    userId = data.user.id; userMeta = data.user.user_metadata ?? undefined;
+  } else if (code) {
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error || !data.user) return NextResponse.redirect(`${origin}/register?error=auth`);
+    userId = data.user.id; userMeta = data.user.user_metadata ?? undefined;
   }
+  if (!userId) return NextResponse.redirect(`${origin}/register?error=auth`);
+
+  const acctType = (userMeta?.account_type as string) || type;
+  const isLounge = acctType === 'retailer' || acctType === 'lounge';
 
   // First-time social signup: persist the chosen account type.
-  const current = data.user.user_metadata?.account_type;
-  if (type && current !== type) {
+  if (type && userMeta?.account_type !== type) {
     await supabase.auth.updateUser({ data: { account_type: type } });
     await supabase
       .from('profiles')
-      .update({
-        account_type: type,
-        role: (type === 'retailer' || type === 'lounge') ? 'lounge_owner' : 'consumer',
-      })
-      .eq('id', data.user.id);
+      .update({ account_type: type, role: isLounge ? 'lounge_owner' : 'consumer' })
+      .eq('id', userId);
   }
 
-  // After confirming their email, retailers continue to plans/certification;
-  // members land on the home page.
-  const dest = (type === 'retailer' || type === 'lounge') ? '/verify' : '/';
-  return NextResponse.redirect(`${origin}${dest}`);
+  // Retailers continue to verification (now signed in); members land home.
+  return NextResponse.redirect(`${origin}${isLounge ? '/verify' : '/'}`);
 }

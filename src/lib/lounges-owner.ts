@@ -221,7 +221,7 @@ export async function getMyCertifiedLounge(): Promise<{ slug: string; name: stri
 export interface LoungeHours { [day: string]: string } // e.g. { Mon: '10:00–22:00', Tue: 'Closed' }
 
 export async function updateLoungeDetails(
-  slug: string, d: { hoursJson?: LoungeHours; servesFood?: boolean; menuUrl?: string | null },
+  slug: string, d: { hoursJson?: LoungeHours; servesFood?: boolean; menuUrl?: string | null; hideEmail?: boolean; bannerUrl?: string | null },
 ): Promise<boolean> {
   if (!isSupabaseConfigured) return false;
   const { error } = await supabaseBrowser().rpc('update_lounge_details', {
@@ -229,9 +229,24 @@ export async function updateLoungeDetails(
     p_hours_json: (d.hoursJson ?? null) as never,
     p_serves_food: d.servesFood ?? null,
     p_menu_url: d.menuUrl ?? null,
+    p_hide_email: d.hideEmail ?? null,
+    p_banner_url: d.bannerUrl ?? null,
   });
   if (error) { console.error('[lounge] update details failed:', error.message); return false; }
   return true;
+}
+
+/** Upload a lounge banner image to the submissions bucket; returns a public URL. */
+export async function uploadBannerImage(file: File): Promise<string | null> {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const sb = supabaseBrowser();
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `banners/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await sb.storage.from('submissions').upload(path, file, { contentType: file.type || 'image/jpeg', upsert: true });
+    if (error) { console.error('[lounge] banner upload failed:', error.message); return null; }
+    return sb.storage.from('submissions').getPublicUrl(path).data.publicUrl;
+  } catch { return null; }
 }
 
 /** Upload a menu PDF to the submissions bucket; returns a public URL or null. */

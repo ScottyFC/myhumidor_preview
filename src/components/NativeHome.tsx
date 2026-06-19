@@ -14,7 +14,6 @@ const TILES: { label: string; href: string; icon: typeof Flame; tint: string }[]
   { label: 'Top Rated', href: '/top', icon: Flame, tint: 'text-ember-400' },
   { label: 'For You', href: '/top', icon: Heart, tint: 'text-ember-400' },
   { label: 'Lounges', href: '/lounges', icon: Store, tint: 'text-ember-400' },
-  { label: 'Map', href: '/map', icon: MapPin, tint: 'text-ember-400' },
   { label: 'Add Cigar', href: '/submit', icon: Plus, tint: 'text-ember-400' },
   { label: 'Concierge', href: '/top', icon: Sparkles, tint: 'text-ember-400' },
   { label: 'Aficionados', href: '/profile', icon: Crown, tint: 'text-ember-400' },

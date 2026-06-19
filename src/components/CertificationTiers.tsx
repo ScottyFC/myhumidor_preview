@@ -54,6 +54,8 @@ export function CertificationTiers() {
 
   if (loading) return null;
   if (!lounge) return null;
+  // Once a plan is selected, plans are managed from My Plan — hide here.
+  if ((lounge.certTier as string) !== 'none') return null;
 
   // Not verified yet → certification isn't available; point at the free step.
   if (!lounge.verified) {
