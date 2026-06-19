@@ -1,3 +1,29 @@
+## Group 2 — Plans & billing (run phase73.sql)
+
+A real **My Plan** page (`/dashboard/plan`): tier cards (Starter $49 / Pro $99 /
+Premier $199 — shared in `src/lib/billing.ts`), current-plan highlight, upgrade/
+switch buttons, a "Manage billing & invoices" button, and success/cancel handling.
+
+**How payment is wired (graceful):**
+- Choosing a tier calls `/api/billing/checkout`. If Stripe is configured it returns
+  a Checkout URL and redirects; if not, it returns `{ fallback:true }` and the page
+  applies the tier change directly (the existing free `set_cert_tier`) so the app
+  is fully usable today.
+- "Manage billing" → `/api/billing/portal` (Stripe billing portal) when configured.
+- `/api/billing/webhook` verifies the signature and reconciles subscription state →
+  lounge tier via `billing_set_tier_by_customer` (service role). Lounges gained
+  `stripe_customer_id`, `stripe_subscription_id`, `plan_status`, `plan_renews_at`.
+
+**To turn on real billing (your part — needs a Stripe account):**
+1. Create 3 recurring Prices in Stripe (Starter/Pro/Premier).
+2. Set server env vars in Vercel: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
+   `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_PRO`, `STRIPE_PRICE_PREMIER`.
+3. Add a Stripe webhook → `https://www.myhumidor.shop/api/billing/webhook`
+   (events: `customer.subscription.created/updated/deleted`).
+4. Ensure `SUPABASE_SERVICE_KEY` is set (the webhook + owner checks use it).
+Until those exist, the plan UI works for free via the direct tier change.
+
+> Run `supabase/migrations/phase73.sql`.
 ## Group 5 — invites (run phase72.sql)
 
 - **Invite links prefill the email.** Admin **Invites** tab (`InviteManager`)

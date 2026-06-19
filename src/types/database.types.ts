@@ -1490,6 +1490,10 @@ export type Database = {
           hours_json: Json | null
           serves_food: boolean
           menu_url: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          plan_status: string | null
+          plan_renews_at: string | null
           city: string
           created_at: string
           credits: number
@@ -1521,6 +1525,10 @@ export type Database = {
           hours_json?: Json | null
           serves_food?: boolean
           menu_url?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          plan_status?: string | null
+          plan_renews_at?: string | null
           city: string
           created_at?: string
           credits?: number
@@ -1552,6 +1560,10 @@ export type Database = {
           hours_json?: Json | null
           serves_food?: boolean
           menu_url?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          plan_status?: string | null
+          plan_renews_at?: string | null
           city?: string
           created_at?: string
           credits?: number
@@ -2529,6 +2541,10 @@ export type Database = {
       set_catalog_override: {
         Args: { p_slug: string; p_brand?: string | null; p_name?: string | null; p_country?: string | null; p_price?: number | null; p_image_url?: string | null; p_buy_url?: string | null; p_removed?: boolean }
         Returns: string
+      }
+      billing_set_tier_by_customer: {
+        Args: { p_customer: string; p_tier: string; p_subscription?: string | null; p_status?: string | null; p_renews_at?: string | null }
+        Returns: undefined
       }
       update_lounge_details: {
         Args: { p_slug: string; p_hours_json?: Json | null; p_serves_food?: boolean | null; p_menu_url?: string | null }
