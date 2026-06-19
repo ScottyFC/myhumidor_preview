@@ -7,6 +7,9 @@ import type { UserRating } from './ratings';
 export type BadgeTier = 'bronze' | 'silver' | 'gold' | 'rare' | 'lounge';
 
 export interface BadgeDef {
+  status?: string;
+  needsArtwork?: boolean;
+  billable?: boolean;
   id: string;
   slug: string;
   name: string;
@@ -19,15 +22,15 @@ export interface BadgeDef {
 
 type Row = {
   id: string; slug: string; name: string; criteria: string | null;
-  tier: string | null; image_url: string | null; lounge_id: string | null; aficionado_only: boolean | null;
+  tier: string | null; image_url: string | null; lounge_id: string | null; aficionado_only: boolean | null; status?: string | null; needs_artwork?: boolean | null; billable?: boolean | null;
 };
 function rowTo(r: Row): BadgeDef {
   return {
     id: r.id, slug: r.slug, name: r.name, criteria: r.criteria ?? undefined,
-    tier: (r.tier as BadgeTier) ?? 'bronze', imageUrl: r.image_url ?? undefined, loungeId: r.lounge_id, aficionadoOnly: r.aficionado_only ?? false,
+    tier: (r.tier as BadgeTier) ?? 'bronze', imageUrl: r.image_url ?? undefined, loungeId: r.lounge_id, aficionadoOnly: r.aficionado_only ?? false, status: r.status ?? 'active', needsArtwork: !!r.needs_artwork, billable: !!r.billable,
   };
 }
-const SELECT = 'id, slug, name, criteria, tier, image_url, lounge_id, aficionado_only';
+const SELECT = 'id, slug, name, criteria, tier, image_url, lounge_id, aficionado_only, status, needs_artwork, billable';
 
 export async function listBadges(): Promise<BadgeDef[]> {
   if (!isSupabaseConfigured) return [];
@@ -212,18 +215,60 @@ export async function collectBadge(userId: string, badgeId: string): Promise<boo
   } catch { return false; }
 }
 
-export async function createLoungeBadge(input: { loungeId: string; name: string; description?: string; imageUrl?: string }): Promise<boolean> {
-  if (!isSupabaseConfigured) return false;
-  const slug = `lounge-${input.loungeId.slice(0, 8)}-${input.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`.slice(0, 60);
-  try {
-    const { error } = await supabaseBrowser().from('badges').insert({
-      slug, name: input.name, criteria: input.description || 'Collectible badge from this lounge.',
-      tier: 'rare', image_url: input.imageUrl || null, lounge_id: input.loungeId,
-    });
-    if (error) { console.error('[badges] create lounge badge failed:', error.message); return false; }
-    return true;
-  } catch { return false; }
+export async function createLoungeBadge(input: { loungeSlug: string; name: string; imageUrl?: string | null; needsArtwork?: boolean }): Promise<{ ok: boolean; billable?: boolean; status?: string; error?: string }> {
+  if (!isSupabaseConfigured) return { ok: false, error: 'Not connected.' };
+  const { data, error } = await supabaseBrowser().rpc('create_lounge_badge', {
+    p_slug: input.loungeSlug, p_name: input.name, p_image_url: input.imageUrl ?? null, p_needs_artwork: !!input.needsArtwork,
+  });
+  if (error) return { ok: false, error: error.message };
+  const d = (data ?? {}) as { billable?: boolean; status?: string };
+  return { ok: true, billable: d.billable, status: d.status };
 }
+
+/** Upload a transparent badge PNG; returns a public URL. */
+export async function uploadBadgeImage(file: File): Promise<string | null> {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const sb = supabaseBrowser();
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+    const path = `badges/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await sb.storage.from('submissions').upload(path, file, { contentType: file.type || 'image/png', upsert: true });
+    if (error) { console.error('[badges] image upload failed:', error.message); return null; }
+    return sb.storage.from('submissions').getPublicUrl(path).data.publicUrl;
+  } catch { return null; }
+}
+
+/** Award a lounge's active collectible badges to a user (called on check-in). */
+export async function awardLoungeBadgesOnCheckin(loungeId: string, userId: string): Promise<number> {
+  if (!isSupabaseConfigured || !loungeId || !userId) return 0;
+  try {
+    const sb = supabaseBrowser();
+    const { data } = await sb.from('badges').select('id, status').eq('lounge_id', loungeId).eq('status', 'active');
+    let n = 0;
+    for (const b of (data ?? []) as Array<{ id: string }>) {
+      const ok = await collectBadge(userId, b.id);
+      if (ok) n++;
+    }
+    return n;
+  } catch { return 0; }
+}
+
+/** Admin: badges awaiting artwork. */
+export async function listPendingBadgeArtwork(): Promise<Array<BadgeDef & { loungeName?: string }>> {
+  if (!isSupabaseConfigured) return [];
+  const sb = supabaseBrowser();
+  const { data } = await sb.from('badges').select(SELECT + ', lounges(name)').eq('status', 'pending_artwork');
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  return ((data ?? []) as any[]).map((r) => ({ ...rowTo(r), loungeName: r.lounges?.name }));
+}
+
+/** Admin: attach artwork + activate. */
+export async function setBadgeArtwork(badgeId: string, imageUrl: string): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  const { error } = await supabaseBrowser().rpc('admin_set_badge_artwork', { p_badge_id: badgeId, p_image_url: imageUrl });
+  return !error;
+}
+
 
 export const TIER_RING: Record<string, string> = {
   bronze: 'from-amber-700/60 to-amber-900/20',

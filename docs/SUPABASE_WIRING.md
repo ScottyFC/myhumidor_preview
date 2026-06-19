@@ -1,3 +1,46 @@
+## App fixes: location fallback, fixed toolbar, home tiles (no migration)
+
+- **Location fallback** — device location can fail in the webview, so the nearby
+  features now accept a **city or ZIP** entry (`geocodePlace` via Mapbox). Both
+  `WhereToBuyNearby` (cigar page) and `NearbyLounges` got the input, and
+  `NearbyLounges` now uses the cross-platform `getUserLocation()` (Capacitor plugin
+  on native) instead of the raw browser API — which is why it wasn't prompting in
+  the app.
+- **Bottom toolbar fixed** — the native top/bottom bars used `backdrop-blur` over
+  scrolling content, which smears milky-white in the iOS webview (the screenshot).
+  Both bars are now fully opaque (`bg-ink`, no blur), `z-50`, and pinned to their own
+  GPU layer (`translateZ(0)`), so they stay put and render cleanly across navigation.
+- **Home tiles** — removed the **Aficionados** tile and switched the launcher grid to
+  3 columns, so the remaining six (Top Rated, For You, Lounges, Add Cigar, Concierge,
+  My Humidor) sit in an even 3×2.
+
+Caveat: the city/ZIP fallback uses Mapbox geocoding, so `NEXT_PUBLIC_MAPBOX_TOKEN`
+must be set; without it the fallback can't resolve coordinates.
+## Custom collectible badges — Premier lounges (run phase78.sql)
+
+Premier lounge owners can create collectible badges that members **earn by checking
+in**. Built on the existing `badges` + `user_badges` tables.
+
+- **Dashboard → Collectible badges** (`LoungeBadges`, Premier-only): name the badge,
+  upload a **transparent PNG**, or tick "request our team to make one". States that
+  the **first badge is free; additional badges cost extra**.
+- **Creation** goes through `create_lounge_badge(p_slug, p_name, p_image_url,
+  p_needs_artwork)` — premier-gated + `can_manage_lounge`; first badge per lounge is
+  free, later ones flagged `billable`; no artwork → `status = pending_artwork`.
+- **Awarding**: `createCheckIn` now calls `awardLoungeBadgesOnCheckin`, granting the
+  lounge's `active` badges to the user (`user_badges`, self-insert RLS). Badges appear
+  on profiles via the existing badge display.
+- **Super-admin → Badge artwork**: `BadgeArtworkQueue` lists `pending_artwork` badges;
+  uploading a PNG calls `admin_set_badge_artwork` to attach art + activate. The count
+  also shows on the new admin **Overview**.
+- phase78 drops the old `badges_tier_check` so the `lounge` tier value is allowed.
+
+Caveats: **"additional badges cost extra" is stated and flagged (`billable`) but not
+yet charged** — wiring per-badge payment is a follow-up. Badge PNGs upload to the
+`submissions` bucket (must exist + be public). If phase78's constraint drop name
+differs in your DB, inserting the `lounge` tier could fail — check after running it.
+
+> Run `supabase/migrations/phase78.sql`.
 ## Admin overview + app splash + centered logo (no migration)
 
 - **Admin Overview** — a new default first tab on the admin page (`AdminOverview`)

@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
-import { Cigarette, Store, KeyRound, Building2, MessageSquare, Loader2, Inbox } from 'lucide-react';
+import { Cigarette, Store, KeyRound, Building2, MessageSquare, Loader2, Inbox, Award } from 'lucide-react';
 import { isSupabaseConfigured, supabaseBrowser } from '@/lib/supabase';
 
 const QUEUES = [
@@ -11,6 +11,7 @@ const QUEUES = [
   { key: 'claims',    label: 'Lounge claims',      table: 'lounge_claims',          status: 'pending', icon: KeyRound,      tab: 'claims' },
   { key: 'claimreqs', label: 'Bulk claim requests',table: 'lounge_claim_requests',  status: 'pending', icon: Building2,     tab: 'claimreqs' },
   { key: 'requests',  label: 'Change requests',    table: 'change_requests',        status: 'open',    icon: MessageSquare, tab: 'requests' },
+  { key: 'badgeart',  label: 'Badge artwork requests', table: 'badges',           status: 'pending_artwork', icon: Award, tab: 'badgeart' },
 ] as const;
 
 /** Super-admin overview: pending counts across every review queue. */

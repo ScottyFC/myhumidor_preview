@@ -38,7 +38,7 @@ export function MobileTopBar() {
   }
 
   return (
-    <header className="native-only native-topbar fixed inset-x-0 top-0 z-40 items-center justify-between border-b border-ember-400/15 bg-ink/95 px-3 backdrop-blur-lg">
+    <header className="native-only native-topbar fixed inset-x-0 top-0 z-50 items-center justify-between border-b border-ember-400/15 bg-ink px-3">
       <div className="relative flex h-14 w-full items-center justify-between">
         <div className="flex min-w-0 items-center gap-1">
           {!isRoot && (

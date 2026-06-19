@@ -2,32 +2,45 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { MapPin, Navigation, Loader2, Store } from 'lucide-react';
+import { MapPin, Navigation, Loader2, Store, Search } from 'lucide-react';
 import { getUserLocation } from '@/lib/geo';
+import { geocodePlace } from '@/lib/geocode';
 
 interface NearbyLounge { slug: string; name: string; address: string; price: number | null; inStock: boolean; distanceMi: number }
 
 /**
  * "Where to buy near you" — certified lounges within 25 miles that carry this
- * cigar. Location is requested only on tap (privacy), via the cross-platform geo
- * helper so it works in the apps too.
+ * cigar. Uses device location, with a city/ZIP entry as a fallback.
  */
 export function WhereToBuyNearby({ slug }: { slug: string }) {
   const [state, setState] = useState<'idle' | 'locating' | 'loading' | 'done' | 'denied'>('idle');
   const [items, setItems] = useState<NearbyLounge[]>([]);
+  const [place, setPlace] = useState('');
 
-  async function find() {
-    setState('locating');
-    const loc = await getUserLocation();
-    if ('error' in loc) { setState('denied'); return; }
+  async function run(lat: number, lng: number) {
     setState('loading');
     try {
-      const res = await fetch(`/api/cigars/${slug}/nearby?lat=${loc.lat}&lng=${loc.lng}`);
+      const res = await fetch(`/api/cigars/${slug}/nearby?lat=${lat}&lng=${lng}`);
       const data = await res.json();
       setItems(data.items ?? []);
     } finally {
       setState('done');
     }
+  }
+
+  async function find() {
+    setState('locating');
+    const loc = await getUserLocation();
+    if ('error' in loc) { setState('denied'); return; }
+    await run(loc.lat, loc.lng);
+  }
+
+  async function searchPlace() {
+    if (!place.trim()) return;
+    setState('locating');
+    const geo = await geocodePlace(place);
+    if (!geo) { setState('denied'); return; }
+    await run(geo.lat, geo.lng);
   }
 
   return (
@@ -39,15 +52,41 @@ export function WhereToBuyNearby({ slug }: { slug: string }) {
       <p className="mt-1 text-sm text-smoke-400">Certified lounges within 25 miles that carry this cigar.</p>
 
       {state === 'idle' && (
-        <button onClick={find} className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-ember-400 px-4 py-2 text-xs font-semibold text-paper hover:bg-ember-600">
-          <Navigation size={13} strokeWidth={1.75} /> Find lounges near me
-        </button>
+        <>
+          <button onClick={find} className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-ember-400 px-4 py-2 text-xs font-semibold text-paper hover:bg-ember-600">
+            <Navigation size={13} strokeWidth={1.75} /> Find lounges near me
+          </button>
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              value={place} onChange={(e) => setPlace(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') searchPlace(); }}
+              placeholder="or enter city or ZIP"
+              className="min-w-0 flex-1 rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-3 py-2 text-xs text-paper placeholder:text-smoke-500 focus:border-ember-400 focus:outline-none"
+            />
+            <button onClick={searchPlace} className="inline-flex shrink-0 items-center gap-1 rounded-md border-[0.5px] border-ember-400/30 px-3 py-2 text-xs text-ember-100 hover:bg-ember-400/10">
+              <Search size={12} /> Search
+            </button>
+          </div>
+        </>
       )}
       {(state === 'locating' || state === 'loading') && (
         <div className="mt-3 flex items-center gap-2 text-sm text-smoke-300"><Loader2 size={14} className="animate-spin text-ember-400" /> {state === 'locating' ? 'Getting your location…' : 'Searching nearby lounges…'}</div>
       )}
       {state === 'denied' && (
-        <p className="mt-3 text-sm text-smoke-400">Couldn’t access your location. Enable location access and try again.</p>
+        <div className="mt-3">
+          <p className="text-sm text-smoke-400">Couldn’t get your location. Enter a city or ZIP instead:</p>
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              value={place} onChange={(e) => setPlace(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') searchPlace(); }}
+              placeholder="City or ZIP"
+              className="min-w-0 flex-1 rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-3 py-2 text-xs text-paper placeholder:text-smoke-500 focus:border-ember-400 focus:outline-none"
+            />
+            <button onClick={searchPlace} className="inline-flex shrink-0 items-center gap-1 rounded-md bg-ember-400 px-3 py-2 text-xs font-semibold text-paper hover:bg-ember-600">
+              <Search size={12} /> Search
+            </button>
+          </div>
+        </div>
       )}
       {state === 'done' && items.length === 0 && (
         <p className="mt-3 text-sm text-smoke-400">No certified lounges within 25 miles list this cigar yet.</p>

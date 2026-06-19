@@ -190,3 +190,11 @@ body::before {
 
 /* Notification banner slide-in */
 @keyframes mh-slide-down { from { transform: translateY(-120%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* Keep the native bars on their own stable GPU layer so they never smear or
+   shift during route changes or momentum scroll (iOS WebKit fix). */
+.native-tabbar, .native-topbar {
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}

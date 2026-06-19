@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin, MessageSquare, History, KeyRound, ChevronDown, Megaphone, BarChart3, Crown, Upload, UserCog, Mail, Building2, Inbox } from 'lucide-react';
+import { Check, X, Loader2, ShieldCheck, Cigarette, Store, UserPlus, Trash2, BadgeCheck, MapPin, MessageSquare, History, KeyRound, ChevronDown, Megaphone, BarChart3, Crown, Upload, UserCog, Mail, Building2, Inbox, Award } from 'lucide-react';
 import { AdManager } from '@/components/AdManager';
 import { MemberVerify } from '@/components/MemberVerify';
 import { BulkCatalogTool } from '@/components/BulkCatalogTool';
@@ -13,6 +13,7 @@ import { LoungeOwnerControls } from '@/components/LoungeOwnerControls';
 import { InviteManager } from '@/components/InviteManager';
 import { ClaimRequestsQueue } from '@/components/ClaimRequestsQueue';
 import { AdminOverview } from '@/components/AdminOverview';
+import { BadgeArtworkQueue } from '@/components/BadgeArtworkQueue';
 import { AnalyticsPanel } from '@/components/AnalyticsPanel';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { isAdmin, isBootstrapAdmin, listAdmins, promoteAdmin, revokeAdmin, onAdminsChange } from '@/lib/admin';
@@ -36,7 +37,7 @@ import {
 } from '@/lib/submissions';
 import { cn } from '@/lib/utils';
 
-type Tab = 'overview' | 'cigars' | 'lounges' | 'claims' | 'certify' | 'requests' | 'log' | 'ads' | 'admins' | 'analytics' | 'members' | 'bulk' | 'notify' | 'owners' | 'invites' | 'claimreqs';
+type Tab = 'overview' | 'cigars' | 'lounges' | 'claims' | 'certify' | 'requests' | 'log' | 'ads' | 'admins' | 'analytics' | 'members' | 'bulk' | 'notify' | 'owners' | 'invites' | 'claimreqs' | 'badgeart';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -90,6 +91,7 @@ export default function AdminPage() {
     { id: 'owners', label: 'Cert & owners', icon: UserCog },
     { id: 'invites', label: 'Invites', icon: Mail },
     { id: 'claimreqs', label: 'Claim requests', icon: Building2 },
+    { id: 'badgeart', label: 'Badge artwork', icon: Award },
     { id: 'requests', label: 'Change requests', icon: MessageSquare },
     { id: 'log', label: 'Activity log', icon: History },
     { id: 'admins', label: 'Admins', icon: ShieldCheck },
@@ -137,6 +139,7 @@ export default function AdminPage() {
       {tab === 'owners' && <LoungeOwnerControls />}
       {tab === 'invites' && <InviteManager />}
       {tab === 'claimreqs' && <ClaimRequestsQueue />}
+      {tab === 'badgeart' && <BadgeArtworkQueue />}
       {tab === 'lounges' && <LoungeQueue />}
       {tab === 'claims' && <ClaimsQueue />}
       {tab === 'certify' && (

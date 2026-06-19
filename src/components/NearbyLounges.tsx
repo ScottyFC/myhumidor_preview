@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { LocateFixed, Loader2, MapPin, BadgeCheck } from 'lucide-react';
+import { LocateFixed, Loader2, MapPin, BadgeCheck, Search } from 'lucide-react';
+import { getUserLocation } from '@/lib/geo';
+import { geocodePlace } from '@/lib/geocode';
 import type { NearbyStore } from '@/lib/catalog';
 import { BrandTile } from '@/components/BrandTile';
 
@@ -10,29 +12,31 @@ export function NearbyLounges() {
   const [state, setState] = useState<'idle' | 'locating' | 'ready' | 'denied' | 'unsupported'>('idle');
   const [lounges, setLounges] = useState<NearbyStore[]>([]);
   const [origin, setOrigin] = useState<{ lat: number; lng: number } | null>(null);
+  const [place, setPlace] = useState('');
 
-  function findNearMe() {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-      setState('unsupported');
-      return;
-    }
+  async function loadNear(lat: number, lng: number) {
+    setOrigin({ lat, lng });
+    try {
+      const res = await fetch(`/api/stores/nearby?lat=${lat}&lng=${lng}&limit=8`);
+      const data = await res.json();
+      setLounges(data.items ?? []);
+    } catch { /* ignore */ }
+    setState('ready');
+  }
+
+  async function findNearMe() {
     setState('locating');
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const here = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        setOrigin(here);
-        try {
-          const res = await fetch(`/api/stores/nearby?lat=${here.lat}&lng=${here.lng}&limit=8`);
-          const data = await res.json();
-          setLounges(data.items ?? []);
-          setState('ready');
-        } catch {
-          setState('ready');
-        }
-      },
-      () => setState('denied'),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
+    const loc = await getUserLocation();
+    if ('error' in loc) { setState('denied'); return; }
+    await loadNear(loc.lat, loc.lng);
+  }
+
+  async function searchPlace() {
+    if (!place.trim()) return;
+    setState('locating');
+    const geo = await geocodePlace(place);
+    if (!geo) { setState('denied'); return; }
+    await loadNear(geo.lat, geo.lng);
   }
 
   return (
@@ -49,9 +53,20 @@ export function NearbyLounges() {
           </button>
         </div>
       </div>
+      <div className="mt-3 flex items-center gap-2">
+        <input
+          value={place} onChange={(e) => setPlace(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') searchPlace(); }}
+          placeholder="or enter a city or ZIP"
+          className="min-w-0 flex-1 rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-3 py-2 text-sm text-paper placeholder:text-smoke-500 focus:border-ember-400 focus:outline-none"
+        />
+        <button onClick={searchPlace} className="inline-flex shrink-0 items-center gap-1 rounded-md border-[0.5px] border-ember-400/30 px-3 py-2 text-sm text-ember-100 hover:bg-ember-400/10">
+          <Search size={14} /> Search
+        </button>
+      </div>
 
       {state === 'denied' && (
-        <p className="mt-3 text-sm text-smoke-400">Location access was blocked. You can still browse the full directory below.</p>
+        <p className="mt-3 text-sm text-smoke-400">Couldn’t get your location — enter a city or ZIP above, or browse the directory below.</p>
       )}
       {state === 'unsupported' && (
         <p className="mt-3 text-sm text-smoke-400">Your browser doesn&apos;t support location. Browse the directory below.</p>

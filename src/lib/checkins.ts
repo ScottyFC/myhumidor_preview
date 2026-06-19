@@ -1,4 +1,5 @@
 'use client';
+import { awardLoungeBadgesOnCheckin } from '@/lib/badges';
 
 import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { subscribeAuth } from './auth';
@@ -105,6 +106,10 @@ export async function createCheckIn(input: {
       } catch {
         /* non-critical */
       }
+    }
+    // Award the lounge's collectible badge(s) to the user.
+    if (loungeId) {
+      try { await awardLoungeBadgesOnCheckin(loungeId, userId); } catch { /* non-critical */ }
     }
     return true;
   } catch {

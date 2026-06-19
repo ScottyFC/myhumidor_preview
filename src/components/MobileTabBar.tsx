@@ -43,7 +43,7 @@ export function MobileTabBar() {
   if (['/register', '/auth', '/terms', '/privacy'].some((r) => pathname.startsWith(r))) return null;
 
   return (
-    <nav className="native-only native-tabbar fixed inset-x-0 bottom-0 z-40 border-t border-ember-400/15 bg-ink/95 backdrop-blur-lg">
+    <nav className="native-only native-tabbar fixed inset-x-0 bottom-0 z-50 border-t border-ember-400/15 bg-ink">
       <div className="grid w-full grid-cols-6 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
         {tabs.map((t) => {
           const active = t.match(pathname);

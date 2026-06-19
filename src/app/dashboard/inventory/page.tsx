@@ -13,7 +13,6 @@ import { getInventory, saveInventory, publishMenu } from '@/lib/inventory';
 import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
 import { ActivityLog } from '@/components/ActivityLog';
 import { PostComposer } from '@/components/PostComposer';
-import { LoungeBadgeCreator } from '@/components/LoungeBadgeCreator';
 import { BoostLounge } from '@/components/BoostLounge';
 import { SocialLinksEditor } from '@/components/SocialLinks';
 import { getMyLounges, type MyLounge } from '@/lib/lounges-owner';
@@ -317,10 +316,6 @@ export default function InventoryPage() {
 
           {store && (
             <PostComposer slug={store.slug} loungeName={store.name} />
-          )}
-
-          {store && (
-            <LoungeBadgeCreator slug={store.slug} />
           )}
 
           {store && (

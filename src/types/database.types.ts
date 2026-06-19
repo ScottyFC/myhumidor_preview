@@ -285,6 +285,9 @@ export type Database = {
           id: string
           image_url: string | null
           lounge_id: string | null
+          status: string
+          needs_artwork: boolean
+          billable: boolean
           name: string
           slug: string
           tier: string
@@ -295,6 +298,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           lounge_id?: string | null
+          status?: string
+          needs_artwork?: boolean
+          billable?: boolean
           name: string
           slug: string
           tier?: string
@@ -305,6 +311,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           lounge_id?: string | null
+          status?: string
+          needs_artwork?: boolean
+          billable?: boolean
           name?: string
           slug?: string
           tier?: string
@@ -2568,6 +2577,14 @@ export type Database = {
       set_catalog_override: {
         Args: { p_slug: string; p_brand?: string | null; p_name?: string | null; p_country?: string | null; p_price?: number | null; p_image_url?: string | null; p_buy_url?: string | null; p_removed?: boolean }
         Returns: string
+      }
+      create_lounge_badge: {
+        Args: { p_slug: string; p_name: string; p_image_url?: string | null; p_needs_artwork?: boolean }
+        Returns: Json
+      }
+      admin_set_badge_artwork: {
+        Args: { p_badge_id: string; p_image_url: string }
+        Returns: undefined
       }
       set_lounge_staff: {
         Args: { p_slug: string; p_handle: string; p_can_post: boolean; p_can_inventory: boolean; p_can_edit: boolean }

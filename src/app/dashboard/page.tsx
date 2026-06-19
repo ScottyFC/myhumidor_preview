@@ -5,6 +5,7 @@ import { LoungeDashboard } from '@/components/LoungeDashboard';
 import { DeviceManager } from '@/components/DeviceManager';
 import { LoungeDetailsEditor } from '@/components/LoungeDetailsEditor';
 import { ChainAndStaff } from '@/components/ChainAndStaff';
+import { LoungeBadges } from '@/components/LoungeBadges';
 import { CertificationTiers } from '@/components/CertificationTiers';
 
 export const metadata = {
@@ -50,6 +51,11 @@ export default function DashboardPage() {
       {/* Staff access + multi-lounge claims */}
       <section className="mt-10 border-t border-ember-400/10 pt-8">
         <ChainAndStaff />
+      </section>
+
+      {/* Collectible badges (Premier) */}
+      <section className="mt-10 border-t border-ember-400/10 pt-8">
+        <LoungeBadges />
       </section>
 
       {/* Screens & credits (register a TV per screen, see earnings) */}

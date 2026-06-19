@@ -3,9 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import {
-  Search, Flame, Heart, Store, MapPin, Plus, Sparkles, Crown, Box, X, ArrowRight,
-} from 'lucide-react';
+import { Search, Flame, Heart, Store, MapPin, Plus, Sparkles, Box, X, ArrowRight } from 'lucide-react';
 import { CigarThumb } from '@/components/CigarThumb';
 
 interface Feat { slug: string; brand: string; name: string; image_url?: string | null }
@@ -16,7 +14,6 @@ const TILES: { label: string; href: string; icon: typeof Flame; tint: string }[]
   { label: 'Lounges', href: '/lounges', icon: Store, tint: 'text-ember-400' },
   { label: 'Add Cigar', href: '/submit', icon: Plus, tint: 'text-ember-400' },
   { label: 'Concierge', href: '/top', icon: Sparkles, tint: 'text-ember-400' },
-  { label: 'Aficionados', href: '/profile', icon: Crown, tint: 'text-ember-400' },
   { label: 'My Humidor', href: '/humidor', icon: Box, tint: 'text-ember-400' },
 ];
 
@@ -50,7 +47,7 @@ export function NativeHome({ featured }: { featured: Feat[] }) {
       </button>
 
       {/* Quick-action tiles (2 × 4) */}
-      <div className="mt-4 grid grid-cols-4 gap-2.5">
+      <div className="mt-4 grid grid-cols-3 gap-2.5">
         {TILES.map((t) => {
           const Icon = t.icon;
           return (

@@ -71,3 +71,21 @@ export async function geocodeAddress(parts: GeoParts): Promise<{ lat: number; ln
     return null;
   }
 }
+
+/** Geocode a free-text place — a city name or ZIP code — to coordinates.
+ *  Used as a fallback when device location is unavailable. */
+export async function geocodePlace(query: string): Promise<{ lat: number; lng: number } | null> {
+  const q = query.trim();
+  if (!q || !MAPBOX_TOKEN) return null;
+  try {
+    const url =
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json` +
+      `?access_token=${MAPBOX_TOKEN}&limit=1&country=us&types=place,postcode,locality,region`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const center: [number, number] | undefined = data?.features?.[0]?.center;
+    if (!center || center.length !== 2) return null;
+    return { lng: center[0], lat: center[1] };
+  } catch { return null; }
+}
