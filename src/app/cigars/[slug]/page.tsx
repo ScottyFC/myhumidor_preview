@@ -10,6 +10,7 @@ import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
 import { MyCigarRatings } from '@/components/MyCigarRatings';
 import { CigarCommunity } from '@/components/CigarCommunity';
+import { CigarInsight } from '@/components/CigarInsight';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandLogo } from '@/components/BrandLogo';
 import { StockNearYou } from '@/components/StockNearYou';
@@ -160,6 +161,8 @@ export default async function CigarPage({ params }: PageProps) {
             {view.country && <Stat label="Origin" value={view.country} />}
             {view.msrp != null && <Stat label="MSRP" value={formatUSD(view.msrp)} />}
           </dl>
+
+          <CigarInsight slug={slug} />
 
           {view.rated ? (
             <div className="mt-6">

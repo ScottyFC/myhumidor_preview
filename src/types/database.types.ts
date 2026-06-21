@@ -356,6 +356,12 @@ export type Database = {
         }
         Relationships: []
       }
+      cigar_descriptions: {
+        Row: { slug: string; description: string; created_at: string }
+        Insert: { slug: string; description: string; created_at?: string }
+        Update: { slug?: string; description?: string; created_at?: string }
+        Relationships: []
+      }
       chains: {
         Row: { id: string; name: string; owner_id: string | null; created_at: string }
         Insert: { id?: string; name: string; owner_id?: string | null; created_at?: string }

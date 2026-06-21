@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Flame, Star, TrendingUp } from 'lucide-react';
+import { Circle, Flame, Star, TrendingUp } from 'lucide-react';
 import { topCigarsThisWeek, highestRatedCigars, type RatedCigar } from '@/lib/db';
 import { BrandTile } from '@/components/BrandTile';
 import { CigarThumb } from '@/components/CigarThumb';
@@ -34,7 +34,7 @@ export function TopCigarsSections() {
         <RankRow title="Top Cigars This Week" icon={<TrendingUp size={14} strokeWidth={1.5} className="text-ember-400" />} cigars={week} showCount />
       )}
       {best.length > 0 && (
-        <RankRow title="Highest Rated" icon={<Star size={14} strokeWidth={1.5} className="text-ember-400" />} cigars={best} />
+        <RankRow title="Highest Rated" icon={<Circle size={14} strokeWidth={1.5} className="text-ember-400" />} cigars={best} />
       )}
     </div>
   );
@@ -70,7 +70,7 @@ function RankRow({
             <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100"><CigarName slug={c.slug} name={c.name} /></div>
             <div className="truncate text-xs text-smoke-400"><CigarName slug={c.slug} brand={c.brand} mode="brand" /> · {c.size}</div>
             <div className="mt-1 inline-flex items-center gap-1 text-xs text-ember-100">
-              <Star size={11} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
+              <Circle size={11} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
               <span className="tabular">{c.avgOverall.toFixed(1)}</span>
               {showCount && <span className="tabular text-smoke-400">· {c.ratingsCount} this week</span>}
             </div>

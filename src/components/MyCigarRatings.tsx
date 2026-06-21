@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Star, Trash2 } from 'lucide-react';
+import { Circle, Star, Trash2 } from 'lucide-react';
 import { getRatings, onRatingsChange, removeRating, type UserRating } from '@/lib/ratings';
 
 /**
@@ -28,7 +28,7 @@ export function MyCigarRatings({ cigarId, slug }: { cigarId: string; slug: strin
           <div key={r.id ?? r.createdAt} className="flex items-center justify-between gap-3 rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 px-4 py-3">
             <div className="min-w-0">
               <div className="inline-flex items-center gap-1.5 font-display text-lg tabular text-ember-100">
-                <Star size={14} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
+                <Circle size={14} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
                 {r.overall.toFixed(1)}
                 <span className="ml-1 text-[10px] uppercase tracking-wider text-smoke-400">
                   F {r.flavor} · B {r.burn} · A {r.appearance}

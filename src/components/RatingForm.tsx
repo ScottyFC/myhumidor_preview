@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuthGate } from '@/lib/use-auth-gate';
 import { subscribeAuth } from '@/lib/auth';
-import { Star, Check, ImagePlus, X, MapPin, Loader2 } from 'lucide-react';
+import { Circle, Check, ImagePlus, X, MapPin, Loader2 } from 'lucide-react';
 import { computeOverall, cn } from '@/lib/utils';
 import { setRating, uploadRatingPhoto } from '@/lib/ratings';
 import { markSmoked } from '@/lib/collection';
@@ -270,11 +270,11 @@ function StarRow({
           <button
             key={n}
             onClick={() => onChange(n)}
-            aria-label={`${label}: ${n} stars`}
+            aria-label={`${label}: ${n}`}
             className="p-0.5"
           >
-            <Star
-              size={22}
+            <Circle
+              size={20}
               strokeWidth={1.5}
               className={
                 n <= value

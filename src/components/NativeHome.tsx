@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Search, Flame, Heart, Store, MapPin, Plus, Sparkles, Box, X, ArrowRight } from 'lucide-react';
 import { CigarThumb } from '@/components/CigarThumb';
+import { HomeWelcome } from '@/components/HomeWelcome';
 
 interface Feat { slug: string; brand: string; name: string; image_url?: string | null }
 
@@ -37,6 +38,7 @@ export function NativeHome({ featured }: { featured: Feat[] }) {
 
   return (
     <div className="native-only-block px-4 pt-2">
+      <HomeWelcome />
       {/* Search */}
       <button
         onClick={() => router.push('/search')}

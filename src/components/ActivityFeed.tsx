@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Star, Flame, MapPin } from 'lucide-react';
+import { Circle, Star, Flame, MapPin } from 'lucide-react';
 import { getCheckInsForUser, type CheckIn } from '@/lib/checkins';
 import { EngagementBar } from '@/components/EngagementBar';
 import type { UserRating } from '@/lib/ratings';
@@ -61,9 +61,9 @@ function RatingRow({ r, ownerId }: { r: UserRating; ownerId: string }) {
   return (
     <Shell>
       <div className="flex items-center gap-1.5 text-xs text-smoke-300">
-        <Star size={12} strokeWidth={1.5} className="text-ember-400" /> rated
+        <Circle size={12} strokeWidth={1.5} className="text-ember-400" /> rated
         <span className="inline-flex items-center gap-0.5 text-ember-100">
-          · <Star size={11} strokeWidth={1.5} className="fill-ember-400 text-ember-400" /> {r.overall.toFixed(1)}
+          · <Circle size={11} strokeWidth={1.5} className="fill-ember-400 text-ember-400" /> {r.overall.toFixed(1)}
         </span>
         <span className="text-smoke-500">· {ago(r.createdAt)}</span>
       </div>
@@ -97,7 +97,7 @@ function CheckInRow({ c, ownerId }: { c: CheckIn; ownerId: string }) {
             <Flame size={12} strokeWidth={1.5} className="text-ember-400" /> checked in
             {c.rating ? (
               <span className="inline-flex items-center gap-0.5 text-ember-100">
-                · <Star size={11} strokeWidth={1.5} className="fill-ember-400 text-ember-400" /> {c.rating.toFixed(1)}
+                · <Circle size={11} strokeWidth={1.5} className="fill-ember-400 text-ember-400" /> {c.rating.toFixed(1)}
               </span>
             ) : null}
             <span className="text-smoke-500">· {ago(c.createdAt)}</span>

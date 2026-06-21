@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react';
+import { Circle, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RatingStarsProps {
@@ -18,7 +18,7 @@ export function RatingStars({
 }: RatingStarsProps) {
   return (
     <div className={cn('inline-flex items-center gap-1.5', className)}>
-      <Star size={size} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
+      <Circle size={size} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
       <span className="tabular font-medium">{value.toFixed(1)}</span>
       {outOf !== 5 && <span className="text-smoke-400 text-xs">/ {outOf}</span>}
     </div>

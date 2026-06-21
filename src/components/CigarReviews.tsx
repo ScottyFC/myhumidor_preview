@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Star, MessageSquareText, Crown } from 'lucide-react';
+import { Circle, Star, MessageSquareText, Crown } from 'lucide-react';
 import { fetchCigarReviews, type CommunityReview } from '@/lib/ratings';
 
 /**
@@ -50,7 +50,7 @@ export function CigarReviews({ slug }: { slug: string }) {
                 {r.aficionado && <Crown size={12} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
               </div>
               <div className="inline-flex shrink-0 items-center gap-1 font-display text-base tabular text-ember-100">
-                <Star size={13} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
+                <Circle size={13} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
                 {r.overall.toFixed(1)}
               </div>
             </div>

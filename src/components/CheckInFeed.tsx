@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Flame, Star, MapPin } from 'lucide-react';
+import { Circle, Flame, Star, MapPin } from 'lucide-react';
 import { getCheckInsForSlug, getCheckInsForUser, type CheckIn } from '@/lib/checkins';
 
 function ago(iso: string): string {
@@ -68,7 +68,7 @@ export function CheckInFeed({ loungeSlug, userId, title = 'Check-ins', sinceDays
               )}
               {c.rating ? (
                 <div className="mt-1 inline-flex items-center gap-1 text-sm text-ember-100">
-                  <Star size={13} strokeWidth={1.5} className="fill-ember-400 text-ember-400" /> {c.rating.toFixed(1)}
+                  <Circle size={13} strokeWidth={1.5} className="fill-ember-400 text-ember-400" /> {c.rating.toFixed(1)}
                 </div>
               ) : null}
               {c.review && <p className="mt-1 text-sm text-smoke-200">{c.review}</p>}

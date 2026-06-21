@@ -1,3 +1,28 @@
+## Nav bars, AI insight, circle ratings, home welcome (run phase79.sql)
+
+- **Bottom nav** — now solid `bg-ink` with a top gradient fade-scrim so content
+  never leaks behind it, a stronger top border + drop shadow for prominence, and a
+  bg gradient. Both bars are opaque, `z-50`, and on their own GPU layer so they stay
+  static while scrolling/navigating (iOS WebKit fix).
+- **AI cigar insight** (cigar page) — `CigarInsight` calls `/api/cigar-insight`:
+  - **Description**: generated once via Claude from the cigar's brand/name/origin/
+    flavor notes, **cached** in `cigar_descriptions` (phase79) so it's not re-billed.
+  - **Recommendation score**: a personalized 0–100 ring built server-side from the
+    user's own ratings — weights their rated cigars' flavor tags + origins and scores
+    overlap with this cigar. Shows only with ≥2 ratings; reasons like "matches your
+    taste for cocoa, cedar".
+- **Ratings use circles** now, not stars — the rating form input and the score
+  glyphs across cards, feeds, reviews, and `RatingStars`.
+- **Home welcome** — `HomeWelcome` greets signed-in users by name with a time-of-day
+  message (morning/afternoon/evening) and data-aware quick links (humidor count,
+  For You / rate-first, lounges, retailer dashboard).
+
+Caveats: descriptions + the rec score need `ANTHROPIC_API_KEY`; first view of a cigar
+generates + caches the description (brief delay), then it's instant. The rec score is
+a heuristic (flavor-tag overlap), not ML, and reads generic when a cigar has no flavor
+tags. None of the AI/Supabase paths run in the sandbox — verify live.
+
+> Run `supabase/migrations/phase79.sql`.
 ## Cigar scanner — Aficionado-only, Beta (no migration)
 
 A camera tool that reads a cigar band and matches the catalog.

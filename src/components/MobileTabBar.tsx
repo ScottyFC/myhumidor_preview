@@ -43,7 +43,10 @@ export function MobileTabBar() {
   if (['/register', '/auth', '/terms', '/privacy'].some((r) => pathname.startsWith(r))) return null;
 
   return (
-    <nav className="native-only native-tabbar fixed inset-x-0 bottom-0 z-50 border-t border-ember-400/15 bg-ink">
+    <nav className="native-only native-tabbar fixed inset-x-0 bottom-0 z-50 bg-ink shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
+      {/* Fade content out just above the bar so nothing leaks behind it. */}
+      <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-ink to-transparent" />
+      <div className="relative border-t border-ember-400/20 bg-gradient-to-b from-char/30 to-ink">
       <div className="grid w-full grid-cols-6 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
         {tabs.map((t) => {
           const active = t.match(pathname);
@@ -62,6 +65,7 @@ export function MobileTabBar() {
             </Link>
           );
         })}
+      </div>
       </div>
     </nav>
   );
