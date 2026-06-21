@@ -1,3 +1,21 @@
+## Cigar scanner — Aficionado-only, Beta (no migration)
+
+A camera tool that reads a cigar band and matches the catalog.
+
+- **`/api/cigar-scan`** (POST { image dataURL }) — gated **server-side** to
+  Aficionado members (`profiles.aficionado`), so non-members can't burn API calls.
+  Sends the photo to Claude vision (Haiku, needs `ANTHROPIC_API_KEY`), gets
+  `{brand, line, confidence}`, then ranks catalog matches (brand search + line-token
+  overlap) and returns the top 6 candidates.
+- **`CigarScanner`** (on the Search page) — renders **only for Aficionado members**
+  and is clearly marked **Beta**. Camera capture → reads the band → shows the read +
+  closest matches with thumbnails; tap a match to confirm/open the cigar. It never
+  auto-decides — the user confirms.
+
+Caveats: this is band *reading*, not visual recognition — accuracy depends on a
+legible, well-lit band and degrades on worn/foreign/limited bands or no band. Each
+scan is a paid vision call (mitigated by the Aficionado gate). Vision calls can't run
+in the sandbox, so test the real-world hit rate live before promoting it out of Beta.
 ## App fixes: location fallback, fixed toolbar, home tiles (no migration)
 
 - **Location fallback** — device location can fail in the webview, so the nearby
