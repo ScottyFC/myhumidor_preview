@@ -1,30 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Clock, Crown } from 'lucide-react';
+import { Clock, Crown, Droplets, Thermometer } from 'lucide-react';
 import type { CollectionItem } from '@/lib/collection';
-
-function monthsSince(iso: string): number {
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return 0;
-  return (Date.now() - then) / (1000 * 60 * 60 * 24 * 30.44);
-}
-
-function window(months: number): { label: string; tone: string } {
-  if (months < 3) return { label: 'Resting — needs more time', tone: 'text-smoke-400' };
-  if (months < 6) return { label: 'Settling in', tone: 'text-smoke-200' };
-  if (months < 24) return { label: 'In its prime smoking window', tone: 'text-ember-100' };
-  if (months < 48) return { label: 'Well-aged — smoke soon', tone: 'text-amber-300' };
-  return { label: 'Past peak for most blends', tone: 'text-smoke-400' };
-}
-
-function fmt(months: number): string {
-  if (months < 1) return 'under a month';
-  if (months < 12) return `${Math.round(months)} mo`;
-  const y = Math.floor(months / 12);
-  const m = Math.round(months % 12);
-  return `${y}y${m ? ` ${m}mo` : ''}`;
-}
+import { agingInfo } from '@/lib/aging';
+import { CigarName } from '@/components/CigarName';
 
 export function AgingTracker({ humidor, member }: { humidor: CollectionItem[]; member: boolean }) {
   if (!member) {
@@ -47,12 +27,11 @@ export function AgingTracker({ humidor, member }: { humidor: CollectionItem[]; m
     );
   }
 
-  // Only cigars actually kept in the humidor age here — never wishlist or
-  // already-smoked entries, regardless of what the caller passes in.
+  // Only cigars actually kept in the humidor age here.
   const rows = [...humidor]
     .filter((c) => c.status === 'humidor')
-    .map((c) => ({ c, m: monthsSince(c.addedAt) }))
-    .sort((a, b) => b.m - a.m);
+    .map((c) => ({ c, info: agingInfo(c.addedAt) }))
+    .sort((a, b) => b.info.months - a.info.months);
 
   return (
     <div className="mt-12">
@@ -60,25 +39,31 @@ export function AgingTracker({ humidor, member }: { humidor: CollectionItem[]; m
         <Clock size={16} strokeWidth={1.5} className="text-ember-400" />
         <h2 className="font-display text-2xl tracking-tightest">Aging Tracker</h2>
       </div>
+
+      {/* Storage guidance — applies to the whole humidor */}
+      <div className="mb-4 flex flex-wrap gap-x-6 gap-y-1 rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 px-4 py-3 text-xs">
+        <span className="flex items-center gap-1.5 text-smoke-300"><Droplets size={13} className="text-ember-400" /> Humidity: <span className="text-paper">65–70% RH</span> <span className="text-smoke-500">(aim ~69%)</span></span>
+        <span className="flex items-center gap-1.5 text-smoke-300"><Thermometer size={13} className="text-ember-400" /> Temp: <span className="text-paper">65–70°F</span></span>
+        <span className="text-smoke-500">Steady conditions matter more than a perfect set point.</span>
+      </div>
+
       {rows.length === 0 ? (
         <p className="text-sm text-smoke-400">Add cigars to your humidor to start tracking their age.</p>
       ) : (
         <div className="divide-y divide-ember-400/10 rounded-xl border-[0.5px] border-ember-400/15 bg-char/40">
-          {rows.map(({ c, m }) => {
-            const w = window(m);
-            return (
-              <div key={c.cigarId} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium">{c.brand} {c.name}</div>
-                  <div className={`text-xs ${w.tone}`}>{w.label}</div>
-                </div>
-                <div className="shrink-0 text-right">
-                  <div className="tabular text-sm text-paper">{fmt(m)}</div>
-                  <div className="text-[11px] text-smoke-500">in humidor</div>
-                </div>
+          {rows.map(({ c, info }) => (
+            <div key={c.cigarId} className="flex items-start justify-between gap-3 px-4 py-3">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-medium"><CigarName slug={c.slug} brand={c.brand} name={c.name} mode="full" /></div>
+                <div className={`text-xs ${info.tone}`}>{info.status}</div>
+                <div className="mt-0.5 text-[11px] text-smoke-500">{info.whenToSmoke}</div>
               </div>
-            );
-          })}
+              <div className="shrink-0 text-right">
+                <div className="tabular text-sm text-paper">{info.ageLabel}</div>
+                <div className="text-[11px] text-smoke-500">in humidor</div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

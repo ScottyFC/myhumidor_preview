@@ -1,3 +1,29 @@
+## Admin sidebar, aging tracker integration, FL lounges/retailers
+
+- **Super admin panel** rebuilt as a **left sidebar + main content** layout; the
+  **Dashboard (overview) is the default/main view**. On mobile the sidebar becomes a
+  horizontal scroll strip. All queues are unchanged — just relocated to the sidebar.
+- **Aging tracker** refined + integrated:
+  - New shared `src/lib/aging.ts` → status, **when-to-smoke guidance**, and **storage
+    conditions** (65–70% RH / 65–70°F) + a tip.
+  - **Top-level humidor list**: each humidor card now shows its aging status + age
+    (Aficionado members).
+  - **Cigar page**: an "In your humidor" card shows that cigar's age, when it's best
+    to smoke, and how to store it (Aficionado members who keep it).
+  - The Aging Tracker section now leads with storage guidance + per-cigar timing.
+- **100 Florida lounges + retailers** (50 each) added: appended to the front-end
+  directory data (`src/data/stores.json`, 728 → 828) so they show immediately, and
+  **`fl-lounges-retailers-insert.sql`** upserts them into the `lounges` table (for
+  pages, search, and claims). Lounges → `venue_type='lounge'`, retailers → `'retail'`.
+
+Caveats: the FL rows use **city-centroid coordinates** (slightly jittered) — I can't
+geocode here, so map pins are city-accurate, not address-exact; re-geocode precisely
+later via the lounge editor. They're imported as `verified=false` (unclaimed
+directory entries). Aging guidance is standard premium-cigar storage, not per-blend
+tailored, and is Aficionado-gated. Can't test live Supabase here.
+
+> For the FL data: run `fl-lounges-retailers-insert.sql` (the front-end directory
+> already includes them via stores.json on the next deploy).
 ## Scanner: native camera plugin + web live preview (no migration)
 
 The iOS WKWebView `getUserMedia` is unreliable (the `Fig -12710` /

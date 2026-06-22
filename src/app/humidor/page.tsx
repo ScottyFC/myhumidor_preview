@@ -9,6 +9,7 @@ import { CigarThumb } from '@/components/CigarThumb';
 import { CigarName } from '@/components/CigarName';
 import { subscribeAuth, type Session } from '@/lib/auth';
 import { AgingTracker } from '@/components/AgingTracker';
+import { agingInfo } from '@/lib/aging';
 import { subscribeAficionado } from '@/lib/aficionado';
 import {
   type CollectionItem,
@@ -28,6 +29,7 @@ interface Row {
   name: string;
   size: string;
   status: 'humidor' | 'wishlist' | 'smoked';
+  addedAt: string;
   quantity?: number;
   yourRating?: number;
   removable: boolean;
@@ -79,6 +81,7 @@ export default function HumidorPage() {
     name: i.name,
     size: i.size,
     status: i.status,
+    addedAt: i.addedAt,
     removable: true,
   }));
 
@@ -168,7 +171,7 @@ export default function HumidorPage() {
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {visible.map((r) => (
-                <Row key={r.cigarId} row={r} onRemove={setPendingRemove} />
+                <Row key={r.cigarId} row={r} member={member} onRemove={setPendingRemove} />
               ))}
             </div>
           )}
@@ -209,7 +212,8 @@ export default function HumidorPage() {
   );
 }
 
-function Row({ row, onRemove }: { row: Row; onRemove: (row: Row) => void }) {
+function Row({ row, member, onRemove }: { row: Row; member: boolean; onRemove: (row: Row) => void }) {
+  const aging = row.status === 'humidor' && member ? agingInfo(row.addedAt) : null;
   return (
     <div className="group flex gap-4 rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-4">
       <Link href={`/cigars/${row.slug}`} className="flex min-w-0 flex-1 gap-4">
@@ -228,7 +232,8 @@ function Row({ row, onRemove }: { row: Row; onRemove: (row: Row) => void }) {
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 text-[11px] text-smoke-300">
-                <Box size={11} strokeWidth={1.5} className="text-ember-400" /> Humidor
+                <Box size={11} strokeWidth={1.5} className="text-ember-400" />
+                {aging ? <span className={aging.tone}>{aging.status} · {aging.ageLabel}</span> : 'Humidor'}
               </span>
             )}
           </div>

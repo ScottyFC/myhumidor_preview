@@ -98,38 +98,43 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-4xl px-6 pt-10">
+    <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6">
       <header className="mb-6">
         <div className="eyebrow mb-2 flex items-center gap-1.5">
           <ShieldCheck size={13} strokeWidth={1.5} className="text-ember-400" /> Super admin
         </div>
-        <h1 className="font-display text-5xl tracking-tightest">Moderation</h1>
+        <h1 className="font-display text-4xl tracking-tightest sm:text-5xl">Dashboard</h1>
         <p className="mt-2 text-sm text-smoke-300">
-          Signed in as <span className="text-paper">{session?.displayName}</span>. Approve new cigars
-          and lounges, and manage who else can moderate.
+          Signed in as <span className="text-paper">{session?.displayName}</span>.
         </p>
       </header>
 
-      <div className="mb-6 flex flex-wrap gap-2">
-        {tabs.map((t) => {
-          const Icon = t.icon;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={cn(
-                'inline-flex items-center gap-2 rounded-full border-[0.5px] px-4 py-1.5 text-sm transition',
-                tab === t.id
-                  ? 'border-ember-400 bg-ember-400/15 text-ember-100'
-                  : 'border-ember-400/20 text-smoke-200 hover:border-ember-400/40'
-              )}
-            >
-              <Icon size={14} strokeWidth={1.5} /> {t.label}
-            </button>
-          );
-        })}
-      </div>
+      <div className="flex flex-col gap-6 lg:flex-row">
+        {/* Left sidebar nav (horizontal scroll on mobile) */}
+        <aside className="shrink-0 lg:w-56">
+          <nav className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden">
+            {tabs.map((t) => {
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  className={cn(
+                    'inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm transition lg:w-full',
+                    tab === t.id
+                      ? 'bg-ember-400/15 font-medium text-ember-100'
+                      : 'text-smoke-300 hover:bg-ember-400/5 hover:text-paper'
+                  )}
+                >
+                  <Icon size={15} strokeWidth={1.5} className={tab === t.id ? 'text-ember-400' : ''} /> {t.label}
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
 
+        {/* Main content */}
+        <main className="min-w-0 flex-1">
       {tab === 'overview' && <AdminOverview onNavigate={(t) => setTab(t as Tab)} />}
       {tab === 'analytics' && <AnalyticsPanel />}
       {tab === 'cigars' && <CigarQueue />}
@@ -152,6 +157,8 @@ export default function AdminPage() {
       {tab === 'ads' && <AdManager />}
       {tab === 'log' && <ActivityLog />}
       {tab === 'admins' && <AdminManager myId={session?.publicId ?? ''} />}
+        </main>
+      </div>
     </div>
   );
 }

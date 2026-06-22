@@ -11,6 +11,7 @@ import { RatingForm } from '@/components/RatingForm';
 import { MyCigarRatings } from '@/components/MyCigarRatings';
 import { CigarCommunity } from '@/components/CigarCommunity';
 import { CigarInsight } from '@/components/CigarInsight';
+import { CigarAging } from '@/components/CigarAging';
 import { ShareButton } from '@/components/ShareButton';
 import { CigarName } from '@/components/CigarName';
 import { AddToCollection } from '@/components/AddToCollection';
@@ -176,6 +177,7 @@ export default async function CigarPage({ params }: PageProps) {
           </dl>
 
           <CigarInsight slug={slug} />
+          <CigarAging slug={slug} />
 
           {view.rated ? (
             <div className="mt-6">
