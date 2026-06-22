@@ -1,3 +1,17 @@
+## Name updates → front end + band images (no migration)
+
+- **DB name edits already flow live** to every card/list/search result via the
+  `/api/cigar-images` resolver (precedence: `catalog_overrides → catalog_cigars →
+  static`). The **cigar detail page title + brand link are now live too**
+  (CigarName), so an edit in `catalog_cigars`/`catalog_overrides` shows on the
+  cigar's own page without a static rebuild.
+- **Still static** (would need a cigars.json refresh from a DB export): brand-level
+  grouping / `/brands/[slug]` slugs, and any spot not using the live `CigarName`.
+
+> Band-image CSV (name → image URL): a good fit for the scanner's *confirm* step
+> (show the candidate's real band) — house as a `cigar_bands` table (slug →
+> band_image_url) or in `catalog_cigars.image_url`. True visual matching would need
+> image embeddings + pgvector, a separate build.
 ## Nav bars, AI insight, circle ratings, home welcome (run phase79.sql)
 
 - **Bottom nav** — now solid `bg-ink` with a top gradient fade-scrim so content

@@ -11,6 +11,7 @@ import { RatingForm } from '@/components/RatingForm';
 import { MyCigarRatings } from '@/components/MyCigarRatings';
 import { CigarCommunity } from '@/components/CigarCommunity';
 import { CigarInsight } from '@/components/CigarInsight';
+import { CigarName } from '@/components/CigarName';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandLogo } from '@/components/BrandLogo';
 import { StockNearYou } from '@/components/StockNearYou';
@@ -128,10 +129,10 @@ export default async function CigarPage({ params }: PageProps) {
         {/* ─── Header + Aggregates ───────────────────────────────────── */}
         <div className="lg:col-span-7">
           <Link href={`/brands/${brandSlug(view.brand)}`} className="eyebrow mb-2 inline-flex items-center gap-1 text-ember-300 underline-offset-2 transition hover:text-ember-100 hover:underline">
-            {view.brand}
+            <CigarName slug={slug} brand={view.brand} mode="brand" />
           </Link>
           <h1 className="font-display text-4xl leading-[1.0] tracking-tightest sm:text-5xl">
-            {view.headline}
+            <CigarName slug={slug} name={view.headline} mode="name" />
           </h1>
           <div className="mt-3 text-lg text-smoke-200 italic">
             {[view.vitola, view.wrapper].filter(Boolean).join(' · ')}
