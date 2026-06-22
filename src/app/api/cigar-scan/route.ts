@@ -75,7 +75,17 @@ export async function POST(req: Request) {
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, 6)
-    .map(({ c }) => ({ slug: c.slug, brand: c.brand, name: c.name, image_url: c.image_url ?? null }));
+    .map(({ c }) => ({ slug: c.slug, brand: c.brand, name: c.name, image_url: c.image_url ?? null, band_image_url: null as string | null }));
+
+  // Attach band reference images so the user can visually confirm the match.
+  if (isSupabaseConfigured && ranked.length) {
+    try {
+      const sb = await supabaseServer();
+      const { data: bands } = await sb.from('cigar_bands').select('slug, band_image_url').in('slug', ranked.map((r) => r.slug));
+      const map = new Map((bands ?? []).map((b: { slug: string; band_image_url: string }) => [b.slug, b.band_image_url]));
+      for (const r of ranked) r.band_image_url = map.get(r.slug) ?? null;
+    } catch { /* non-critical */ }
+  }
 
   return NextResponse.json({ read: { brand, line, confidence }, candidates: ranked });
 }

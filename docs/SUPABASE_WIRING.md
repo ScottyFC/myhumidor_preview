@@ -1,3 +1,41 @@
+## Scanner: live in-app camera + result overlay (no migration)
+
+`CigarScanner` now opens a **full-screen live camera** inside the app
+(`getUserMedia`, rear camera) with a center frame guide and a shutter button.
+Tapping captures a frame → `/api/cigar-scan` → the **matched cigar is overlaid on
+the camera view** as a card (band image + name + "View cigar" link to
+`/cigars/[slug]`), with up to 3 alternates and "Scan again". Tapping a result
+closes the camera and navigates. If camera access is denied/unavailable it falls
+back to the OS photo picker. Still Aficionado-only + Beta.
+
+Caveats: the live camera needs camera permission — on iOS the native project must
+have `NSCameraUsageDescription` in Info.plist (and Android the camera permission),
+or `getUserMedia` fails and it drops to the photo picker. getUserMedia in the iOS
+WKWebView works on recent iOS with that usage string — verify on device. Each
+capture is a paid vision call (mitigated by the Aficionado gate). Camera + vision
+can't run in the sandbox.
+## Band reference images for the scanner (run phase80.sql + the loader)
+
+Matched the 24,591-row band CSV to catalog slugs (normalize + exact, then
+brand-blocked fuzzy ≥90): **23,958 matched (97.5%)**, covering **10,706 unique
+cigars** (the CSV is vitola-level, the catalog is line-level, so variants collapse
+to one representative band per cigar; ~618 rows unmatched).
+
+- **phase80.sql** creates `cigar_bands` (slug → band_image_url, public read).
+- **cigar-bands-insert.sql** upserts the 10,706 matched bands (run after phase80).
+- `/api/cigar-scan` now attaches `band_image_url` for each candidate, and the
+  scanner shows the **actual band image** in the results so the user can visually
+  confirm the match.
+- Review files: `cigar-band-matches.csv` (all matches + score/type),
+  `cigar-band-unmatched.csv` (618 rows that didn't match a catalog cigar).
+
+Caveats: matching is name-based — fuzzy matches (529 of them, score ≥90) should be
+spot-checked. Band image URLs point at the mshanken/Cigar Aficionado CDN; if you want
+to own them, re-host into Supabase Storage and rewrite the URLs (hotlinking risks a
+403, like the CloudFront teaser issue). This is still band *reading* + confirm, not
+visual recognition. Can't run live Supabase/vision here — verify after loading.
+
+> Run `supabase/migrations/phase80.sql`, then `cigar-bands-insert.sql`.
 ## App-open flash, Siri-gesture nav fix, scanner move, Face ID plugin fix
 
 - **App-open layout flash** — `.native-app` (and the safe-area insets) used to be
