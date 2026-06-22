@@ -1,3 +1,10 @@
+## Fix: tab bar bunched left / clipped (no migration)
+
+Regression from the gradient-scrim change: the `<nav>` carries `.native-only`, which
+globals sets to `display:flex`. The grid used to be the direct flex child (with
+`w-full`, so it spanned). The new gradient wrapper div had no width, so as a flex item
+it shrank to content width — pushing the 6 tabs left and clipping the first. Added
+`w-full` to the wrapper; the `grid-cols-6` now spreads evenly across the whole bar.
 ## Share a cigar / lounge page — all users (no migration)
 
 `ShareButton` sits under the cigar title and next to the lounge venue tag, for
