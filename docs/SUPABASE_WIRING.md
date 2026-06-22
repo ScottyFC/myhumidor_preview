@@ -1,3 +1,20 @@
+## Lounge uploads + tidy hours + badge black-box fix (no migration)
+
+- **Banner / menu upload now verified**: `uploadBannerImage` / `uploadMenuPdf` return
+  the real Storage error instead of a silent null. The editor validates type + size
+  before uploading, shows an Uploading… state, and shows an explicit success/error
+  notice. On success it **auto-persists** (saves the full form so nothing else is
+  cleared) — so the upload is confirmed without a separate Save click.
+  → If it still fails, the on-screen message now says why. The usual cause is the
+  **`submissions` Storage bucket** not existing / not public / lacking an INSERT
+  policy for authenticated owners. That's a Supabase Storage config step (yours):
+  create a public `submissions` bucket with an insert policy for authenticated users.
+- **Opening hours tidied**: consecutive days with identical hours collapse into ranges
+  (e.g. "Mon–Sun 1:00PM–11:00PM"); time separators normalized to en-dashes.
+- **Badge black box removed**: bespoke badge artwork (e.g. "Unicorn Chaser", which has
+  a black background baked in) is now clipped into the same circular medallion frame
+  as generated badges with `object-cover`, so it reads as a coin, not a black square.
+  (A fully transparent badge PNG would look even cleaner, but this fixes it CSS-side.)
 ## Scanner: in-app live preview on iOS (camera-preview) — no DB migration
 
 The native app was launching the full-screen OS camera (`Camera.getPhoto`). Switched

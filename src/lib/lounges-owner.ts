@@ -237,26 +237,37 @@ export async function updateLoungeDetails(
 }
 
 /** Upload a lounge banner image to the submissions bucket; returns a public URL. */
-export async function uploadBannerImage(file: File): Promise<string | null> {
-  if (!isSupabaseConfigured) return null;
+export async function uploadBannerImage(file: File): Promise<{ url: string | null; error: string | null }> {
+  if (!isSupabaseConfigured) return { url: null, error: 'Storage isn’t configured.' };
   try {
     const sb = supabaseBrowser();
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const path = `banners/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await sb.storage.from('submissions').upload(path, file, { contentType: file.type || 'image/jpeg', upsert: true });
-    if (error) { console.error('[lounge] banner upload failed:', error.message); return null; }
-    return sb.storage.from('submissions').getPublicUrl(path).data.publicUrl;
-  } catch { return null; }
+    if (error) { console.error('[lounge] banner upload failed:', error.message); return { url: null, error: humanizeUploadError(error.message) }; }
+    const url = sb.storage.from('submissions').getPublicUrl(path).data.publicUrl;
+    return { url, error: url ? null : 'Couldn’t get the uploaded file URL.' };
+  } catch (e) { return { url: null, error: e instanceof Error ? e.message : 'Upload failed.' }; }
 }
 
 /** Upload a menu PDF to the submissions bucket; returns a public URL or null. */
-export async function uploadMenuPdf(file: File): Promise<string | null> {
-  if (!isSupabaseConfigured) return null;
+export async function uploadMenuPdf(file: File): Promise<{ url: string | null; error: string | null }> {
+  if (!isSupabaseConfigured) return { url: null, error: 'Storage isn’t configured.' };
   try {
     const sb = supabaseBrowser();
     const path = `menus/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '')}`;
     const { error } = await sb.storage.from('submissions').upload(path, file, { contentType: file.type || 'application/pdf', upsert: true });
-    if (error) { console.error('[lounge] menu upload failed:', error.message); return null; }
-    return sb.storage.from('submissions').getPublicUrl(path).data.publicUrl;
-  } catch { return null; }
+    if (error) { console.error('[lounge] menu upload failed:', error.message); return { url: null, error: humanizeUploadError(error.message) }; }
+    const url = sb.storage.from('submissions').getPublicUrl(path).data.publicUrl;
+    return { url, error: url ? null : 'Couldn’t get the uploaded file URL.' };
+  } catch (e) { return { url: null, error: e instanceof Error ? e.message : 'Upload failed.' }; }
+}
+
+/** Turn raw Supabase Storage errors into something a lounge owner can act on. */
+function humanizeUploadError(msg: string): string {
+  const m = msg.toLowerCase();
+  if (m.includes('bucket not found') || m.includes('not found')) return 'Upload storage isn’t set up yet (missing “submissions” bucket). Contact support.';
+  if (m.includes('row-level security') || m.includes('policy') || m.includes('unauthorized') || m.includes('403')) return 'You don’t have permission to upload here. Make sure you’re signed in as the lounge owner.';
+  if (m.includes('payload too large') || m.includes('exceeded') || m.includes('413')) return 'That file is too large.';
+  return `Upload failed: ${msg}`;
 }

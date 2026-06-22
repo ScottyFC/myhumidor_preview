@@ -1,5 +1,26 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+
+const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+
+/** Collapse consecutive days with identical hours into ranges, e.g.
+ *  "Mon–Sun  1:00PM–11:00PM" or "Mon–Fri …" + "Sat–Sun …". */
+function groupHours(hoursJson: Record<string, string | undefined>): Array<{ label: string; value: string }> {
+  const tidy = (v: string) => v.replace(/\s*[-–—]\s*/g, '–').trim();
+  const groups: Array<{ start: number; end: number; value: string }> = [];
+  WEEK.forEach((d, i) => {
+    const raw = hoursJson[d];
+    if (!raw) return;
+    const value = tidy(raw);
+    const last = groups[groups.length - 1];
+    if (last && last.value === value && last.end === i - 1) last.end = i;
+    else groups.push({ start: i, end: i, value });
+  });
+  return groups.map((g) => ({
+    label: g.start === g.end ? WEEK[g.start] : `${WEEK[g.start]}–${WEEK[g.end]}`,
+    value: g.value,
+  }));
+}
 import { ProtectMedia } from '@/components/ProtectMedia';
 import { ShareButton } from '@/components/ShareButton';
 import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation, ShoppingBag, UtensilsCrossed, Building2 } from 'lucide-react';
@@ -179,8 +200,8 @@ export default async function LoungePage({ params }: PageProps) {
             <div className="flex items-start gap-2">
               <Clock size={14} strokeWidth={1.5} className="mt-0.5 text-ember-400" />
               <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
-                {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].filter((d) => lounge.hoursJson?.[d]).map((d) => (
-                  <span key={d} className="contents"><span className="text-smoke-400">{d}</span><span className="text-smoke-200">{lounge.hoursJson![d]}</span></span>
+                {groupHours(lounge.hoursJson).map((g) => (
+                  <span key={g.label} className="contents"><span className="text-smoke-400">{g.label}</span><span className="text-smoke-200">{g.value}</span></span>
                 ))}
               </div>
             </div>

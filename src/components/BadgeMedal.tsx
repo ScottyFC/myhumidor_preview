@@ -80,13 +80,26 @@ export function BadgeMedal({ badge, earned, size = 124 }: { badge: BadgeDef; ear
           style={{ background: `radial-gradient(circle at ${t.g}% 30%, rgba(255,255,255,0.30), transparent 55%)`, opacity: earned ? 1 : 0.12 }}
         />
         {badge.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={badge.imageUrl}
-            alt={badge.name}
-            loading="lazy"
-            className={cn('h-full w-full object-contain drop-shadow-[0_10px_24px_rgba(0,0,0,0.6)] transition', !earned && 'grayscale brightness-[0.45]')}
-          />
+          // Bespoke artwork — framed in the same circular medallion as generated
+          // badges and clipped to a circle, so square/black-background art reads as
+          // a coin instead of a black box.
+          <div
+            className={cn(
+              'flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br p-[3px] shadow-[0_8px_20px_rgba(0,0,0,0.35)] transition',
+              ring,
+              !earned && 'grayscale brightness-[0.5]'
+            )}
+          >
+            <div className="relative h-full w-full overflow-hidden rounded-full bg-char">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={badge.imageUrl}
+                alt={badge.name}
+                loading="lazy"
+                className={cn('h-full w-full scale-110 object-cover transition', !earned && 'grayscale brightness-[0.45]')}
+              />
+            </div>
+          </div>
         ) : (
           // Generated medallion for badges without bespoke artwork
           <div

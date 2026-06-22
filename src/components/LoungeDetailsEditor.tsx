@@ -20,6 +20,10 @@ export function LoungeDetailsEditor() {
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploadingMenu, setUploadingMenu] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [uploadErr, setUploadErr] = useState<string | null>(null);
+  const [uploadOk, setUploadOk] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -51,19 +55,32 @@ export function LoungeDetailsEditor() {
   }
 
   async function onMenu(file?: File) {
+    setUploadErr(null); setUploadOk(null);
     if (!file) return;
-    setBusy(true);
-    const url = await uploadMenuPdf(file);
-    setBusy(false);
-    if (url) setMenuUrl(url);
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) { setUploadErr('Please choose a PDF file for the menu.'); return; }
+    if (file.size > 10 * 1024 * 1024) { setUploadErr('Menu PDF must be under 10 MB.'); return; }
+    setUploadingMenu(true);
+    const { url, error } = await uploadMenuPdf(file);
+    setUploadingMenu(false);
+    if (error || !url) { setUploadErr(error ?? 'Upload failed.'); return; }
+    setMenuUrl(url);
+    // Confirm the upload by persisting it immediately (full form, so nothing else is cleared).
+    const ok = await updateLoungeDetails(slug!, { hoursJson: hours, servesFood: certified ? servesFood : undefined, menuUrl: url, hideEmail: certified ? hideEmail : undefined, bannerUrl: certified ? bannerUrl : undefined });
+    setUploadOk(ok ? 'Menu uploaded and saved ✓' : 'Uploaded — but saving failed. Click Save to retry.');
   }
 
   async function onBanner(file?: File) {
+    setUploadErr(null); setUploadOk(null);
     if (!file) return;
-    setBusy(true);
-    const url = await uploadBannerImage(file);
-    setBusy(false);
-    if (url) setBannerUrl(url);
+    if (!file.type.startsWith('image/')) { setUploadErr('Please choose an image file for the banner.'); return; }
+    if (file.size > 5 * 1024 * 1024) { setUploadErr('Banner image must be under 5 MB.'); return; }
+    setUploadingBanner(true);
+    const { url, error } = await uploadBannerImage(file);
+    setUploadingBanner(false);
+    if (error || !url) { setUploadErr(error ?? 'Upload failed.'); return; }
+    setBannerUrl(url);
+    const ok = await updateLoungeDetails(slug!, { hoursJson: hours, servesFood: certified ? servesFood : undefined, menuUrl: certified ? menuUrl : undefined, hideEmail: certified ? hideEmail : undefined, bannerUrl: url });
+    setUploadOk(ok ? 'Banner uploaded and saved ✓' : 'Uploaded — but saving failed. Click Save to retry.');
   }
 
   return (
@@ -96,8 +113,8 @@ export function LoungeDetailsEditor() {
           {servesFood && (
             <div className="mt-3">
               <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/30 px-3 py-2 text-xs text-ember-100 hover:bg-ember-400/10">
-                <Upload size={13} /> {menuUrl ? 'Replace menu PDF' : 'Upload menu PDF'}
-                <input type="file" accept="application/pdf" className="hidden" onChange={(e) => onMenu(e.target.files?.[0])} />
+                {uploadingMenu ? <><Loader2 size={13} className="animate-spin" /> Uploading…</> : <><Upload size={13} /> {menuUrl ? 'Replace menu PDF' : 'Upload menu PDF'}</>}
+                <input type="file" accept="application/pdf" className="hidden" disabled={uploadingMenu} onChange={(e) => onMenu(e.target.files?.[0])} />
               </label>
               {menuUrl && <a href={menuUrl} target="_blank" rel="noreferrer" className="ml-3 text-xs text-ember-400 underline">View current menu</a>}
             </div>
@@ -115,11 +132,17 @@ export function LoungeDetailsEditor() {
               <img src={bannerUrl} alt="Banner preview" className="mb-2 aspect-[3/1] w-full rounded-lg border-[0.5px] border-ember-400/15 object-cover" />
             )}
             <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/30 px-3 py-2 text-xs text-ember-100 hover:bg-ember-400/10">
-              <ImageIcon size={13} /> {bannerUrl ? 'Replace banner' : 'Upload banner'}
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => onBanner(e.target.files?.[0])} />
+              {uploadingBanner ? <><Loader2 size={13} className="animate-spin" /> Uploading…</> : <><ImageIcon size={13} /> {bannerUrl ? 'Replace banner' : 'Upload banner'}</>}
+              <input type="file" accept="image/*" className="hidden" disabled={uploadingBanner} onChange={(e) => onBanner(e.target.files?.[0])} />
             </label>
-            <p className="mt-1 text-[11px] text-smoke-500">Wide image (3:1) shown at the top of your lounge page.</p>
+            <p className="mt-1 text-[11px] text-smoke-500">Wide image (3:1) shown at the top of your lounge page. JPG or PNG, under 5 MB.</p>
           </div>
+
+          {(uploadErr || uploadOk) && (
+            <div className={`mt-3 rounded-lg border-[0.5px] px-3 py-2 text-xs ${uploadErr ? 'border-red-400/30 bg-red-400/10 text-red-300' : 'border-ember-400/30 bg-ember-400/10 text-ember-100'}`}>
+              {uploadErr ?? uploadOk}
+            </div>
+          )}
         </div>
       ) : (
         <p className="mt-4 text-xs text-smoke-500">Food badge and menu uploads are available on certified lounges.</p>
