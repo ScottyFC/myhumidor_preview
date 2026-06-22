@@ -56,12 +56,12 @@ export function MobileTabBar() {
               key={t.href}
               href={t.href}
               className={cn(
-                'flex flex-col items-center gap-1 pt-3 pb-2 text-[10px] font-medium transition-colors',
+                'flex min-w-0 flex-col items-center gap-0.5 px-0.5 pt-1.5 pb-1 text-[10px] font-medium transition-colors',
                 active ? 'text-ember-300' : 'text-smoke-400 active:text-ember-100'
               )}
             >
-              <Icon size={22} strokeWidth={active ? 2 : 1.5} className={active ? 'text-ember-400' : ''} />
-              <span className="leading-none">{t.label}</span>
+              <Icon size={19} strokeWidth={active ? 2 : 1.5} className={active ? 'text-ember-400' : ''} />
+              <span className="w-full truncate text-center leading-none">{t.label}</span>
             </Link>
           );
         })}

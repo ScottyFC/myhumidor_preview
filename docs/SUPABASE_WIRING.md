@@ -1,3 +1,9 @@
+## Bottom nav: even tabs + shorter bar (no migration)
+
+Each tab cell is now constrained (`min-w-0`, `w-full truncate text-center`) so long
+labels like Humidor/Lounges stay centered in their equal `grid-cols-6` column and
+never run together. Reduced the height (smaller icon, tighter padding/gap) and
+trimmed the content bottom-padding to match.
 ## Fix: transparent nav bars — root cause (no migration)
 
 The real bug: **`ink` was never defined in the Tailwind config** (only `char`,
