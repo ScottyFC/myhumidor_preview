@@ -79,7 +79,7 @@ export async function getFollowedLoungeIds(uid: string): Promise<string[]> {
 }
 
 /** Notify all followers of a lounge about a new post (honoring their settings). */
-export async function notifyLoungeFollowers(loungeId: string, loungeName: string, postTitle: string) {
+export async function notifyLoungeFollowers(loungeId: string, loungeName: string, postTitle: string, slug?: string, postId?: string) {
   const ids = await followerIdsForLounge(loungeId);
   if (ids.length === 0) return;
   let allowed = ids;
@@ -89,8 +89,10 @@ export async function notifyLoungeFollowers(loungeId: string, loungeName: string
   } catch {
     /* fall back to notifying all */
   }
+  // Link straight to the post on the lounge page (anchor) when we have both ids.
+  const entityId = slug ? (postId ? `${slug}#post-${postId}` : slug) : undefined;
   for (const recipient of allowed) {
-    await notify(recipient, { type: 'lounge_post', entityType: 'lounge', entityName: `${loungeName}: ${postTitle}` });
+    await notify(recipient, { type: 'lounge_post', entityType: 'lounge', entityId, entityName: `${loungeName}: ${postTitle}` });
   }
 }
 

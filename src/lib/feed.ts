@@ -109,14 +109,34 @@ export async function fetchFeed(): Promise<FeedPost[]> {
       }
     }
 
-    // 2. Recent / promoted lounge posts (public).
-    const { data: lps } = await sb
-      .from('lounge_posts')
-      .select('id, lounge_id, kind, title, body, promoted, created_at')
-      .order('promoted', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(20);
-    const lpsRows = lps ?? [];
+    // 2. Lounge posts: ALL recent posts from lounges you follow, plus recent /
+    //    promoted public posts. (Following a lounge should surface its posts even
+    //    when busier lounges would otherwise crowd them out of the global list.)
+    const lpSelect = 'id, lounge_id, kind, title, body, promoted, created_at';
+    let followedLoungeIds: string[] = [];
+    if (session?.uuid) {
+      const { data: lf } = await sb.from('lounge_follows').select('lounge_id').eq('user_id', session.uuid);
+      followedLoungeIds = (lf ?? []).map((r) => r.lounge_id as string);
+    }
+
+    const lpQueries = [
+      sb.from('lounge_posts').select(lpSelect).order('promoted', { ascending: false }).order('created_at', { ascending: false }).limit(20),
+    ];
+    if (followedLoungeIds.length) {
+      lpQueries.push(
+        sb.from('lounge_posts').select(lpSelect).in('lounge_id', followedLoungeIds).order('created_at', { ascending: false }).limit(50),
+      );
+    }
+    const lpResults = await Promise.all(lpQueries);
+    const seenLp = new Set<string>();
+    const lpsRows: Array<{ id: string; lounge_id: string; kind: string; title: string; body: string | null; promoted: boolean | null; created_at: string }> = [];
+    for (const res of lpResults) {
+      for (const row of (res.data ?? [])) {
+        if (seenLp.has(row.id)) continue;
+        seenLp.add(row.id);
+        lpsRows.push(row as typeof lpsRows[number]);
+      }
+    }
     if (lpsRows.length) {
       const loungeIds = Array.from(new Set(lpsRows.map((l) => l.lounge_id)));
       const { data: lounges } = await sb.from('lounges').select('id, name, slug, verified').in('id', loungeIds);

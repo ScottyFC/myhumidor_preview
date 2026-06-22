@@ -52,6 +52,7 @@ export function PostComposer({ slug, loungeName }: { slug: string; loungeName?: 
     const res = await createPost({
       loungeId,
       loungeName,
+      loungeSlug: slug,
       kind,
       title: title.trim(),
       body: body.trim() || undefined,

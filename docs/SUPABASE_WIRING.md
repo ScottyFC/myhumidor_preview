@@ -1,3 +1,21 @@
+## Followed-lounge posts in feed + notifications deep-link to the post (no migration)
+
+- **Feed was missing followed-lounge posts**: section 2 only pulled the 20 most
+  recent/promoted lounge posts *globally*, so a followed lounge could be crowded out.
+  Now the feed also pulls ALL recent posts (up to 50) from lounges in `lounge_follows`
+  for the signed-in user, merged + de-duped with the global recent/promoted set.
+- **Notifications now link to the specific post**: `notifyLoungeFollowers` previously
+  passed no `entityId`, so the bell linked to the generic `/lounges` directory.
+  `createPost` now returns the new post id and passes `slug` + `postId`; the
+  notification stores `entityId = "{slug}#post-{postId}"`, so tapping it opens the
+  lounge page and scrolls to (and briefly highlights) that exact post. Posts carry an
+  `id="post-{id}"` anchor (`scroll-mt-24`). The bell already wraps items in a Link via
+  `notificationHref`, so no UI change was needed there.
+
+Caveats: notifications are created client-side by the poster when publishing (existing
+mechanism — unchanged); requires the insert RLS to allow follower rows. Existing
+notifications created before this change have no `entityId` and still go to `/lounges`;
+only new posts deep-link. Can't test live Supabase here.
 ## Lounge uploads + tidy hours + badge black-box fix (no migration)
 
 - **Banner / menu upload now verified**: `uploadBannerImage` / `uploadMenuPdf` return

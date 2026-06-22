@@ -69,6 +69,7 @@ export async function getPostsForLounge(loungeId: string, limit = 20): Promise<L
 export async function createPost(input: {
   loungeId: string;
   loungeName?: string;
+  loungeSlug?: string;
   kind: PostKind;
   title: string;
   body?: string;
@@ -91,7 +92,7 @@ export async function createPost(input: {
     let photo_url: string | null = null;
     if (input.photoDataUrl?.startsWith('data:')) photo_url = await uploadPostPhoto(input.photoDataUrl);
 
-    const { error } = await supabaseBrowser().from('lounge_posts').insert({
+    const { data: inserted, error } = await supabaseBrowser().from('lounge_posts').insert({
       lounge_id: input.loungeId,
       kind: input.kind,
       title: input.title,
@@ -100,7 +101,7 @@ export async function createPost(input: {
       photo_url,
       promoted: !!boostUntil,
       boost_until: boostUntil,
-    });
+    }).select('id').single();
     if (error) {
       console.error('[posts] create failed:', error.message);
       return { ok: false, error: error.message };
@@ -114,7 +115,7 @@ export async function createPost(input: {
       meta: { kind: input.kind, title: input.title },
     });
     // Notify everyone who follows this lounge.
-    notifyLoungeFollowers(input.loungeId, input.loungeName ?? 'A lounge', input.title);
+    notifyLoungeFollowers(input.loungeId, input.loungeName ?? 'A lounge', input.title, input.loungeSlug, inserted?.id);
     return { ok: true };
   } catch {
     return { ok: false, error: 'Could not publish.' };

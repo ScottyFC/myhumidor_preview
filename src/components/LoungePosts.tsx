@@ -26,7 +26,7 @@ export function LoungePosts({ slug }: { slug: string }) {
         {posts.map((p) => {
           const Icon = ICON[p.kind];
           return (
-            <div key={p.id} className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">
+            <div key={p.id} id={`post-${p.id}`} className="scroll-mt-24 rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4 target:ring-1 target:ring-ember-400/50">
               <div className="flex items-center gap-2">
                 <Icon size={14} strokeWidth={1.5} className="text-ember-400" />
                 <span className="eyebrow">{KIND_LABEL[p.kind]}</span>
