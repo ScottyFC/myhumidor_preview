@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ProtectMedia } from '@/components/ProtectMedia';
+import { ShareButton } from '@/components/ShareButton';
 import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation, ShoppingBag, UtensilsCrossed, Building2 } from 'lucide-react';
 import { EliteBanner } from '@/components/EliteBanner';
 import { VenueTag } from '@/components/VenueTag';
@@ -119,8 +120,9 @@ export default async function LoungePage({ params }: PageProps) {
           ) : null}
         </h1>
 
-        <div className="mt-3">
+        <div className="mt-3 flex items-center gap-2">
           <VenueTag type={lounge.venue_type} />
+          <ShareButton title={lounge.name} text={`Check out ${lounge.name} on MyHumidor`} />
         </div>
         {lounge.venue_type === 'retail' && (
           <p className="mt-3 flex items-start gap-2 rounded-lg border-[0.5px] border-smoke-500/30 bg-smoke-800/30 px-3.5 py-2.5 text-sm text-smoke-200">

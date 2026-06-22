@@ -1,3 +1,18 @@
+## Share a cigar / lounge page — all users (no migration)
+
+`ShareButton` sits under the cigar title and next to the lounge venue tag, for
+everyone (no gating). Tapping it opens the OS share sheet via `navigator.share` —
+which on iOS surfaces **iMessage/Messages** along with everything else. Where the
+Web Share API isn't available (most desktops), it drops to a small menu: a direct
+**Messages** entry (`sms:&body=` deep link with the title + URL prefilled), Email
+(`mailto:`), and Copy link. It shares `window.location.href`, so the link is always
+the current page.
+
+Caveat: a true native **iMessage app extension/sticker widget** (the kind that lives
+in the Messages app drawer) is a separate iOS Xcode extension target — it can't be
+built from the web/Capacitor codebase. The `navigator.share` sheet + `sms:` deep link
+are the web-accessible iMessage paths and cover the "share to Messages" use case.
+Native share can't be exercised in the sandbox — verify on a device.
 ## Bottom nav: even tabs + shorter bar (no migration)
 
 Each tab cell is now constrained (`min-w-0`, `w-full truncate text-center`) so long
