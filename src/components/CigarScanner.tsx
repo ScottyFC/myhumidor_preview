@@ -19,7 +19,6 @@ type State = 'idle' | 'camera' | 'scanning' | 'result' | 'error';
  */
 export function CigarScanner() {
   const [member, setMember] = useState<boolean | null>(null);
-  const [native, setNative] = useState(false);
   const [state, setState] = useState<State>('idle');
   const [read, setRead] = useState<Read | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -29,10 +28,7 @@ export function CigarScanner() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => subscribeAficionado(setMember), []);
-  useEffect(() => {
-    import('@capacitor/core').then(({ Capacitor }) => setNative(Capacitor.isNativePlatform())).catch(() => {});
-    return () => stopStream();
-  }, []);
+  useEffect(() => () => stopStream(), []);
 
   // Attach the live stream once the <video> is actually mounted (state === 'camera').
   // Doing this in an effect (not a setTimeout) avoids the race where the ref isn't
@@ -75,68 +71,33 @@ export function CigarScanner() {
     }
   }
 
-  // Native: live preview rendered BEHIND the webview (camera-preview plugin) so the
-  // in-app overlay (frame + shutter) sits on top — not the full-screen OS camera.
-  async function startNativePreview() {
+  // Live in-app camera preview via getUserMedia, rendered into a normal <video>
+  // element — works the same in the web app and inside the iOS/Android webview
+  // (needs only the camera permission string, no behind-the-webview transparency).
+  // If the camera can't be opened, we fall back to the OS photo/camera picker.
+  async function openCamera() {
     setErrMsg(''); setRead(null); setCandidates([]);
     try {
-      const { CameraPreview } = await import('@capacitor-community/camera-preview');
-      setState('camera');
-      document.documentElement.classList.add('camera-active');
-      await CameraPreview.start({
-        position: 'rear',
-        toBack: true,            // render behind the (transparent) webview
-        disableAudio: true,
-        x: 0, y: 0,
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    } catch {
-      document.documentElement.classList.remove('camera-active');
-      setState('idle');
-      fileRef.current?.click(); // last-resort: OS picker
-    }
-  }
-
-  async function stopNativePreview() {
-    try {
-      const { CameraPreview } = await import('@capacitor-community/camera-preview');
-      await CameraPreview.stop();
-    } catch { /* already stopped */ }
-    document.documentElement.classList.remove('camera-active');
-  }
-
-  async function captureNative() {
-    try {
-      const { CameraPreview } = await import('@capacitor-community/camera-preview');
-      const res = await CameraPreview.capture({ quality: 80 });
-      await stopNativePreview();
-      await scan(`data:image/jpeg;base64,${res.value}`);
-    } catch {
-      await stopNativePreview();
-      setState('idle');
-    }
-  }
-
-  // Web: live camera preview with a shutter.
-  async function webCamera() {
-    setErrMsg(''); setRead(null); setCandidates([]);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+      } catch {
+        // Retry with a plain video constraint (some devices reject facingMode).
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
       streamRef.current = stream;
       setState('camera'); // effect attaches the stream once the <video> mounts
     } catch {
-      fileRef.current?.click(); // fall back to the photo picker
+      fileRef.current?.click(); // fall back to the OS photo/camera picker
     }
   }
 
   function openScanner() {
     setRead(null); setCandidates([]); setErrMsg('');
-    if (native) startNativePreview();
-    else webCamera();
+    openCamera();
   }
 
-  function close() { stopStream(); if (native) stopNativePreview(); setState('idle'); }
+  function close() { stopStream(); setState('idle'); }
 
   function captureWeb() {
     const v = videoRef.current;
@@ -150,9 +111,7 @@ export function CigarScanner() {
 
   function scanAgain() {
     setRead(null); setCandidates([]); setErrMsg('');
-    if (native) { startNativePreview(); return; }
-    setState('camera');
-    videoRef.current?.play().catch(() => {});
+    openCamera();
   }
 
   async function onFile(file?: File) {
@@ -168,7 +127,6 @@ export function CigarScanner() {
 
   const top = candidates[0];
   const rest = candidates.slice(1, 4);
-  const showVideo = !native; // native uses the OS camera UI, not a <video> element
 
   return (
     <>
@@ -188,8 +146,8 @@ export function CigarScanner() {
 
       {/* Overlay: web live camera, or (native/file) the scanning + result surface */}
       {state !== 'idle' && (
-        <div className={`fixed inset-0 z-[100] flex flex-col ${native && state === 'camera' ? 'bg-transparent' : 'bg-black'}`}>
-          {showVideo && <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-cover" />}
+        <div className="fixed inset-0 z-[100] flex flex-col bg-black">
+          {<video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-cover" />}
 
           <div className="relative z-10 flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),1rem)]">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium text-paper backdrop-blur">
@@ -215,7 +173,7 @@ export function CigarScanner() {
           <div className="relative z-10 mt-auto px-4 pb-[max(env(safe-area-inset-bottom),1.5rem)]">
             {state === 'camera' && (
               <div className="flex justify-center">
-                <button onClick={native ? captureNative : captureWeb} aria-label="Capture" className="h-16 w-16 rounded-full border-4 border-white/80 bg-white/20 backdrop-blur active:scale-95" />
+                <button onClick={captureWeb} aria-label="Capture" className="h-16 w-16 rounded-full border-4 border-white/80 bg-white/20 backdrop-blur active:scale-95" />
               </div>
             )}
 

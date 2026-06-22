@@ -1,3 +1,21 @@
+## Scanner: switch native to inline getUserMedia video (no migration)
+
+The camera-preview approach renders the camera BEHIND the webview, which only shows
+if the iOS WKWebView is set transparent — a native setting I can't apply/verify here,
+and the likely reason the preview stayed broken on device.
+
+Switched the native path to the SAME inline `<video>` + getUserMedia flow that works
+on web: the preview renders inside the (opaque) webview, no transparency hack, no
+behind-the-webview plugin. Added a plain-`video:true` retry if `facingMode` is
+rejected, and the OS photo/camera picker remains the fallback if getUserMedia is
+blocked. Requirements on device: the camera usage string (already added) + iOS 14.3+
+(WKWebView getUserMedia). `@capacitor-community/camera-preview` is no longer used
+(dependency left in place but inert).
+
+Caveat: can't test the device camera here. If getUserMedia is still blocked in the
+WKWebView build, tapping Scan falls back to the OS picker (take one photo → scan),
+which always works. If even the live preview is desired and getUserMedia won't
+cooperate on device, that points to a Capacitor webview media setting to check.
 ## In-app menu PDF viewing (no migration)
 
 `ViewMenuLink` (food + drink menus) no longer kicks out to an external browser:
