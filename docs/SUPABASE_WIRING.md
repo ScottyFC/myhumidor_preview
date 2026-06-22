@@ -1,3 +1,12 @@
+## FL lounges/retailers — corrected import (dedup, labeled)
+
+Re-imported idempotently. **The two CSVs are 50 rows each (100 total), not 100
+each** — and **28 venues appear in BOTH files**, so there are **72 unique venues**:
+22 lounge-only, 22 retail-only, and **28 labeled `both`** (lounge + retailer).
+Cleared the prior import (removed 108 matching/duplicate rows) and re-added the 72
+clean, correctly-labeled entries to `stores.json`; regenerated
+`fl-lounges-retailers-insert.sql` (72 rows, `on conflict (slug) do nothing`).
+Re-running is safe — duplicates are skipped by name+city (front end) and slug (DB).
 ## Fix: iOS webview WebP/ICC image decode failure (no migration)
 
 The scanner error (`WEBP initImage failed err=-50`, `profile tags overlap`) is the
