@@ -3,12 +3,12 @@ import { safeImg } from '@/lib/img';
 
 // Warm, on-brand background tones; picked deterministically from the name.
 const TONES = [
-  'from-[#3A2417] to-[#1C120B]',
-  'from-[#4A2E18] to-[#241509]',
-  'from-[#3F2A2A] to-[#1E1212]',
-  'from-[#2E2A18] to-[#16140B]',
-  'from-[#42301C] to-[#1F160C]',
-  'from-[#332016] to-[#180E08]',
+  'from-ember-400/15 to-char',
+  'from-leather/20 to-char',
+  'from-ember-600/15 to-char',
+  'from-smoke-700/20 to-char',
+  'from-ember-400/10 to-ink',
+  'from-leather-dark/20 to-char',
 ];
 
 function hash(s: string): number {
@@ -60,7 +60,7 @@ export function BrandTile({
   return (
     <div
       className={cn(
-        'flex items-center justify-center bg-gradient-to-br',
+        'flex items-center justify-center border-[0.5px] border-ember-400/10 bg-gradient-to-br',
         tone,
         rounded,
         className

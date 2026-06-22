@@ -1,3 +1,16 @@
+## Light-theme polish (no migration)
+
+- **Aficionado / Certified banners** (`EliteBanner`) redesigned: dropped the dark
+  leather/ember gradient + radial glow (the `#f0a875` brown) for a clean,
+  gold-tinted light panel (`from-ember-400/12` over a hairline border) that blends
+  with the off-white background and still reads in dark mode.
+- **Fallback product tile** (`BrandTile` monogram): replaced hard-coded dark-brown
+  gradients with theme-aware tones (`ember/leather/smoke` over `char/ink`), so the
+  no-image tile is a soft warm card on light and a dark card on dark; monogram is
+  gold in both.
+- **Theme toggle in the top-bar dropdown menu** (a Light/Dark row beside Log out),
+  in addition to Settings → Appearance.
+- **Home subtitle** "From the 23,000-cigar catalog" → "From the catalog" (no number).
 ## Redesign: light theme + dark toggle (default light) — no migration
 
 The whole palette was converted to **CSS variables** (channel format, so `/opacity`

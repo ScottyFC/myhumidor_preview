@@ -14,24 +14,16 @@ export function EliteBanner({ kind }: { kind: 'aficionado' | 'certified' }) {
   const Icon = isAf ? Crown : BadgeCheck;
 
   return (
-    <div className="relative -mx-6 mb-6 overflow-hidden sm:mx-0 sm:rounded-2xl">
-      {/* layered gradient + glow */}
-      <div className={`absolute inset-0 ${isAf
-        ? 'bg-gradient-to-r from-leather-deep via-ember-600/40 to-leather-deep'
-        : 'bg-gradient-to-r from-leather-deep via-teal-700/30 to-leather-deep'}`} />
-      <div className="absolute inset-0 bg-[radial-gradient(120%_120%_at_50%_-20%,rgba(240,195,85,0.28),transparent_60%)]" />
-      {/* shimmer hairline */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ember-300/70 to-transparent" />
-
+    <div className="relative -mx-6 mb-6 overflow-hidden border-y border-ember-400/20 bg-gradient-to-r from-ember-400/12 via-ember-400/[0.05] to-transparent sm:mx-0 sm:rounded-2xl sm:border">
       <div className="relative flex items-center gap-3 px-6 py-3.5">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ember-400 text-paper shadow-[0_0_20px_rgba(240,195,85,0.5)] ring-1 ring-ember-200/60">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-ember-400 text-paper ring-1 ring-ember-200/50">
           <Icon size={17} strokeWidth={2} />
         </span>
         <div className="min-w-0">
-          <div className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-ember-50">{label}</div>
-          <div className="truncate text-xs text-ember-100/70">{blurb}</div>
+          <div className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-ember-200">{label}</div>
+          <div className="truncate text-xs text-smoke-400">{blurb}</div>
         </div>
-        <span className="ml-auto hidden shrink-0 items-center gap-1 rounded-full border-[0.5px] border-ember-300/40 bg-char/30 px-2.5 py-1 text-[10px] uppercase tracking-widest text-ember-100 sm:inline-flex">
+        <span className="ml-auto hidden shrink-0 items-center gap-1 rounded-full border-[0.5px] border-ember-400/30 bg-char/40 px-2.5 py-1 text-[10px] uppercase tracking-widest text-ember-200 sm:inline-flex">
           <Icon size={11} strokeWidth={2} /> MyHumidor
         </span>
       </div>

@@ -182,7 +182,7 @@ export default async function HomePage() {
       <section className="py-12">
         <SectionHeader
           title="Browse cigars"
-          subtitle="From the 23,000-cigar catalog"
+          subtitle="From the catalog"
           href="/top"
           icon={<Flame size={14} strokeWidth={1.5} className="text-ember-400" />}
         />

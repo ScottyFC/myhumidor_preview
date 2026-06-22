@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "813771496556",
+    "project_id": "myhumidor-57240",
+    "storage_bucket": "myhumidor-57240.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:813771496556:android:7251711842ab72b6234c49",
+        "android_client_info": {
+          "package_name": "shop.myhumidor.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBnkMstyUSS9Na4niFnr-33AELkv2nIzj4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
