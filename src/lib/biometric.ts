@@ -3,15 +3,21 @@
 import { signInEmail, type AuthResult } from '@/lib/auth';
 
 /**
- * Face ID / Touch ID / fingerprint login for the native app, via the
- * `capacitor-native-biometric` plugin. Credentials are stored in the device
- * Keychain/Keystore by the plugin — never in our database or in plain text.
+ * Face ID / Touch ID / fingerprint login for the native app.
  *
- * Everything dynamically imports the plugin and is wrapped in try/catch, so the
- * web build works whether or not the native plugin is installed. On web (or if
- * the plugin/hardware is absent) these resolve to "unavailable" and the UI hides.
+ * Uses @aparajita/capacitor-biometric-auth for the biometric prompt and
+ * @aparajita/capacitor-secure-storage to keep the login in the device
+ * Keychain/Keystore — never in our database or in plain text. Everything
+ * dynamic-imports the plugins and is wrapped in try/catch, so the web build
+ * works with or without them; on web (or without the hardware) these resolve to
+ * "unavailable" and the UI hides.
+ *
+ * IMPORTANT: the plugin versions must match the app's Capacitor major version,
+ * and the native projects need `npx cap sync` + an iOS NSFaceIDUsageDescription
+ * for any of this to work on device.
  */
-const SERVER = 'myhumidor.shop';
+const K_EMAIL = 'mh_bio_email';
+const K_PW = 'mh_bio_pw';
 
 async function isNative(): Promise<boolean> {
   try {
@@ -20,65 +26,76 @@ async function isNative(): Promise<boolean> {
   } catch { return false; }
 }
 
-async function plugin(): Promise<typeof import('capacitor-native-biometric').NativeBiometric | null> {
+async function bioPlugin() {
   try {
     if (!(await isNative())) return null;
-    const mod = await import('capacitor-native-biometric');
-    return mod.NativeBiometric;
+    return (await import('@aparajita/capacitor-biometric-auth')).BiometricAuth;
+  } catch { return null; }
+}
+
+async function store() {
+  try {
+    if (!(await isNative())) return null;
+    return (await import('@aparajita/capacitor-secure-storage')).SecureStorage;
   } catch { return null; }
 }
 
 export type BiometryInfo = { available: boolean; type: 'face' | 'fingerprint' | 'other' | null };
 
-/** Is biometric hardware available on this device? */
+/** biometryType enum (aparajita): 1 touchId, 2 faceId, 3 fingerprint, 4 faceAuth, 5 iris. */
+function mapType(t: number | undefined): BiometryInfo['type'] {
+  if (t === 2 || t === 4) return 'face';
+  if (t === 1 || t === 3) return 'fingerprint';
+  return 'other';
+}
+
 export async function biometricAvailable(): Promise<BiometryInfo> {
-  const NB = await plugin();
-  if (!NB) return { available: false, type: null };
+  const BA = await bioPlugin();
+  if (!BA) return { available: false, type: null };
   try {
-    const res = await NB.isAvailable();
-    // biometryType: 1 = TouchID, 2 = FaceID (iOS); Android reports fingerprint/face.
-    const t = res.biometryType;
-    const type = t === 2 ? 'face' : t === 1 ? 'fingerprint' : 'other';
-    return { available: !!res.isAvailable, type };
+    const info = await BA.checkBiometry();
+    return { available: !!info.isAvailable, type: mapType(info.biometryType as unknown as number) };
   } catch { return { available: false, type: null }; }
 }
 
-/** Have we already stored credentials for biometric sign-in? */
 export async function hasBiometricCredentials(): Promise<boolean> {
-  const NB = await plugin();
-  if (!NB) return false;
-  try {
-    const c = await NB.getCredentials({ server: SERVER });
-    return !!c?.username;
-  } catch { return false; }
+  const S = await store();
+  if (!S) return false;
+  try { return (await S.get(K_EMAIL)) != null; } catch { return false; }
 }
 
-/** Store credentials in the Keychain after a successful password login. */
 export async function saveBiometricCredentials(email: string, password: string): Promise<boolean> {
-  const NB = await plugin();
-  if (!NB) return false;
-  try {
-    await NB.setCredentials({ username: email, password, server: SERVER });
-    return true;
-  } catch { return false; }
+  const S = await store();
+  if (!S) return false;
+  try { await S.set(K_EMAIL, email); await S.set(K_PW, password); return true; } catch { return false; }
 }
 
 export async function clearBiometricCredentials(): Promise<void> {
-  const NB = await plugin();
-  if (!NB) return;
-  try { await NB.deleteCredentials({ server: SERVER }); } catch { /* ignore */ }
+  const S = await store();
+  if (!S) return;
+  try { await S.remove(K_EMAIL); await S.remove(K_PW); } catch { /* ignore */ }
 }
 
-/** Verify identity with Face ID, then sign in with the stored credentials. */
-export async function biometricSignIn(): Promise<AuthResult & { ok?: boolean }> {
-  const NB = await plugin();
-  if (!NB) return { error: 'Biometric login isn’t available on this device.' } as AuthResult;
+export async function biometricSignIn(): Promise<AuthResult> {
+  const BA = await bioPlugin();
+  const S = await store();
+  if (!BA || !S) return { error: 'Biometric login isn’t available on this device.' };
   try {
-    await NB.verifyIdentity({ reason: 'Sign in to MyHumidor', title: 'MyHumidor', subtitle: 'Confirm it’s you' });
-    const c = await NB.getCredentials({ server: SERVER });
-    if (!c?.username || !c?.password) return { error: 'No saved login found. Sign in once to enable Face ID.' } as AuthResult;
-    return await signInEmail(c.username, c.password, true);
+    await BA.authenticate({
+      reason: 'Sign in to MyHumidor',
+      iosFallbackTitle: 'Use passcode',
+      androidTitle: 'MyHumidor',
+      androidSubtitle: 'Confirm it’s you',
+    });
   } catch {
-    return { error: 'Face ID was cancelled or failed.' } as AuthResult;
+    return { error: 'Face ID was cancelled or failed.' };
+  }
+  try {
+    const email = (await S.get(K_EMAIL)) as string | null;
+    const password = (await S.get(K_PW)) as string | null;
+    if (!email || !password) return { error: 'No saved login found. Sign in once to enable Face ID.' };
+    return await signInEmail(email, password, true);
+  } catch {
+    return { error: 'Could not read your saved login.' };
   }
 }

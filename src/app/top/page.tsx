@@ -6,6 +6,7 @@ import { BrandTile } from '@/components/BrandTile';
 import { CigarThumb } from '@/components/CigarThumb';
 import { RecentlyAdded } from '@/components/RecentlyAdded';
 import { TopCigarsSections } from '@/components/TopCigarsSections';
+import { CigarScanner } from '@/components/CigarScanner';
 import { CigarAgent } from '@/components/CigarAgent';
 
 export const metadata = {
@@ -29,6 +30,10 @@ export default async function TopCigarsPage() {
           full catalog.
         </p>
       </header>
+
+      <div className="mb-8">
+        <CigarScanner />
+      </div>
 
       <TopCigarsSections />
 

@@ -1,5 +1,4 @@
 'use client';
-import { CigarScanner } from '@/components/CigarScanner';
 
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -90,10 +89,6 @@ export function SearchClient() {
           and find who carries it. You can also search for your fellow smokers.
         </p>
       </header>
-
-      <div className="mb-6">
-        <CigarScanner />
-      </div>
 
       {/* Search box */}
       <div className="relative">

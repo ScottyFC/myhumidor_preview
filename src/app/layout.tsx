@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import '@fontsource-variable/fraunces';
 import './globals.css';
@@ -14,6 +14,13 @@ import { NotificationBanner } from '@/components/NotificationBanner';
 import { PageAccent } from '@/components/PageAccent';
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.myhumidor.shop';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#14110d',
+};
 
 export const metadata: Metadata = {
   title: 'MyHumidor by CigarTV',
@@ -46,6 +53,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={GeistSans.variable}>
       <body className="min-h-screen">
+        {/* Flag the native shell synchronously, before first paint, so safe-area
+            insets + bar padding are correct on app open (no layout flash). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var C=window.Capacitor;if(C&&C.isNativePlatform&&C.isNativePlatform()){var d=document.documentElement;d.classList.add('native-app');d.classList.add('native-'+C.getPlatform());}}catch(e){}})();",
+          }}
+        />
         <div className="web-chrome"><Nav /></div>
         <MobileTopBar />
         <Analytics />

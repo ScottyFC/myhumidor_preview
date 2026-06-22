@@ -1,3 +1,28 @@
+## App-open flash, Siri-gesture nav fix, scanner move, Face ID plugin fix
+
+- **App-open layout flash** — `.native-app` (and the safe-area insets) used to be
+  applied only *after* an async import resolved, so the first paint had no bar
+  padding and content sat wrong until you navigated. Fixed: `viewport-fit=cover` is
+  now set at SSR (Next `viewport` export) and an inline `<script>` in `<body>` flags
+  the native shell **synchronously before first paint**. No more flash.
+- **iOS Siri/home-bar triggers** — root cause: without `viewport-fit=cover`,
+  `env(safe-area-inset-bottom)` was 0, so the tab buttons sat on the very bottom edge.
+  Now insets resolve, plus the bar is taller and the buttons lifted
+  (`padding-bottom: env(safe-area-inset-bottom) + 12px`, taller tab items), clearing
+  the home indicator.
+- **Cigar scanner moved** from the Search page to the **Cigars page** (`/top`), under
+  the header. Still Aficionado-only + Beta.
+- **Face ID fixed (the real reason it didn't work)** — the app is on **Capacitor 8**,
+  but `capacitor-native-biometric@4.2.2` targets **Capacitor 5**, so it never
+  registered. Swapped to **@aparajita/capacitor-biometric-auth** (prompt) +
+  **@aparajita/capacitor-secure-storage** (Keychain) and rewrote `src/lib/biometric.ts`
+  against them.
+
+Face ID setup (Scotty): `npm install`, then **confirm these @aparajita plugin
+versions support Capacitor 8** (check their docs against your Cap version), run
+`npx cap sync`, add `NSFaceIDUsageDescription` to iOS Info.plist + the Android
+biometric permission. I can't verify native plugin/Capacitor compatibility or test
+biometrics in the sandbox.
 ## Name sync to all pages, mobile title order, Face ID (no migration)
 
 - **Names everywhere** — several spots rendered the raw static name instead of the

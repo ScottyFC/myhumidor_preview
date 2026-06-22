@@ -148,12 +148,12 @@ video {
 
 /* App bars sit above the device safe areas. */
 .native-topbar { padding-top: env(safe-area-inset-top); }
-.native-tabbar { padding-bottom: env(safe-area-inset-bottom); }
+.native-tabbar { padding-bottom: calc(env(safe-area-inset-bottom) + 12px); }
 
 /* Make room for the fixed top bar (56px) and bottom tab bar (~64px). */
 .native-app main {
   padding-top: calc(env(safe-area-inset-top) + 56px);
-  padding-bottom: calc(env(safe-area-inset-bottom) + 58px) !important;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 80px) !important;
 }
 
 /* App-like feel: no tap-highlight flash, no rubber-band overscroll, no

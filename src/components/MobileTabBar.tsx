@@ -47,7 +47,7 @@ export function MobileTabBar() {
       {/* Fade content out just above the bar so nothing leaks behind it. */}
       <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-ink to-transparent" />
       <div className="relative w-full border-t border-ember-400/20 bg-gradient-to-b from-char/30 to-ink">
-      <div className="grid w-full grid-cols-6 pb-[max(env(safe-area-inset-bottom),0.5rem)]">
+      <div className="grid w-full grid-cols-6 pt-1">
         {tabs.map((t) => {
           const active = t.match(pathname);
           const Icon = t.icon;
@@ -56,7 +56,7 @@ export function MobileTabBar() {
               key={t.href}
               href={t.href}
               className={cn(
-                'flex min-w-0 flex-col items-center gap-0.5 px-0.5 pt-1.5 pb-1 text-[10px] font-medium transition-colors',
+                'flex min-w-0 flex-col items-center gap-1 px-0.5 pt-2 pb-1.5 text-[10px] font-medium transition-colors',
                 active ? 'text-ember-300' : 'text-smoke-400 active:text-ember-100'
               )}
             >
