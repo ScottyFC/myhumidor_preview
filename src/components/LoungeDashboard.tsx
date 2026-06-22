@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { LoungeLogoEditor } from '@/components/LoungeLogoEditor';
 import { getMyLounges, type MyLounge } from '@/lib/lounges-owner';
 import { VenueTypeControl } from '@/components/VenueTypeControl';
+import { LoungeFollowers } from '@/components/LoungeFollowers';
 import {
   listDevices, recentLedger, streamStats7d, renameLounge,
   type LoungeDevice, type CreditLedgerEntry, type DayStat,
@@ -169,6 +170,8 @@ export function LoungeDashboard() {
           </div>
         )}
       </section>
+
+      {lounge?.loungeId && <LoungeFollowers loungeId={lounge.loungeId} />}
     </div>
   );
 }

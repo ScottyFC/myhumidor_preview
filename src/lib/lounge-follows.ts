@@ -97,3 +97,40 @@ export async function notifyLoungeFollowers(loungeId: string, loungeName: string
 }
 
 export const resolveLoungeId = loungeIdForSlug;
+
+export interface LoungeFollower {
+  id: string;
+  handle: string;
+  displayName: string;
+  avatarUrl: string | null;
+  since: string;
+}
+
+/** The members who follow a lounge (most recent first). Lounge owners use this to
+ *  see their audience. `lounge_follows` is publicly readable, so this works for the
+ *  owner under RLS. */
+export async function getLoungeFollowers(loungeId: string, limit = 200): Promise<LoungeFollower[]> {
+  if (!isSupabaseConfigured || !loungeId) return [];
+  try {
+    const sb = supabaseBrowser();
+    const { data: rows } = await sb
+      .from('lounge_follows')
+      .select('user_id, created_at')
+      .eq('lounge_id', loungeId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    const order = (rows ?? []).map((r) => r.user_id as string);
+    if (!order.length) return [];
+    const since = new Map((rows ?? []).map((r) => [r.user_id as string, r.created_at as string]));
+    const { data: profs } = await sb.from('profiles').select('id, handle, display_name, avatar_url').in('id', order);
+    const byId = new Map((profs ?? []).map((p) => [p.id, p]));
+    return order
+      .map((id) => {
+        const p = byId.get(id);
+        return p ? { id, handle: p.handle as string, displayName: p.display_name as string, avatarUrl: (p.avatar_url as string) ?? null, since: since.get(id) ?? '' } : null;
+      })
+      .filter(Boolean) as LoungeFollower[];
+  } catch {
+    return [];
+  }
+}

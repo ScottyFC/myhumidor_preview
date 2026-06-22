@@ -1,3 +1,10 @@
+## Lounges can see their followers (no migration)
+
+Added `getLoungeFollowers(loungeId)` (reads `lounge_follows` → joins `profiles`, most
+recent first) and a `LoungeFollowers` component shown on the lounge dashboard: a count
+plus a list of follower avatars/names linking to each profile. No migration needed —
+`lounge_follows` is already public-read (phase16) and profiles are readable. Can't
+test live, but it uses the same read path as the existing follower-count/notify code.
 ## phase81 — fix uploads + integrate lounge ownership (RUN THIS MIGRATION)
 
 Root causes of the "you don't have permission to upload" error AND the missing
