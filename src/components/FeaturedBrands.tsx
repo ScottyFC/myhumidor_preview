@@ -6,7 +6,7 @@ import type { FeaturedBrand } from '@/lib/catalog';
 export function FeaturedBrands({ brands }: { brands: FeaturedBrand[] }) {
   if (!brands.length) return null;
   return (
-    <div className="-mx-6 flex gap-3 overflow-x-auto px-6 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="-mr-6 flex gap-3 overflow-x-auto pr-6 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {brands.map((b) => (
         <Link
           key={b.slug}

@@ -138,9 +138,12 @@ export function CigarScanner() {
           <span className="rounded-full border-[0.5px] border-ember-400/40 bg-ember-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ember-200">Beta</span>
         </div>
         <p className="mt-1 text-sm text-smoke-400">Point your camera at the band and we’ll identify it. Still learning — results vary with band legibility.</p>
-        <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
         <button onClick={openScanner} className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-ember-400 px-4 py-2 text-xs font-semibold text-paper hover:bg-ember-600">
           <Camera size={14} strokeWidth={1.75} /> Scan a cigar
+        </button>
+        <button onClick={() => fileRef.current?.click()} className="ml-3 text-xs text-ember-200 underline underline-offset-2">
+          or choose a photo
         </button>
       </div>
 

@@ -51,7 +51,7 @@ function RankRow({
         {icon}
         <h2 className="eyebrow">{title}</h2>
       </div>
-      <div className="-mx-6 flex snap-x gap-4 overflow-x-auto px-6 pb-2 [scrollbar-width:thin]">
+      <div className="-mr-6 flex snap-x gap-4 overflow-x-auto pr-6 pb-2 [scrollbar-width:thin]">
         {cigars.map((c, i) => (
           <Link key={c.slug} href={`/cigars/${c.slug}`} className="group w-44 shrink-0 snap-start">
             <div className="relative">

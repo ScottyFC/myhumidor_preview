@@ -1,3 +1,16 @@
+## Carousel left-clip + scanner on Simulator (no migration)
+
+- **Carousel clipping**: `TopCigarsSections` and `FeaturedBrands` used a full-bleed
+  `-mx-6 … px-6` pattern; when it didn't line up with the parent padding the first
+  card's left edge clipped. Switched to right-only bleed (`-mr-6 … pr-6`) so the rail
+  aligns with the section header on the left (never clips) and still peeks on the right.
+- **Scanner on iOS**: the Xcode log (`device (null)`, `FigCaptureSourceRemote err=-17281`)
+  is the **iOS Simulator having no camera** — getUserMedia/AVCaptureSession can't find a
+  capture device, so the live preview cannot work there. It must be tested on a real
+  device. To keep it testable + add a real option: removed `capture="environment"` from
+  the fallback input so the picker offers the **photo library** (works on the Simulator),
+  and added an explicit "or choose a photo" button on the scan card. On a real device the
+  live preview should work; if the camera can't open, the photo picker is the fallback.
 ## Scanner: switch native to inline getUserMedia video (no migration)
 
 The camera-preview approach renders the camera BEHIND the webview, which only shows
