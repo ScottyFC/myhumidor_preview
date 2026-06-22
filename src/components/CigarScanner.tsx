@@ -11,10 +11,15 @@ interface Candidate { slug: string; brand: string; name: string; image_url: stri
 type Read = { brand: string; line: string; confidence: string };
 type State = 'idle' | 'camera' | 'scanning' | 'result' | 'error';
 
-/** In-app cigar scanner: live camera preview, tap to capture, and the matched
- *  cigar is overlaid on the view with a link to its page. Aficionado-only, Beta. */
+/**
+ * In-app cigar scanner. On the native app it uses the official Capacitor camera
+ * (reliable — the WKWebView's getUserMedia is flaky and errors with Fig -12710);
+ * on the web it shows a live in-app camera preview with a shutter. Either way the
+ * matched cigar is overlaid with a link to its page. Aficionado-only, Beta.
+ */
 export function CigarScanner() {
   const [member, setMember] = useState<boolean | null>(null);
+  const [native, setNative] = useState(false);
   const [state, setState] = useState<State>('idle');
   const [read, setRead] = useState<Read | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -24,7 +29,10 @@ export function CigarScanner() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => subscribeAficionado(setMember), []);
-  useEffect(() => () => stopStream(), []); // cleanup on unmount
+  useEffect(() => {
+    import('@capacitor/core').then(({ Capacitor }) => setNative(Capacitor.isNativePlatform())).catch(() => {});
+    return () => stopStream();
+  }, []);
 
   if (!member) return null; // members-only; hidden for everyone else
 
@@ -32,21 +40,6 @@ export function CigarScanner() {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
   }
-
-  async function openCamera() {
-    setErrMsg(''); setRead(null); setCandidates([]);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
-      streamRef.current = stream;
-      setState('camera');
-      setTimeout(() => { if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}); } }, 0);
-    } catch {
-      // No camera access (denied / unsupported) — fall back to the photo picker.
-      fileRef.current?.click();
-    }
-  }
-
-  function close() { stopStream(); setState('idle'); }
 
   async function scan(dataUrl: string) {
     setState('scanning'); setErrMsg('');
@@ -69,7 +62,45 @@ export function CigarScanner() {
     }
   }
 
-  function capture() {
+  // Native: use the Capacitor camera (reliable on device).
+  async function nativeCapture() {
+    try {
+      const { Camera, CameraResultType, CameraSource, CameraDirection } = await import('@capacitor/camera');
+      setState('scanning');
+      const photo = await Camera.getPhoto({
+        quality: 80, resultType: CameraResultType.DataUrl, source: CameraSource.Camera,
+        direction: CameraDirection.Rear, correctOrientation: true,
+      });
+      if (photo.dataUrl) await scan(photo.dataUrl);
+      else setState('idle');
+    } catch {
+      // user cancelled or permission denied
+      setState('idle');
+    }
+  }
+
+  // Web: live camera preview with a shutter.
+  async function webCamera() {
+    setErrMsg(''); setRead(null); setCandidates([]);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+      streamRef.current = stream;
+      setState('camera');
+      setTimeout(() => { if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}); } }, 0);
+    } catch {
+      fileRef.current?.click(); // fall back to the photo picker
+    }
+  }
+
+  function openScanner() {
+    setRead(null); setCandidates([]); setErrMsg('');
+    if (native) nativeCapture();
+    else webCamera();
+  }
+
+  function close() { stopStream(); setState('idle'); }
+
+  function captureWeb() {
     const v = videoRef.current;
     if (!v || !v.videoWidth) return;
     v.pause();
@@ -81,6 +112,7 @@ export function CigarScanner() {
 
   function scanAgain() {
     setRead(null); setCandidates([]); setErrMsg('');
+    if (native) { nativeCapture(); return; }
     setState('camera');
     videoRef.current?.play().catch(() => {});
   }
@@ -92,12 +124,13 @@ export function CigarScanner() {
       r.onload = () => res(r.result as string); r.onerror = () => rej(new Error('read failed'));
       r.readAsDataURL(file);
     });
-    setState('camera');
+    setState('scanning');
     scan(dataUrl);
   }
 
   const top = candidates[0];
   const rest = candidates.slice(1, 4);
+  const showVideo = !native; // native uses the OS camera UI, not a <video> element
 
   return (
     <>
@@ -108,30 +141,26 @@ export function CigarScanner() {
           <h3 className="font-display text-lg">Scan a cigar</h3>
           <span className="rounded-full border-[0.5px] border-ember-400/40 bg-ember-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ember-200">Beta</span>
         </div>
-        <p className="mt-1 text-sm text-smoke-400">Point your camera at the band and we’ll identify it right here. Still learning — results vary with band legibility.</p>
+        <p className="mt-1 text-sm text-smoke-400">Point your camera at the band and we’ll identify it. Still learning — results vary with band legibility.</p>
         <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} />
-        <button onClick={openCamera} className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-ember-400 px-4 py-2 text-xs font-semibold text-paper hover:bg-ember-600">
+        <button onClick={openScanner} className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-ember-400 px-4 py-2 text-xs font-semibold text-paper hover:bg-ember-600">
           <Camera size={14} strokeWidth={1.75} /> Scan a cigar
         </button>
       </div>
 
-      {/* Full-screen camera + overlay */}
+      {/* Overlay: web live camera, or (native/file) the scanning + result surface */}
       {state !== 'idle' && (
         <div className="fixed inset-0 z-[100] flex flex-col bg-black">
-          <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />
+          {showVideo && <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />}
 
-          {/* Top bar */}
           <div className="relative z-10 flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),1rem)]">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium text-paper backdrop-blur">
               <ScanLine size={13} className="text-ember-400" /> Scan <span className="text-[10px] uppercase tracking-wide text-ember-200">Beta</span>
             </span>
-            <button onClick={close} aria-label="Close" className="rounded-full bg-black/50 p-2 text-paper backdrop-blur">
-              <X size={18} />
-            </button>
+            <button onClick={close} aria-label="Close" className="rounded-full bg-black/50 p-2 text-paper backdrop-blur"><X size={18} /></button>
           </div>
 
-          {/* Center frame guide */}
-          {state === 'camera' && (
+          {showVideo && state === 'camera' && (
             <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
               <div className="h-44 w-72 rounded-2xl border-2 border-ember-400/70 shadow-[0_0_0_100vmax_rgba(0,0,0,0.35)]" />
               <p className="mt-4 rounded-full bg-black/50 px-3 py-1 text-xs text-paper backdrop-blur">Center the band, then tap to scan</p>
@@ -145,11 +174,10 @@ export function CigarScanner() {
             </div>
           )}
 
-          {/* Bottom controls / result */}
           <div className="relative z-10 mt-auto px-4 pb-[max(env(safe-area-inset-bottom),1.5rem)]">
-            {state === 'camera' && (
+            {showVideo && state === 'camera' && (
               <div className="flex justify-center">
-                <button onClick={capture} aria-label="Capture" className="h-16 w-16 rounded-full border-4 border-white/80 bg-white/20 backdrop-blur active:scale-95" />
+                <button onClick={captureWeb} aria-label="Capture" className="h-16 w-16 rounded-full border-4 border-white/80 bg-white/20 backdrop-blur active:scale-95" />
               </div>
             )}
 

@@ -1,3 +1,19 @@
+## Scanner: native camera plugin + web live preview (no migration)
+
+The iOS WKWebView `getUserMedia` is unreliable (the `Fig -12710` /
+`videoFrameAvailable` error = it couldn't pull camera frames). Fixed by splitting
+the capture path:
+- **Native app** → official `@capacitor/camera` `Camera.getPhoto` (rear camera,
+  DataUrl) → scan → result overlay with the cigar link. Reliable on device.
+- **Web** → live `getUserMedia` preview + shutter + overlay (works in browsers, so
+  scanning is now enabled on the website too). Falls back to the photo picker if the
+  browser blocks camera access.
+
+Native setup (Scotty): `npm install`, `npx cap sync`, and add
+`NSCameraUsageDescription` to iOS `Info.plist` (+ camera permission on Android) — the
+plugin needs it, and its absence is part of why the camera failed. Web needs HTTPS
+(prod is) and the user's camera permission. Each scan is a paid vision call
+(Aficionado-gated). Camera + vision can't run in the sandbox — verify on device + web.
 ## Scanner: live in-app camera + result overlay (no migration)
 
 `CigarScanner` now opens a **full-screen live camera** inside the app

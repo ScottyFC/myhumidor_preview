@@ -48,8 +48,8 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>YES</string>
+	<string> YES</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>YES</string>
+	<string> YES</string>
 </dict>
 </plist>
