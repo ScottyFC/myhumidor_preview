@@ -1,3 +1,32 @@
+## In-app menu PDF viewing (no migration)
+
+`ViewMenuLink` (food + drink menus) no longer kicks out to an external browser:
+- **Native app**: opens the PDF in an in-app browser sheet via `@capacitor/browser`
+  (`^8.0.3`, Cap-8 compatible) — stays inside the app, reliable PDF rendering.
+- **Web**: opens a full-screen modal with an `<iframe>` of the PDF (loading spinner,
+  Esc to close) plus an "Open" button as a fallback.
+Sign-in gating unchanged (signed-out users still get the register prompt).
+
+REQUIRED for native: `npx cap sync ios/android` to register the new browser plugin
+(same step as the camera plugin). Caveats: web mobile browsers don't always render a
+PDF inside an iframe (the "Open" button covers that), and if Supabase Storage ever
+sends an X-Frame-Options header the web iframe would be blocked (again, "Open"
+covers it). Can't test live.
+## phase82 — lounges can post a drink menu (RUN THIS MIGRATION)
+
+`supabase/migrations/phase82.sql`: adds `lounges.drink_menu_url` and extends
+`update_lounge_details` with `p_drink_menu_url` (coalesced).
+
+- Lounge editor: a "Drink menu (optional)" PDF upload alongside the food menu —
+  same validation + auto-save + success/error feedback, reusing `uploadMenuPdf`
+  (→ `submissions` bucket, already set up in phase81).
+- Lounge page: shows a "Drinks · View drink menu" row when a drink menu is set
+  (independent of the food/"Serves food" flag). `ViewMenuLink` gained a `label` prop
+  so food vs. drink links read correctly.
+- `database.types.ts` updated by hand (drink_menu_url on lounges Row/Insert/Update +
+  the RPC Args).
+
+Run phase82. Can't test live here.
 ## Story card revamp + ultra-shiny rare badges (no migration)
 
 - **Instagram Story card** (`CigarStoryShare`): top line is now the sharer's **handle**

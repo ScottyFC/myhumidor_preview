@@ -18,10 +18,12 @@ export function LoungeDetailsEditor() {
   const [menuUrl, setMenuUrl] = useState<string | null>(null);
   const [hideEmail, setHideEmail] = useState(false);
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [drinkMenuUrl, setDrinkMenuUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploadingMenu, setUploadingMenu] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [uploadingDrink, setUploadingDrink] = useState(false);
   const [uploadErr, setUploadErr] = useState<string | null>(null);
   const [uploadOk, setUploadOk] = useState<string | null>(null);
 
@@ -33,13 +35,14 @@ export function LoungeDetailsEditor() {
       setSlug(l.slug); setName(l.name); setCertified(!!l.certified);
       if (isSupabaseConfigured) {
         const { data } = await supabaseBrowser().from('lounges')
-          .select('hours_json, serves_food, menu_url, hide_email, banner_url').eq('slug', l.slug).single();
+          .select('hours_json, serves_food, menu_url, hide_email, banner_url, drink_menu_url').eq('slug', l.slug).single();
         if (data) {
           setHours((data.hours_json as LoungeHours) ?? {});
           setServesFood(!!data.serves_food);
           setMenuUrl(data.menu_url ?? null);
           setHideEmail(!!data.hide_email);
           setBannerUrl(data.banner_url ?? null);
+          setDrinkMenuUrl(data.drink_menu_url ?? null);
         }
       }
     })();
@@ -49,7 +52,7 @@ export function LoungeDetailsEditor() {
 
   async function save() {
     setBusy(true); setSaved(false);
-    const ok = await updateLoungeDetails(slug!, { hoursJson: hours, servesFood: certified ? servesFood : undefined, menuUrl: certified ? menuUrl : undefined, hideEmail: certified ? hideEmail : undefined, bannerUrl: certified ? bannerUrl : undefined });
+    const ok = await updateLoungeDetails(slug!, { hoursJson: hours, servesFood: certified ? servesFood : undefined, menuUrl: certified ? menuUrl : undefined, hideEmail: certified ? hideEmail : undefined, bannerUrl: certified ? bannerUrl : undefined, drinkMenuUrl: certified ? drinkMenuUrl : undefined });
     setBusy(false);
     if (ok) { setSaved(true); setTimeout(() => setSaved(false), 1500); }
   }
@@ -67,6 +70,20 @@ export function LoungeDetailsEditor() {
     // Confirm the upload by persisting it immediately (full form, so nothing else is cleared).
     const ok = await updateLoungeDetails(slug!, { hoursJson: hours, servesFood: certified ? servesFood : undefined, menuUrl: url, hideEmail: certified ? hideEmail : undefined, bannerUrl: certified ? bannerUrl : undefined });
     setUploadOk(ok ? 'Menu uploaded and saved ✓' : 'Uploaded — but saving failed. Click Save to retry.');
+  }
+
+  async function onDrink(file?: File) {
+    setUploadErr(null); setUploadOk(null);
+    if (!file) return;
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) { setUploadErr('Please choose a PDF file for the drink menu.'); return; }
+    if (file.size > 10 * 1024 * 1024) { setUploadErr('Drink menu PDF must be under 10 MB.'); return; }
+    setUploadingDrink(true);
+    const { url, error } = await uploadMenuPdf(file);
+    setUploadingDrink(false);
+    if (error || !url) { setUploadErr(error ?? 'Upload failed.'); return; }
+    setDrinkMenuUrl(url);
+    const ok = await updateLoungeDetails(slug!, { hoursJson: hours, servesFood: certified ? servesFood : undefined, menuUrl: certified ? menuUrl : undefined, hideEmail: certified ? hideEmail : undefined, bannerUrl: certified ? bannerUrl : undefined, drinkMenuUrl: url });
+    setUploadOk(ok ? 'Drink menu uploaded and saved ✓' : 'Uploaded — but saving failed. Click Save to retry.');
   }
 
   async function onBanner(file?: File) {
@@ -119,6 +136,15 @@ export function LoungeDetailsEditor() {
               {menuUrl && <a href={menuUrl} target="_blank" rel="noreferrer" className="ml-3 text-xs text-ember-400 underline">View current menu</a>}
             </div>
           )}
+
+          <div className="mt-4">
+            <div className="mb-1 text-sm text-smoke-200">Drink menu (optional)</div>
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/30 px-3 py-2 text-xs text-ember-100 hover:bg-ember-400/10">
+              {uploadingDrink ? <><Loader2 size={13} className="animate-spin" /> Uploading…</> : <><Upload size={13} /> {drinkMenuUrl ? 'Replace drink menu PDF' : 'Upload drink menu PDF'}</>}
+              <input type="file" accept="application/pdf" className="hidden" disabled={uploadingDrink} onChange={(e) => onDrink(e.target.files?.[0])} />
+            </label>
+            {drinkMenuUrl && <a href={drinkMenuUrl} target="_blank" rel="noreferrer" className="ml-3 text-xs text-ember-400 underline">View current drink menu</a>}
+          </div>
 
           <label className="mt-4 flex cursor-pointer items-center gap-2 text-sm text-smoke-200">
             <input type="checkbox" checked={hideEmail} onChange={(e) => setHideEmail(e.target.checked)} className="accent-ember-400" />

@@ -229,7 +229,7 @@ export async function getMyCertifiedLounge(): Promise<{ slug: string; name: stri
 export interface LoungeHours { [day: string]: string } // e.g. { Mon: '10:00–22:00', Tue: 'Closed' }
 
 export async function updateLoungeDetails(
-  slug: string, d: { hoursJson?: LoungeHours; servesFood?: boolean; menuUrl?: string | null; hideEmail?: boolean; bannerUrl?: string | null },
+  slug: string, d: { hoursJson?: LoungeHours; servesFood?: boolean; menuUrl?: string | null; hideEmail?: boolean; bannerUrl?: string | null; drinkMenuUrl?: string | null },
 ): Promise<boolean> {
   if (!isSupabaseConfigured) return false;
   const { error } = await supabaseBrowser().rpc('update_lounge_details', {
@@ -239,6 +239,7 @@ export async function updateLoungeDetails(
     p_menu_url: d.menuUrl ?? null,
     p_hide_email: d.hideEmail ?? null,
     p_banner_url: d.bannerUrl ?? null,
+    p_drink_menu_url: d.drinkMenuUrl ?? null,
   });
   if (error) { console.error('[lounge] update details failed:', error.message); return false; }
   return true;
