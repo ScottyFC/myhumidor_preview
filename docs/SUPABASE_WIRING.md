@@ -1,3 +1,26 @@
+## Name sync to all pages, mobile title order, Face ID (no migration)
+
+- **Names everywhere** — several spots rendered the raw static name instead of the
+  live `CigarName` resolver, so they showed pre-update names: the **mobile home
+  featured rail, web home, search rows (CigarRow), brand pages, Flavor Profile,
+  Recently Added, and the Concierge picks** are now all live `CigarName` (batched +
+  cached, so it's cheap). NOTE: `AgingTracker` has no slug on its entries, so it
+  wasn't converted — and **brand grouping / any remaining static spots still need the
+  cigars.json refresh from your DB export** for a complete, API-call-free fix.
+- **Mobile cigar page** — the brand + name now render **above the picture** on mobile
+  (`lg:hidden` title block before the image; the desktop two-column title is
+  `hidden lg:block` so it isn't duplicated).
+- **Face ID / biometric login** — `capacitor-native-biometric` plugin (installed) +
+  `src/lib/biometric.ts`. On the sign-in screen: an "Enable Face ID sign-in" opt-in
+  (stores credentials in the device Keychain after a successful password login) and a
+  "Sign in with Face ID" button on return. Credentials live in the Keychain/Keystore
+  via the plugin — never in our DB or plain text. Everything dynamic-imports the
+  plugin and degrades to hidden on web.
+
+Face ID native setup (Scotty): after `npm install`, run `npx cap sync`, add
+`NSFaceIDUsageDescription` to iOS `Info.plist`, and the biometric permission on
+Android. Can't be tested in the sandbox — verify on device. The web build treats
+biometrics as unavailable, so the buttons simply don't show there.
 ## Fix: tab bar bunched left / clipped (no migration)
 
 Regression from the gradient-scrim change: the `<nav>` carries `.native-only`, which

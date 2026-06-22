@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CigarName } from '@/components/CigarName';
 import { notFound } from 'next/navigation';
 import { Boxes, ArrowLeft } from 'lucide-react';
 import { cigarsByBrand, brandSlug, findCatalogCigarBySlug } from '@/lib/catalog';
@@ -109,7 +110,7 @@ export default async function BrandPage({ params }: PageProps) {
           >
             <CigarThumb slug={c.slug} brand={c.brand} src={c.image_url} fit="contain" rounded="rounded" className="h-16 w-12 shrink-0 text-xs" />
             <div className="min-w-0 flex-1">
-              <div className="font-display text-lg leading-snug group-hover:text-ember-100">{c.name}</div>
+              <div className="font-display text-lg leading-snug group-hover:text-ember-100"><CigarName slug={c.slug} name={c.name} /></div>
               <div className="mt-1 text-xs text-smoke-400">
                 {[c.size, c.country].filter(Boolean).join(' · ')}
               </div>

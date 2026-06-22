@@ -114,6 +114,16 @@ export default async function CigarPage({ params }: PageProps) {
       </Link>
 
       <div className="grid gap-10 lg:grid-cols-12">
+        {/* Mobile: cigar name sits above the picture. */}
+        <div className="lg:hidden">
+          <Link href={`/brands/${brandSlug(view.brand)}`} className="eyebrow mb-2 inline-flex items-center gap-1 text-ember-300">
+            <CigarName slug={slug} brand={view.brand} mode="brand" />
+          </Link>
+          <h1 className="font-display text-4xl leading-[1.0] tracking-tightest">
+            <CigarName slug={slug} name={view.headline} mode="name" />
+          </h1>
+        </div>
+
         {/* ─── Visual ─────────────────────────────────────────────────── */}
         <div className="lg:col-span-5">
           <BrandLogo
@@ -129,10 +139,10 @@ export default async function CigarPage({ params }: PageProps) {
 
         {/* ─── Header + Aggregates ───────────────────────────────────── */}
         <div className="lg:col-span-7">
-          <Link href={`/brands/${brandSlug(view.brand)}`} className="eyebrow mb-2 inline-flex items-center gap-1 text-ember-300 underline-offset-2 transition hover:text-ember-100 hover:underline">
+          <Link href={`/brands/${brandSlug(view.brand)}`} className="eyebrow mb-2 hidden items-center gap-1 text-ember-300 underline-offset-2 transition hover:text-ember-100 hover:underline lg:inline-flex">
             <CigarName slug={slug} brand={view.brand} mode="brand" />
           </Link>
-          <h1 className="font-display text-4xl leading-[1.0] tracking-tightest sm:text-5xl">
+          <h1 className="hidden font-display text-4xl leading-[1.0] tracking-tightest sm:text-5xl lg:block">
             <CigarName slug={slug} name={view.headline} mode="name" />
           </h1>
           <div className="mt-3 text-lg text-smoke-200 italic">

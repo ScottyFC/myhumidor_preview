@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CigarName } from '@/components/CigarName';
 import { ArrowRight, MapPin, Tv, Flame, BadgeCheck, Award } from 'lucide-react';
 import { featuredCigars, featuredLounges, featuredBrands, allCigars, allStores } from '@/lib/catalog';
 import { boostedLounges } from '@/lib/featured-server';
@@ -110,7 +111,7 @@ export default async function HomePage() {
                   </span>
                 )}
               </div>
-              <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100">{c.name}</div>
+              <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100"><CigarName slug={c.slug} name={c.name} /></div>
               <div className="truncate text-xs text-smoke-400">{c.brand} · {c.size}</div>
             </Link>
           ))}

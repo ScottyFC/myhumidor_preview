@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { CigarName } from '@/components/CigarName';
 import Link from 'next/link';
 import { Sparkles, SendHorizonal, Loader2 } from 'lucide-react';
 import { BrandTile } from '@/components/BrandTile';
@@ -92,7 +93,7 @@ export function CigarAgent() {
                             </span>
                           )}
                         </div>
-                        <div className="mt-1.5 line-clamp-2 text-xs font-medium leading-snug group-hover:text-ember-100">{p.name}</div>
+                        <div className="mt-1.5 line-clamp-2 text-xs font-medium leading-snug group-hover:text-ember-100"><CigarName slug={p.slug} name={p.name} /></div>
                         {p.reasons[0] && <div className="mt-0.5 line-clamp-1 text-[10px] text-ember-200/80">{p.reasons[0]}</div>}
                       </Link>
                     ))}

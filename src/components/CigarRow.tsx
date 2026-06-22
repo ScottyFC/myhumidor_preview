@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CigarName } from '@/components/CigarName';
 import type { CatalogCigar } from '@/types';
 import { BrandLogo } from '@/components/BrandLogo';
 import { AutoScrollRow } from '@/components/AutoScrollRow';
@@ -31,7 +32,7 @@ export function CigarRow({ title, eyebrowIcon, cigars, href }: { title: string; 
                 </span>
               )}
             </div>
-            <div className="mt-2 line-clamp-2 text-sm font-medium leading-snug group-hover:text-ember-100">{c.name}</div>
+            <div className="mt-2 line-clamp-2 text-sm font-medium leading-snug group-hover:text-ember-100"><CigarName slug={c.slug} name={c.name} /></div>
             <div className="truncate text-xs text-smoke-400">{c.brand}{c.size ? ` · ${c.size}` : ''}</div>
           </Link>
         ))}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CigarName } from '@/components/CigarName';
 import Link from 'next/link';
 import { Sparkles, Crown, MapPin, Loader2 } from 'lucide-react';
 import { BrandTile } from '@/components/BrandTile';
@@ -73,7 +74,7 @@ export function FlavorProfile({
               <Link key={c.slug} href={`/cigars/${c.slug}`} className="group w-44 shrink-0">
                 <BrandTile name={c.brand} src={c.image_url} fit="contain" rounded="rounded-xl"
                   className="aspect-[4/5] w-full text-4xl transition group-hover:ring-1 group-hover:ring-ember-400/40" />
-                <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100">{c.name}</div>
+                <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100"><CigarName slug={c.slug} name={c.name} /></div>
                 <div className="truncate text-xs text-smoke-400">{c.brand}{c.country ? ` · ${c.country}` : ''}</div>
                 {c.why && <div className="mt-1 line-clamp-3 text-[11px] leading-snug text-smoke-300">{c.why}</div>}
               </Link>

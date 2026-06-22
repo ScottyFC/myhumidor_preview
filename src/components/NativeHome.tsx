@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { CigarName } from '@/components/CigarName';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Search, Flame, Heart, Store, MapPin, Plus, Sparkles, Box, X, ArrowRight } from 'lucide-react';
@@ -115,7 +116,7 @@ export function NativeHome({ featured }: { featured: Feat[] }) {
         {featured.map((c) => (
           <Link key={c.slug} href={`/cigars/${c.slug}`} className="w-32 shrink-0">
             <CigarThumb slug={c.slug} brand={c.brand} src={c.image_url} fit="contain" rounded="rounded-xl" className="aspect-[4/5] w-full text-2xl" />
-            <div className="mt-1.5 truncate text-[11px] font-medium text-paper">{c.name}</div>
+            <div className="mt-1.5 truncate text-[11px] font-medium text-paper"><CigarName slug={c.slug} name={c.name} /></div>
             <div className="truncate text-[10px] text-smoke-400">{c.brand}</div>
           </Link>
         ))}

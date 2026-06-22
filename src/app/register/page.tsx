@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { User, Store, Loader2, Check, MailCheck } from 'lucide-react';
+import { ScanFace, User, Store, Loader2, Check, MailCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signUpEmail, signInEmail, resendConfirmation, type AuthProvider } from '@/lib/auth';
+import { biometricAvailable, hasBiometricCredentials, saveBiometricCredentials, biometricSignIn, type BiometryInfo } from '@/lib/biometric';
 import { Recaptcha } from '@/components/Recaptcha';
 import type { AccountType } from '@/lib/ids';
 
@@ -23,6 +24,9 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
+  const [bio, setBio] = useState<BiometryInfo>({ available: false, type: null });
+  const [bioHasCreds, setBioHasCreds] = useState(false);
+  const [enableBiometric, setEnableBiometric] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [confirm, setConfirm] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -44,6 +48,7 @@ export default function RegisterPage() {
     const q = new URLSearchParams(window.location.search);
     if (q.get('error')) { setLinkError(true); setMode('signin'); }
     if (q.get('mode') === 'signup') setMode('signup');
+    biometricAvailable().then((b) => { setBio(b); if (b.available) hasBiometricCredentials().then(setBioHasCreds); });
     const prefEmail = q.get('email'); if (prefEmail) setEmail(prefEmail);
     const inv = q.get('invite');
     if (inv) {
@@ -137,6 +142,7 @@ export default function RegisterPage() {
         setBusy(null);
         return;
       }
+      if (enableBiometric && bio.available) { try { await saveBiometricCredentials(email.trim(), password); } catch { /* ignore */ } }
       finish();
     }
   }
@@ -233,6 +239,12 @@ export default function RegisterPage() {
             Remember me on this device
           </label>
         )}
+        {mode === 'signin' && bio.available && !bioHasCreds && (
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-smoke-300">
+            <input type="checkbox" checked={enableBiometric} onChange={(e) => setEnableBiometric(e.target.checked)} className="accent-ember-400" />
+            <ScanFace size={13} className="text-ember-400" /> Enable {bio.type === 'face' ? 'Face ID' : bio.type === 'fingerprint' ? 'fingerprint' : 'biometric'} sign-in
+          </label>
+        )}
 
         {error && <div className="text-xs text-red-400">{error}</div>}
 
@@ -267,6 +279,21 @@ export default function RegisterPage() {
               : 'Create account'
             : 'Sign in'}
         </button>
+
+        {mode === 'signin' && bio.available && bioHasCreds && (
+          <button
+            onClick={async () => {
+              setError(''); setBusy('password');
+              const res = await biometricSignIn();
+              if (res.error) { setError(res.error); setBusy(null); return; }
+              finish();
+            }}
+            disabled={!!busy}
+            className="flex w-full items-center justify-center gap-2 rounded-md border-[0.5px] border-ember-400/40 py-2.5 text-sm font-medium text-ember-100 transition hover:bg-ember-400/10 disabled:opacity-60"
+          >
+            <ScanFace size={16} strokeWidth={1.75} /> Sign in with {bio.type === 'face' ? 'Face ID' : bio.type === 'fingerprint' ? 'fingerprint' : 'biometrics'}
+          </button>
+        )}
       </div>
 
       <div className="mt-6 text-center text-sm text-smoke-300">

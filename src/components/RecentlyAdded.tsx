@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CigarName } from '@/components/CigarName';
 import Link from 'next/link';
 import { BadgeCheck } from 'lucide-react';
 import { AutoScrollRow } from '@/components/AutoScrollRow';
@@ -58,7 +59,7 @@ export function RecentlyAdded({
                 rounded="rounded-xl"
                 className="aspect-[4/5] w-full text-3xl transition group-hover:ring-1 group-hover:ring-ember-400/40"
               />
-              <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100">{x.name}</div>
+              <div className="mt-2 truncate text-sm font-medium group-hover:text-ember-100"><CigarName slug={x.slug} name={x.name} /></div>
               <div className="truncate text-xs text-smoke-400">{x.brand} · {x.size}</div>
             </Link>
           ))}
