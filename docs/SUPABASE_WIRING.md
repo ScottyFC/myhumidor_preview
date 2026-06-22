@@ -1,3 +1,24 @@
+## Story card revamp + ultra-shiny rare badges (no migration)
+
+- **Instagram Story card** (`CigarStoryShare`): top line is now the sharer's **handle**
+  (`@handle`, fetched from profiles; falls back to display name). Middle always shows
+  an image — the cigar image when it loads (imgix/CORS-permitting), otherwise a brand
+  monogram tile so it's never empty. Bottom now shows the **MyHumidor logo**
+  (`/myhumidor-logo.png`, same-origin so the canvas isn't tainted) + the cigar page
+  URL `myhumidor.shop/cigars/{slug}`, and the share payload includes that URL.
+- **Rare badges**: bespoke artwork (which often ships with an unremovable black
+  background, e.g. "Unicorn Chaser") is no longer rendered as the raw image. Those
+  badges now render as the matching icon in an **ultra-shiny holographic medallion**
+  (iridescent hue-shifting ring + gloss highlight + sheen sweep), so they read as
+  special and there's no black box.
+
+Caveats: Instagram doesn't make text inside a story image tappable, so the cigar link
+is the visible URL on the card + the URL attached to the native share (platforms that
+support it). The middle falls back to a monogram if the cigar image is missing or
+CORS-blocked — passing a CORS-safe brand-logo URL could show a real logo instead.
+ALL bespoke-art badges now use the shiny medallion (so genuinely-transparent artwork
+is replaced too); that's the trade for guaranteeing no black boxes. Can't test the
+canvas/share or the animations live.
 ## Lounges can see their followers (no migration)
 
 Added `getLoungeFollowers(loungeId)` (reads `lounge_follows` → joins `profiles`, most

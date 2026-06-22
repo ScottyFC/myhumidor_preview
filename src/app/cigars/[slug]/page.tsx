@@ -152,7 +152,7 @@ export default async function CigarPage({ params }: PageProps) {
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
             <ShareButton title={`${view.brand} ${view.headline}`} text={`Check out ${view.brand} ${view.headline} on MyHumidor`} />
-            <CigarStoryShare brand={view.brand} name={view.headline} imageUrl={view.imageUrl} />
+            <CigarStoryShare slug={slug} brand={view.brand} name={view.headline} imageUrl={view.imageUrl} />
           </div>
           <AdminOnlyId id={view.id} label="Cigar UUID" />
           <div><AdminCigarActions slug={slug} name={`${view.brand} ${view.headline}`} /></div>

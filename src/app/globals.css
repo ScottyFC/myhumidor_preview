@@ -244,3 +244,6 @@ body::before {
 html.camera-active, html.camera-active body { background: transparent !important; }
 html.camera-active body { background-image: none !important; }
 html.camera-active body::before { display: none !important; }
+
+/* Ultra-shiny holographic ring for rare badges */
+@keyframes holoHue { to { filter: hue-rotate(360deg); } }

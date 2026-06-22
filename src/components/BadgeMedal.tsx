@@ -80,24 +80,19 @@ export function BadgeMedal({ badge, earned, size = 124 }: { badge: BadgeDef; ear
           style={{ background: `radial-gradient(circle at ${t.g}% 30%, rgba(255,255,255,0.30), transparent 55%)`, opacity: earned ? 1 : 0.12 }}
         />
         {badge.imageUrl ? (
-          // Bespoke artwork — framed in the same circular medallion as generated
-          // badges and clipped to a circle, so square/black-background art reads as
-          // a coin instead of a black box.
-          <div
-            className={cn(
-              'flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br p-[3px] shadow-[0_8px_20px_rgba(0,0,0,0.35)] transition',
-              ring,
-              !earned && 'grayscale brightness-[0.5]'
-            )}
-          >
-            <div className="relative h-full w-full overflow-hidden rounded-full bg-char">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={badge.imageUrl}
-                alt={badge.name}
-                loading="lazy"
-                className={cn('h-full w-full scale-110 object-cover transition', !earned && 'grayscale brightness-[0.45]')}
-              />
+          // Rare badges: render the matching icon as an ULTRA-SHINY holographic
+          // medallion (iridescent hue-shifting ring + gloss + sheen) instead of the
+          // uploaded artwork, which often ships with an unremovable black background.
+          <div className="relative h-full w-full overflow-hidden rounded-full shadow-[0_8px_28px_rgba(240,195,85,0.4)]">
+            <div
+              className={cn('absolute inset-0 rounded-full', earned && 'animate-[holoHue_7s_linear_infinite]')}
+              style={{ background: 'conic-gradient(from 0deg, #f0c355, #8fd3ff, #ff9ff0, #9dffc9, #ffd98f, #c0a3ff, #f0c355)' }}
+            />
+            <div className={cn('absolute inset-[3px] flex flex-col items-center justify-center overflow-hidden rounded-full bg-gradient-to-b from-[#201a13] to-[#0b0805]', !earned && 'grayscale brightness-[0.5]')}>
+              <div className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(120%_80%_at_30%_0%,rgba(255,255,255,0.4),transparent_55%)]" />
+              {earned && <div className="pointer-events-none absolute inset-0 -translate-x-full animate-[sheen_3s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/45 to-transparent" />}
+              {(() => { const I = iconFor(badge); return <I size={size * 0.34} strokeWidth={1.25} className="relative text-white drop-shadow-[0_2px_12px_rgba(255,255,255,0.6)]" />; })()}
+              <span className="relative mt-1.5 h-1.5 w-1.5 rounded-full bg-fuchsia-300 shadow-[0_0_8px_rgba(240,160,255,0.9)]" />
             </div>
           </div>
         ) : (
