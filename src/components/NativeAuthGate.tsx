@@ -35,7 +35,7 @@ export function NativeAuthGate() {
   return (
     <div
       className="fixed inset-0 z-[100] flex flex-col"
-      style={{ backgroundColor: '#14110d', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+      style={{ backgroundColor: 'rgb(var(--ink))', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_0%,rgba(240,195,85,0.16),transparent_60%)]" />
       <div className="relative flex flex-1 flex-col items-center justify-center px-8 text-center">

@@ -3,33 +3,62 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Light theme (default) ─────────────────────────────────────────── */
   :root {
+    color-scheme: light;
+    --ink: 250 247 240;       /* page background */
+    --char: 234 227 214;      /* panels / elevated surfaces */
+    --paper: 31 24 16;        /* primary text */
+    --leather: 122 84 58; --leather-dark: 92 62 42; --leather-deep: 66 44 30;
+    --ember-50: 250 238 218; --ember-100: 138 90 18; --ember-200: 154 100 16;
+    --ember-300: 160 106 18; --ember-400: 198 138 26; --ember-600: 138 82 8;
+    --ember-800: 99 56 6; --ember-900: 65 36 2;
+    --smoke-50: 42 36 27; --smoke-100: 58 52 42; --smoke-200: 74 68 56;
+    --smoke-300: 92 86 72; --smoke-400: 110 103 87; --smoke-500: 131 123 105;
+    --smoke-600: 154 147 130; --smoke-700: 179 173 158; --smoke-800: 216 211 199;
+    --smoke-900: 237 233 223;
+    /* legacy aliases */
+    --ember: #BA7517; --ember-glow: #FAC775; --ember-deep: #854F0B;
+  }
+
+  /* ── Dark theme ────────────────────────────────────────────────────── */
+  .dark {
     color-scheme: dark;
-    /* Brand */
-    --ember: #BA7517;
-    --ember-glow: #FAC775;
-    --ember-deep: #854F0B;
-    --leather: #4A2C1A;
-    --smoke-bg: #0F0A06;
-    --paper: #FAEEDA;
+    --ink: 20 17 13;
+    --char: 15 10 6;
+    --paper: 250 238 218;
+    --leather: 74 44 26; --leather-dark: 44 24 16; --leather-deep: 26 14 8;
+    --ember-50: 250 238 218; --ember-100: 250 199 117; --ember-200: 239 159 39;
+    --ember-300: 200 150 80; --ember-400: 186 117 23; --ember-600: 133 79 11;
+    --ember-800: 99 56 6; --ember-900: 65 36 2;
+    --smoke-50: 245 242 235; --smoke-100: 232 228 217; --smoke-200: 194 192 182;
+    --smoke-300: 168 166 156; --smoke-400: 136 135 128; --smoke-500: 117 116 104;
+    --smoke-600: 95 94 90; --smoke-700: 68 67 65; --smoke-800: 44 44 42;
+    --smoke-900: 26 26 24;
   }
 
   html {
-    @apply bg-char text-paper antialiased;
+    @apply bg-ink text-paper antialiased;
     font-feature-settings: 'ss01', 'ss02', 'cv11';
     text-rendering: optimizeLegibility;
   }
 
   body {
     @apply font-sans;
-    /* Layered "after-hours" wash: gold ember top-left, rust drift right,
-       leather pool low — richer than a flat char field but still recedes. */
+    /* Light wash — gentle warm radials so the page isn't a flat white. */
+    background-image:
+      radial-gradient(ellipse 900px 600px at 14% 8%, rgba(240, 195, 85, 0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 1000px 700px at 50% 110%, rgba(122, 84, 58, 0.08) 0%, transparent 60%);
+    background-attachment: fixed;
+  }
+
+  /* Dark wash — the original after-hours layered field. */
+  .dark body {
     background-image:
       radial-gradient(ellipse 900px 600px at 14% 8%, rgba(240, 195, 85, 0.085) 0%, transparent 55%),
       radial-gradient(ellipse 700px 900px at 92% 30%, rgba(166, 84, 38, 0.07) 0%, transparent 55%),
       radial-gradient(ellipse 1000px 700px at 50% 110%, rgba(74, 46, 24, 0.16) 0%, transparent 60%),
       linear-gradient(160deg, rgba(28, 18, 11, 0.5) 0%, transparent 35%, rgba(18, 12, 8, 0.6) 100%);
-    background-attachment: fixed;
   }
 
   /* Editorial display headings */
@@ -75,7 +104,7 @@
 
   /* Glass panel for overlays */
   .glass {
-    background: rgba(15, 10, 6, 0.78);
+    background: rgb(var(--char) / 0.85);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 0.5px solid rgba(186, 117, 23, 0.25);
@@ -201,5 +230,5 @@ body::before {
 
 /* Bulletproof solid backgrounds for the native bars (independent of Tailwind
    color resolution) so content can never show through them. */
-.native-topbar { background-color: #14110d !important; }
-.native-tabbar { background-color: #14110d !important; }
+.native-topbar { background-color: rgb(var(--ink)) !important; }
+.native-tabbar { background-color: rgb(var(--ink)) !important; }

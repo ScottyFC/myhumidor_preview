@@ -13,6 +13,7 @@ import { CigarCommunity } from '@/components/CigarCommunity';
 import { CigarInsight } from '@/components/CigarInsight';
 import { CigarAging } from '@/components/CigarAging';
 import { ShareButton } from '@/components/ShareButton';
+import { CigarStoryShare } from '@/components/CigarStoryShare';
 import { CigarName } from '@/components/CigarName';
 import { AddToCollection } from '@/components/AddToCollection';
 import { BrandLogo } from '@/components/BrandLogo';
@@ -149,7 +150,10 @@ export default async function CigarPage({ params }: PageProps) {
           <div className="mt-3 text-lg text-smoke-200 italic">
             {[view.vitola, view.wrapper].filter(Boolean).join(' · ')}
           </div>
-          <div className="mt-3"><ShareButton title={`${view.brand} ${view.headline}`} text={`Check out ${view.brand} ${view.headline} on MyHumidor`} /></div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <ShareButton title={`${view.brand} ${view.headline}`} text={`Check out ${view.brand} ${view.headline} on MyHumidor`} />
+            <CigarStoryShare brand={view.brand} name={view.headline} imageUrl={view.imageUrl} />
+          </div>
           <AdminOnlyId id={view.id} label="Cigar UUID" />
           <div><AdminCigarActions slug={slug} name={`${view.brand} ${view.headline}`} /></div>
           <CigarEditForm

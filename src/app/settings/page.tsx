@@ -1,4 +1,5 @@
 'use client';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -49,8 +50,14 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-2xl px-6 pt-10">
       <h1 className="font-display text-4xl tracking-tightest">Settings</h1>
 
+      <section className="mt-6">
+        <h2 className="font-display text-xl">Appearance</h2>
+        <p className="mt-1 text-sm text-smoke-400">Choose how MyHumidor looks.</p>
+        <div className="mt-3"><ThemeToggle /></div>
+      </section>
+
       {session && (
-        <section className="mt-6">
+        <section className="mt-8">
           <h2 className="font-display text-xl">Account</h2>
           {retailCapable ? (
             <>

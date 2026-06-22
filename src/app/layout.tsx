@@ -58,7 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var C=window.Capacitor;if(C&&C.isNativePlatform&&C.isNativePlatform()){var d=document.documentElement;d.classList.add('native-app');d.classList.add('native-'+C.getPlatform());}}catch(e){}})();",
+              "(function(){try{var C=window.Capacitor;if(C&&C.isNativePlatform&&C.isNativePlatform()){var d=document.documentElement;d.classList.add('native-app');d.classList.add('native-'+C.getPlatform());}}catch(e){}try{if(localStorage.getItem('mh-theme')==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();",
           }}
         />
         <div className="web-chrome"><Nav /></div>

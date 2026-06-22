@@ -1,3 +1,37 @@
+## Redesign: light theme + dark toggle (default light) — no migration
+
+The whole palette was converted to **CSS variables** (channel format, so `/opacity`
+modifiers still work) defined in `globals.css`: **light is the default** (`:root`),
+**dark** lives under `.dark`. Tailwind colors (`ink`, `char`, `paper`, `ember-*`,
+`smoke-*`) now resolve to those vars, so every existing `bg-ink`/`text-paper`/etc.
+flips theme with one class — no per-component rewrite.
+
+- **Settings → Appearance**: `ThemeToggle` (Light/Dark); choice persists in
+  localStorage and is applied **before paint** by the inline script in the layout
+  (no flash). Default = light.
+- Native top/bottom bars, the auth gate, and `.glass` overlays are now theme-aware
+  too (were hard-coded dark).
+- Semantics: `ink` = page bg, `char` = panels, `paper` = primary text, `smoke-*` =
+  muted text (inverted for light so it reads dark), `ember-*` = gold accent (small
+  shades darkened in light mode for contrast).
+
+Caveats: this is a blind implementation — I can't see it rendered, so the light
+values are sensible defaults that **will need a visual tuning pass** (some
+opacity-based panels and accent-text contrasts may want adjustment). Review on web +
+device and tell me what reads wrong. The "neater / reposition pages" decluttering is a
+separate follow-up — this pass delivers the lighting + toggle.
+## Cigars → Instagram Story share (no migration)
+
+`CigarStoryShare` (on the cigar page, next to Share) generates a 1080×1920 branded
+story card client-side (canvas) and hands it to the OS share sheet, which offers
+Instagram → Stories on mobile; desktop downloads the card. Cigar image is drawn via
+the imgix-safe URL (CORS-permitting); if the image taints the canvas it falls back to
+a clean text card.
+
+NOTE: this is the *share-sheet* path (works today, no Meta app). True automatic
+posting to Facebook/Instagram and lounge Facebook-Page management are a separate
+infrastructure track — see the redesign/social plan; auto-posting to a personal
+Facebook timeline is not possible via Meta's API regardless.
 ## FL lounges/retailers — corrected import (dedup, labeled)
 
 Re-imported idempotently. **The two CSVs are 50 rows each (100 total), not 100
