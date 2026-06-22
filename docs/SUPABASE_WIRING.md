@@ -1,3 +1,21 @@
+## Scanner black-preview fix + web theme toggle + banner polish (no migration)
+
+- **Scanner stayed black**: the live `<video>` reached the camera state (stream was
+  acquired) but the stream was attached in a `setTimeout` that raced the render, so
+  `srcObject` often never landed on the mounted element. Now attached in a
+  `useEffect` keyed on the camera state (runs after the DOM commits) + `autoPlay` on
+  the video. Web preview should show reliably.
+- **Theme toggle on web**: added a Light/Dark row to the web `Nav` account dropdown
+  (the earlier toggle was only in the native top bar). Now in both, plus Settings.
+- **Elite banners — more razzle dazzle**: animated gold sheen sweep, soft gold glow
+  shadow, gradient-clipped label text, dual shimmer hairlines, and a gradient icon
+  badge — while staying light-friendly (no brown).
+
+Caveat (scanner): this fixes the web/desktop preview race. On the native iPad/iOS
+app the camera should use the OS camera (`Camera.getPhoto`); if Capacitor isn't
+detected it falls back to the WKWebView `getUserMedia` path, which can still be black
+on device (Fig -12710). Verify on device; if black persists there, it's the native
+detection/WKWebView path, not this race.
 ## Light-theme polish (no migration)
 
 - **Aficionado / Certified banners** (`EliteBanner`) redesigned: dropped the dark

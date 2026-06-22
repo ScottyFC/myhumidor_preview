@@ -34,6 +34,19 @@ export function CigarScanner() {
     return () => stopStream();
   }, []);
 
+  // Attach the live stream once the <video> is actually mounted (state === 'camera').
+  // Doing this in an effect (not a setTimeout) avoids the race where the ref isn't
+  // ready yet, which left the preview black.
+  useEffect(() => {
+    if (state !== 'camera') return;
+    const v = videoRef.current;
+    const s = streamRef.current;
+    if (!v || !s) return;
+    v.srcObject = s;
+    const t = setTimeout(() => v.play().catch(() => {}), 0);
+    return () => clearTimeout(t);
+  }, [state]);
+
   if (!member) return null; // members-only; hidden for everyone else
 
   function stopStream() {
@@ -85,8 +98,7 @@ export function CigarScanner() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
       streamRef.current = stream;
-      setState('camera');
-      setTimeout(() => { if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}); } }, 0);
+      setState('camera'); // effect attaches the stream once the <video> mounts
     } catch {
       fileRef.current?.click(); // fall back to the photo picker
     }
@@ -151,7 +163,7 @@ export function CigarScanner() {
       {/* Overlay: web live camera, or (native/file) the scanning + result surface */}
       {state !== 'idle' && (
         <div className="fixed inset-0 z-[100] flex flex-col bg-black">
-          {showVideo && <video ref={videoRef} playsInline muted className="absolute inset-0 h-full w-full object-cover" />}
+          {showVideo && <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-cover" />}
 
           <div className="relative z-10 flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),1rem)]">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-medium text-paper backdrop-blur">

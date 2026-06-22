@@ -232,3 +232,9 @@ body::before {
    color resolution) so content can never show through them. */
 .native-topbar { background-color: rgb(var(--ink)) !important; }
 .native-tabbar { background-color: rgb(var(--ink)) !important; }
+
+/* Premium sheen sweep for elite banners */
+@keyframes sheen {
+  0% { transform: translateX(-120%); }
+  60%, 100% { transform: translateX(120%); }
+}

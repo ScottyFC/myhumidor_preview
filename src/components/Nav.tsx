@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings, Bell, Package, Newspaper, CreditCard } from 'lucide-react';
+import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings, Bell, Package, Newspaper, CreditCard, Sun, Moon } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
@@ -33,6 +33,9 @@ export function Nav() {
   const [, bumpAdmin] = useState(0);
   const [loungeSlug, setLoungeSlug] = useState<string | null>(null);
   const [loungeDone, setLoungeDone] = useState(false); // verified → hide the Verify entry points
+  const [dark, setDark] = useState(false);
+  useEffect(() => { setDark(document.documentElement.classList.contains('dark')); }, []);
+  function toggleTheme() { setDark((d) => { const n = !d; document.documentElement.classList.toggle('dark', n); try { localStorage.setItem('mh-theme', n ? 'dark' : 'light'); } catch {} return n; }); }
 
   useEffect(() => {
     return subscribeAuth(setSession);
@@ -179,6 +182,12 @@ export function Nav() {
                       <MenuItem href="/account#notifications" icon={<Bell size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                         Notification Settings
                       </MenuItem>
+                      <button
+                        onClick={toggleTheme}
+                        className="flex w-full items-center gap-2.5 border-t border-ember-400/10 px-4 py-2.5 text-left text-sm text-smoke-300 hover:bg-ember-400/10 hover:text-paper"
+                      >
+                        {dark ? <Sun size={14} strokeWidth={1.5} /> : <Moon size={14} strokeWidth={1.5} />} {dark ? 'Light mode' : 'Dark mode'}
+                      </button>
                       <button
                         onClick={async () => { setMenuOpen(false); await signOut(); window.location.href = '/'; }}
                         className="flex w-full items-center gap-2.5 border-t border-ember-400/10 px-4 py-2.5 text-left text-sm text-smoke-300 hover:bg-ember-400/10 hover:text-paper"
