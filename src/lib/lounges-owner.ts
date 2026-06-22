@@ -173,10 +173,18 @@ export async function getMyLounges(): Promise<MyLounge[]> {
   try {
     const sb = supabaseBrowser();
     const { data: mems } = await sb.from('lounge_members').select('lounge_id, role').eq('user_id', userId);
-    const ids = (mems ?? []).map((m) => m.lounge_id);
-    if (!ids.length) return [];
     const roleById = new Map((mems ?? []).map((m) => [m.lounge_id, m.role]));
-    const { data: lounges } = await sb.from('lounges').select('id, slug, name, city, state, credits, verified, certified, cert_tier').in('id', ids);
+    const ids = new Set((mems ?? []).map((m) => m.lounge_id as string));
+
+    // Also treat lounges you directly own (lounges.owner_id) as yours, so an owner
+    // is recognized even if the membership row is missing.
+    const { data: owned } = await sb.from('lounges').select('id').eq('owner_id', userId);
+    for (const o of owned ?? []) {
+      if (!ids.has(o.id)) { ids.add(o.id); roleById.set(o.id, 'owner'); }
+    }
+
+    if (!ids.size) return [];
+    const { data: lounges } = await sb.from('lounges').select('id, slug, name, city, state, credits, verified, certified, cert_tier').in('id', Array.from(ids));
     return (lounges ?? []).map((l) => ({
       loungeId: l.id,
       slug: l.slug,

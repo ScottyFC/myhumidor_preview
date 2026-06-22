@@ -1,3 +1,32 @@
+## phase81 — fix uploads + integrate lounge ownership (RUN THIS MIGRATION)
+
+Root causes of the "you don't have permission to upload" error AND the missing
+owner link:
+- The `submissions` Storage bucket (where menus/banners go) had **no policy at all**,
+  so Storage denied every upload.
+- Ownership was granted via `lounges.owner_id` (claim approval / admin assign) but the
+  app reads ownership from `lounge_members` — the two were never synced, so an owner
+  wasn't recognized.
+
+`supabase/migrations/phase81.sql` does:
+1. Creates the public `submissions` bucket + read/insert/update policies (fixes the upload).
+2. **Backfills** `lounge_members` from every existing `lounges.owner_id` (links current owners).
+3. Updates `approve_claim_request` and `admin_set_lounge_owner` to ALSO insert the
+   `lounge_members` owner row — so **all future lounge owners are linked automatically**.
+4. A commented one-off to grant your user (b6eb6e4f-…088336) ownership of a named lounge.
+
+Also: `getMyLounges` now unions `lounge_members` with lounges you own via `owner_id`,
+so an owner is recognized even if a membership row is missing.
+
+TO FIX YOUR ACCOUNT: run phase81. If your lounge already has your `owner_id`, the
+backfill links you automatically. If not, uncomment the section 4 block, set your
+lounge slug, and run it (or have an admin approve your claim / use admin_set_lounge_owner).
+
+Caveats: the storage policy lets any authenticated user write to `submissions`
+(the upload path doesn't encode a lounge id, matching the existing `avatars` bucket
+pattern); only managers reach the editor UI. If you want uploads strictly scoped to a
+lounge's owners, that needs lounge-id-prefixed paths + a membership-checking policy.
+Can't test live Storage/RLS here.
 ## Followed-lounge posts in feed + notifications deep-link to the post (no migration)
 
 - **Feed was missing followed-lounge posts**: section 2 only pulled the 20 most
