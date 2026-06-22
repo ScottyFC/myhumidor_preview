@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { safeImg } from '@/lib/img';
 
 // Warm, on-brand background tones; picked deterministically from the name.
 const TONES = [
@@ -46,13 +47,13 @@ export function BrandTile({
       return (
         <div className={cn('flex items-center justify-center overflow-hidden bg-char/70 p-1.5', rounded, className)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt={name} className={cn('h-full w-full object-contain', rounded)} loading="lazy" />
+          <img src={safeImg(src)} alt={name} className={cn("h-full w-full object-contain", rounded)} loading="lazy" />
         </div>
       );
     }
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={name} className={cn('object-cover', rounded, className)} loading="lazy" />
+      <img src={safeImg(src)} alt={name} className={cn("object-cover", rounded, className)} loading="lazy" />
     );
   }
   const tone = TONES[hash(name) % TONES.length];

@@ -1,3 +1,16 @@
+## Fix: iOS webview WebP/ICC image decode failure (no migration)
+
+The scanner error (`WEBP initImage failed err=-50`, `profile tags overlap`) is the
+iOS WKWebView's WebP/ICC decoder rejecting imgix-served band images (imgix can
+auto-negotiate WebP and pass through bad color profiles). Added `src/lib/img.ts`
+`safeImg()` and applied it at the render chokepoint (`BrandTile`, which every
+`CigarThumb`/`BrandLogo` flows through): imgix URLs now get `fm=jpg&cs=srgb`, forcing
+a baseline sRGB JPEG the webview always decodes.
+
+Caveat: this targets imgix images (the band photos tied to the scanner). A non-imgix
+`.webp` from another source could still trip the webview; if the error persists after
+this, the offending image is elsewhere and I'll need the URL. Can't run the webview
+in the sandbox — verify on device.
 ## Admin sidebar, aging tracker integration, FL lounges/retailers
 
 - **Super admin panel** rebuilt as a **left sidebar + main content** layout; the
