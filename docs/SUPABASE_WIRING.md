@@ -1,3 +1,12 @@
+## Fix: transparent nav bars — root cause (no migration)
+
+The real bug: **`ink` was never defined in the Tailwind config** (only `char`,
+`ember`, `smoke`, `paper`). Every `bg-ink` on the top/bottom native bars produced
+*no* background → transparent, so page content showed through. Fixed by adding
+`ink: '#14110d'` to the theme, plus a hard `background-color: #14110d !important`
+on `.native-topbar`/`.native-tabbar` as a fallback. Both bars are now solid.
+(This also makes other previously-transparent `bg-ink` surfaces — splash, auth gate,
+notification banner, the settings dropdown — correctly opaque.)
 ## Name updates → front end + band images (no migration)
 
 - **DB name edits already flow live** to every card/list/search result via the

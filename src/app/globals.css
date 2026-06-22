@@ -198,3 +198,8 @@ body::before {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
+
+/* Bulletproof solid backgrounds for the native bars (independent of Tailwind
+   color resolution) so content can never show through them. */
+.native-topbar { background-color: #14110d !important; }
+.native-tabbar { background-color: #14110d !important; }

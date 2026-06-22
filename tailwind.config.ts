@@ -36,6 +36,7 @@ const config: Config = {
           900: '#1a1a18',
         },
         char: '#0F0A06',
+        ink: '#14110d',
         paper: '#FAEEDA',
       },
       letterSpacing: {
