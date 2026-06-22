@@ -75,7 +75,10 @@ export function CigarScanner() {
     }
   }
 
-  // Native: use the Capacitor camera (reliable on device).
+  // Native: use the Capacitor camera (reliable on device). If the plugin isn't
+  // available (e.g. not yet synced) or errors, fall back to the OS photo/camera
+  // picker via the file input — which works in the webview with no plugin — so
+  // tapping "Scan a cigar" always does something.
   async function nativeCapture() {
     try {
       const { Camera, CameraResultType, CameraSource, CameraDirection } = await import('@capacitor/camera');
@@ -84,11 +87,15 @@ export function CigarScanner() {
         quality: 80, resultType: CameraResultType.DataUrl, source: CameraSource.Camera,
         direction: CameraDirection.Rear, correctOrientation: true,
       });
-      if (photo.dataUrl) await scan(photo.dataUrl);
-      else setState('idle');
-    } catch {
-      // user cancelled or permission denied
+      if (photo.dataUrl) { await scan(photo.dataUrl); return; }
       setState('idle');
+    } catch (e) {
+      const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
+      // Genuine user cancel → just close. Anything else (plugin missing, not
+      // synced, permission, unavailable) → fall back to the OS picker.
+      if (msg.includes('cancel')) { setState('idle'); return; }
+      setState('idle');
+      fileRef.current?.click();
     }
   }
 

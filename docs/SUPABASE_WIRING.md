@@ -1,3 +1,20 @@
+## Scanner: "nothing happens" in the app — robust fallback (no migration)
+
+In the native app, tapping Scan ran `Camera.getPhoto`; if that throws (plugin not
+synced into the iOS project, or no camera permission) the catch silently reset to
+idle → nothing visible. Now: a genuine user-cancel closes quietly, but ANY other
+failure falls back to the OS photo/camera picker (the `<input capture>` file input,
+which works in the webview without a plugin), so tapping Scan always does something.
+
+To make the *native plugin* camera itself work on device, the app build needs (yours):
+1. `npx cap sync ios` (registers @capacitor/camera@8.2.0 — already in package.json).
+2. Add to ios `Info.plist`: `NSCameraUsageDescription` (and
+   `NSPhotoLibraryUsageDescription` for the picker fallback).
+3. Rebuild in Xcode. Without the camera usage string, BOTH the plugin and the
+   webview file-input camera are blocked by iOS, so this is required.
+
+The web/desktop black-preview race fix from the previous build stands (stream now
+attaches in an effect + autoPlay).
 ## Scanner black-preview fix + web theme toggle + banner polish (no migration)
 
 - **Scanner stayed black**: the live `<video>` reached the camera state (stream was
