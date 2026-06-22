@@ -2,7 +2,7 @@
   "name": "myhumidor",
   "version": "0.1.0",
   "private": true,
-  "description": "MyHumidor by CigarTV — premium cigar rating, collection, and discovery platform.",
+  "description": "MyHumidor by CigarTV \u2014 premium cigar rating, collection, and discovery platform.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -41,7 +41,8 @@
     "react-dom": "^18.3.1",
     "server-only": "^0.0.1",
     "stripe": "^22.2.2",
-    "tailwind-merge": "^2.5.2"
+    "tailwind-merge": "^2.5.2",
+    "@capacitor-community/camera-preview": "^8.0.1"
   },
   "devDependencies": {
     "@capacitor/android": "^8.4.0",

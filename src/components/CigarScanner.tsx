@@ -75,27 +75,46 @@ export function CigarScanner() {
     }
   }
 
-  // Native: use the Capacitor camera (reliable on device). If the plugin isn't
-  // available (e.g. not yet synced) or errors, fall back to the OS photo/camera
-  // picker via the file input — which works in the webview with no plugin — so
-  // tapping "Scan a cigar" always does something.
-  async function nativeCapture() {
+  // Native: live preview rendered BEHIND the webview (camera-preview plugin) so the
+  // in-app overlay (frame + shutter) sits on top — not the full-screen OS camera.
+  async function startNativePreview() {
+    setErrMsg(''); setRead(null); setCandidates([]);
     try {
-      const { Camera, CameraResultType, CameraSource, CameraDirection } = await import('@capacitor/camera');
-      setState('scanning');
-      const photo = await Camera.getPhoto({
-        quality: 80, resultType: CameraResultType.DataUrl, source: CameraSource.Camera,
-        direction: CameraDirection.Rear, correctOrientation: true,
+      const { CameraPreview } = await import('@capacitor-community/camera-preview');
+      setState('camera');
+      document.documentElement.classList.add('camera-active');
+      await CameraPreview.start({
+        position: 'rear',
+        toBack: true,            // render behind the (transparent) webview
+        disableAudio: true,
+        x: 0, y: 0,
+        width: window.innerWidth,
+        height: window.innerHeight,
       });
-      if (photo.dataUrl) { await scan(photo.dataUrl); return; }
+    } catch {
+      document.documentElement.classList.remove('camera-active');
       setState('idle');
-    } catch (e) {
-      const msg = (e instanceof Error ? e.message : String(e)).toLowerCase();
-      // Genuine user cancel → just close. Anything else (plugin missing, not
-      // synced, permission, unavailable) → fall back to the OS picker.
-      if (msg.includes('cancel')) { setState('idle'); return; }
+      fileRef.current?.click(); // last-resort: OS picker
+    }
+  }
+
+  async function stopNativePreview() {
+    try {
+      const { CameraPreview } = await import('@capacitor-community/camera-preview');
+      await CameraPreview.stop();
+    } catch { /* already stopped */ }
+    document.documentElement.classList.remove('camera-active');
+  }
+
+  async function captureNative() {
+    try {
+      const { CameraPreview } = await import('@capacitor-community/camera-preview');
+      const res = await CameraPreview.capture({ quality: 80 });
+      await stopNativePreview();
+      await scan(`data:image/jpeg;base64,${res.value}`);
+    } catch {
+      await stopNativePreview();
       setState('idle');
-      fileRef.current?.click();
     }
   }
 
@@ -113,11 +132,11 @@ export function CigarScanner() {
 
   function openScanner() {
     setRead(null); setCandidates([]); setErrMsg('');
-    if (native) nativeCapture();
+    if (native) startNativePreview();
     else webCamera();
   }
 
-  function close() { stopStream(); setState('idle'); }
+  function close() { stopStream(); if (native) stopNativePreview(); setState('idle'); }
 
   function captureWeb() {
     const v = videoRef.current;
@@ -131,7 +150,7 @@ export function CigarScanner() {
 
   function scanAgain() {
     setRead(null); setCandidates([]); setErrMsg('');
-    if (native) { nativeCapture(); return; }
+    if (native) { startNativePreview(); return; }
     setState('camera');
     videoRef.current?.play().catch(() => {});
   }
@@ -169,7 +188,7 @@ export function CigarScanner() {
 
       {/* Overlay: web live camera, or (native/file) the scanning + result surface */}
       {state !== 'idle' && (
-        <div className="fixed inset-0 z-[100] flex flex-col bg-black">
+        <div className={`fixed inset-0 z-[100] flex flex-col ${native && state === 'camera' ? 'bg-transparent' : 'bg-black'}`}>
           {showVideo && <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-cover" />}
 
           <div className="relative z-10 flex items-center justify-between px-4 pt-[max(env(safe-area-inset-top),1rem)]">
@@ -179,7 +198,7 @@ export function CigarScanner() {
             <button onClick={close} aria-label="Close" className="rounded-full bg-black/50 p-2 text-paper backdrop-blur"><X size={18} /></button>
           </div>
 
-          {showVideo && state === 'camera' && (
+          {state === 'camera' && (
             <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
               <div className="h-44 w-72 rounded-2xl border-2 border-ember-400/70 shadow-[0_0_0_100vmax_rgba(0,0,0,0.35)]" />
               <p className="mt-4 rounded-full bg-black/50 px-3 py-1 text-xs text-paper backdrop-blur">Center the band, then tap to scan</p>
@@ -194,9 +213,9 @@ export function CigarScanner() {
           )}
 
           <div className="relative z-10 mt-auto px-4 pb-[max(env(safe-area-inset-bottom),1.5rem)]">
-            {showVideo && state === 'camera' && (
+            {state === 'camera' && (
               <div className="flex justify-center">
-                <button onClick={captureWeb} aria-label="Capture" className="h-16 w-16 rounded-full border-4 border-white/80 bg-white/20 backdrop-blur active:scale-95" />
+                <button onClick={native ? captureNative : captureWeb} aria-label="Capture" className="h-16 w-16 rounded-full border-4 border-white/80 bg-white/20 backdrop-blur active:scale-95" />
               </div>
             )}
 

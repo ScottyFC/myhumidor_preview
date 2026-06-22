@@ -1,3 +1,26 @@
+## Scanner: in-app live preview on iOS (camera-preview) — no DB migration
+
+The native app was launching the full-screen OS camera (`Camera.getPhoto`). Switched
+the native path to **`@capacitor-community/camera-preview@^8.0.1`** (Cap 8 compatible),
+which renders a live camera preview BEHIND the webview so the existing in-app overlay
+(frame + "center the band" + shutter) sits on top — the in-app experience, not the OS
+camera. `position:'rear'`, `toBack:true`; capture → base64 → `/api/cigar-scan`.
+Web path (getUserMedia `<video>`) unchanged. File-picker fallback still kicks in if
+the plugin errors.
+
+The `BackTriple / mode Portrait unsupported` + `FigCaptureSourceRemote -17281` errors
+came from the OS capture session; using camera-preview's `'rear'` position avoids
+forcing the triple-cam device.
+
+REQUIRED on the app build (yours; I can't run native here):
+1. `npx cap sync ios` — registers the new camera-preview plugin (+ pod install).
+2. `Info.plist`: `NSCameraUsageDescription` (required, or iOS blocks the camera).
+3. **Webview transparency** — `toBack:true` shows the camera *through* the webview.
+   I made the web layer transparent during preview (`html.camera-active` clears
+   html/body backgrounds). camera-preview also needs the WKWebView itself to be
+   non-opaque; if the preview shows black instead of the camera on device, set the
+   iOS webview background transparent (camera-preview's documented iOS requirement).
+4. Rebuild in Xcode; verify on device.
 ## Scanner: "nothing happens" in the app — robust fallback (no migration)
 
 In the native app, tapping Scan ran `Camera.getPhoto`; if that throws (plugin not

@@ -238,3 +238,9 @@ body::before {
   0% { transform: translateX(-120%); }
   60%, 100% { transform: translateX(120%); }
 }
+
+/* While the native camera preview renders behind the webview, make the web layer
+   transparent so the camera shows through (camera-preview toBack). */
+html.camera-active, html.camera-active body { background: transparent !important; }
+html.camera-active body { background-image: none !important; }
+html.camera-active body::before { display: none !important; }
