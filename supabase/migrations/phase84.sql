@@ -1,27 +1,29 @@
--- Phase 84 — Brand accounts.
--- Brands manage their own listings, announce releases, publish promos, advertise,
--- and (premium) sell to lounges + issue collectible badges. Access is membership-based
--- (brand_members), like lounge ownership — no change to profiles.account_type needed.
--- Every signup is approved by a super admin, who either links an existing catalog brand
--- or creates a new brand row.
+-- Phase 84 (corrected) — Brand accounts.
+-- A `brands` table already existed (id, name, country, created_at) from the original
+-- relational schema, so we ADD the columns we need rather than recreating it. Fully
+-- idempotent — safe to re-run after the earlier failed attempt.
 
--- 1. brands — the DB home for a managed brand page (catalog brands are name-derived;
---    a row here exists once a brand is claimed/created via a brand account).
+-- 1. brands — extend the existing table with brand-account fields.
 create table if not exists public.brands (
   id uuid primary key default gen_random_uuid(),
-  slug text unique not null,
-  name text not null,
-  logo_url text,
-  banner_url text,
-  website text,
-  description text,
-  hq text,
-  tier text not null default 'standard' check (tier in ('standard','premium')),
-  verified boolean not null default false,
-  claimed boolean not null default false,
-  owner_id uuid references auth.users(id) on delete set null,
-  created_at timestamptz not null default now()
+  name text not null
 );
+alter table public.brands add column if not exists slug text;
+alter table public.brands add column if not exists logo_url text;
+alter table public.brands add column if not exists banner_url text;
+alter table public.brands add column if not exists website text;
+alter table public.brands add column if not exists description text;
+alter table public.brands add column if not exists hq text;
+alter table public.brands add column if not exists tier text not null default 'standard';
+alter table public.brands add column if not exists verified boolean not null default false;
+alter table public.brands add column if not exists claimed boolean not null default false;
+alter table public.brands add column if not exists owner_id uuid references auth.users(id) on delete set null;
+alter table public.brands add column if not exists created_at timestamptz not null default now();
+alter table public.brands add column if not exists onboarding jsonb not null default '{}'::jsonb;
+do $$ begin
+  alter table public.brands add constraint brands_tier_check check (tier in ('standard','premium')) not valid;
+exception when duplicate_object then null; end $$;
+create unique index if not exists brands_slug_key on public.brands(slug) where slug is not null;
 alter table public.brands enable row level security;
 
 -- 2. brand_members — seats (owner + managers).
@@ -60,7 +62,7 @@ create table if not exists public.brand_signup_requests (
   email text not null,
   website text,
   phone text,
-  tax_id text,                  -- Federal/Tax ID, for verification
+  tax_id text,
   tier text not null default 'standard' check (tier in ('standard','premium')),
   notes text,
   status text not null default 'pending' check (status in ('pending','approved','rejected')),
@@ -101,7 +103,7 @@ create table if not exists public.brand_review_requests (
 );
 alter table public.brand_review_requests enable row level security;
 
--- ── Access helpers ──────────────────────────────────────────────────────────
+-- Access helpers
 create or replace function public.can_manage_brand_id(p_brand_id uuid)
 returns boolean language sql stable security definer set search_path = public as $$
   select public._is_admin() or exists (
@@ -119,7 +121,7 @@ returns boolean language sql stable security definer set search_path = public as
 $$;
 grant execute on function public.can_manage_brand(text) to authenticated;
 
--- ── RLS policies ────────────────────────────────────────────────────────────
+-- RLS policies
 drop policy if exists "brands public read" on public.brands;
 create policy "brands public read" on public.brands for select using (true);
 drop policy if exists "brands members update" on public.brands;
@@ -144,10 +146,7 @@ create policy "brand_posts members write" on public.brand_posts for all using (p
 drop policy if exists "brand_reviews members" on public.brand_review_requests;
 create policy "brand_reviews members" on public.brand_review_requests for all using (public.can_manage_brand_id(brand_id) or public._is_admin()) with check (public.can_manage_brand_id(brand_id));
 
--- ── Approve a brand signup (super admin) ───────────────────────────────────────
--- Links an existing brand (match by slug) or creates a new one, then attaches the
--- requester as owner and provisions a subscription. Premium subs start 'pending'
--- (custom pricing handled off-platform); standard start 'active' once approved.
+-- Approve a brand signup (super admin): link by slug, then name, else create.
 create or replace function public.approve_brand_signup(
   p_request_id uuid, p_brand_name text, p_brand_slug text
 ) returns uuid language plpgsql security definer set search_path = public as $$
@@ -163,11 +162,18 @@ begin
 
   select id into v_brand_id from public.brands where slug = p_brand_slug;
   if v_brand_id is null then
+    select id into v_brand_id from public.brands where lower(name) = lower(p_brand_name) limit 1;
+  end if;
+
+  if v_brand_id is null then
     insert into public.brands (slug, name, tier, claimed, owner_id)
     values (p_brand_slug, p_brand_name, r.tier, true, r.user_id)
     returning id into v_brand_id;
   else
-    update public.brands set claimed = true, owner_id = coalesce(owner_id, r.user_id), tier = r.tier where id = v_brand_id;
+    update public.brands
+      set slug = coalesce(slug, p_brand_slug), claimed = true,
+          owner_id = coalesce(owner_id, r.user_id), tier = r.tier
+    where id = v_brand_id;
   end if;
 
   insert into public.brand_members (brand_id, user_id, role)
@@ -196,7 +202,6 @@ begin
 end $$;
 grant execute on function public.reject_brand_signup(uuid) to authenticated;
 
--- Consume one monthly boost (resets at the start of each month).
 create or replace function public.brand_use_boost(p_brand_id uuid)
 returns boolean language plpgsql security definer set search_path = public as $$
 declare s public.brand_subscriptions;

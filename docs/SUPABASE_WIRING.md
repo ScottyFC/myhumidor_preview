@@ -1,3 +1,42 @@
+## phase84 FIX — brands table already existed (re-run phase84)
+
+The first phase84 run failed with `column b.slug does not exist`: a `brands` table
+already existed from the original relational schema (id, name, country, created_at), so
+`create table if not exists` was a no-op and none of the brand-account columns were
+added. Corrected phase84 now ADDs every column with `alter table ... add column if not
+exists` (slug, logo_url, banner_url, website, description, hq, tier, verified, claimed,
+owner_id, created_at, onboarding) + a partial unique index on slug. It's fully
+idempotent — just re-run phase84.sql. It also makes `approve_brand_signup` match an
+existing brand by slug **then by name**, so linking a brand that already exists (e.g.
+Deadwood Tobacco Co., which lives as a name-row) works and backfills its slug.
+
+Note: phase84 now includes the `onboarding` column, so phase85 is redundant (still safe
+to run — it's `add column if not exists`).
+## phase85 — Brand onboarding / checklist flow (RUN THIS MIGRATION)
+
+`phase85.sql` adds `brands.onboarding jsonb` (stores manual acks + a dismissed flag;
+brand members can already update their brands row, so no new RPC).
+
+After approval the brand dashboard now opens with a guided checklist (`BrandOnboarding`):
+- **Newly created brand** (no products yet) → a "Get your brand listed" checklist whose
+  key step is **List your first product** (links to `/submit?brand=<slug>`).
+- **Linked existing brand** (already has catalog cigars under its slug) → a
+  "Welcome — manage your brand" walk-through with a **Review your product listings**
+  step (opens the public page).
+Shared steps — add logo, write bio, add banner, post first update — auto-complete from
+real data. Progress bar + dismiss when done; state persists on `brands.onboarding`.
+
+Supporting pieces: `BrandDetailsEditor` (logo/banner upload via the existing
+`uploadBannerImage` → submissions bucket, plus bio/website/HQ) wired into the dashboard;
+`/api/brand-products?slug=` counts products under a brand (static catalog + catalog_cigars)
+so the "list a product" / "review listings" steps reflect reality. Onboarding "Compose"
+and "Add logo/bio/banner" buttons scroll to the relevant dashboard panels.
+
+Caveats: new-vs-existing is derived from product count (a new brand's checklist flips
+once it has a product). The "List a cigar" link passes `?brand=<slug>`; the submit page
+doesn't prefill the brand from that param yet, so the cigar must be submitted under the
+matching brand name for its slug to line up (minor follow-up). Image uploads use the
+public submissions bucket (phase81). Run phase85. Compile-verified only.
 ## phase84 — Brand accounts (RUN THIS MIGRATION)
 
 A full brand-account spine. Access is membership-based via `brand_members` (like

@@ -148,3 +148,47 @@ export async function rejectBrandSignup(requestId: string): Promise<boolean> {
 }
 
 export { slugify as brandSlugify };
+
+// ── Brand page details + onboarding ────────────────────────────────────────
+export interface BrandDetail {
+  logoUrl?: string; bannerUrl?: string; description?: string; website?: string; hq?: string;
+  onboarding: { dismissed?: boolean; acked?: string[] };
+}
+
+export async function getBrandDetail(brandId: string): Promise<BrandDetail | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data } = await sb().from('brands').select('logo_url, banner_url, description, website, hq, onboarding').eq('id', brandId).maybeSingle();
+  if (!data) return null;
+  return {
+    logoUrl: data.logo_url ?? undefined, bannerUrl: data.banner_url ?? undefined,
+    description: data.description ?? undefined, website: data.website ?? undefined, hq: data.hq ?? undefined,
+    onboarding: (data.onboarding as BrandDetail['onboarding']) ?? {},
+  };
+}
+
+export async function updateBrandDetails(brandId: string, patch: { logoUrl?: string | null; bannerUrl?: string | null; description?: string | null; website?: string | null; hq?: string | null }): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured) return { ok: false, error: 'Not configured' };
+  const row: Record<string, unknown> = {};
+  if (patch.logoUrl !== undefined) row.logo_url = patch.logoUrl;
+  if (patch.bannerUrl !== undefined) row.banner_url = patch.bannerUrl;
+  if (patch.description !== undefined) row.description = patch.description;
+  if (patch.website !== undefined) row.website = patch.website;
+  if (patch.hq !== undefined) row.hq = patch.hq;
+  const { error } = await sb().from('brands').update(row).eq('id', brandId);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}
+
+export async function setBrandOnboarding(brandId: string, onboarding: BrandDetail['onboarding']): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  const { error } = await sb().from('brands').update({ onboarding }).eq('id', brandId);
+  return !error;
+}
+
+export async function brandProductCount(slug: string): Promise<number> {
+  try {
+    const res = await fetch(`/api/brand-products?slug=${encodeURIComponent(slug)}`);
+    const j = await res.json();
+    return typeof j.count === 'number' ? j.count : 0;
+  } catch { return 0; }
+}

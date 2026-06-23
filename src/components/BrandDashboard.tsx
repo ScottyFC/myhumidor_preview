@@ -5,8 +5,11 @@ import Link from 'next/link';
 import { Loader2, Rocket, Trash2, BarChart3, Megaphone, Users, Store, Plus, Sparkles } from 'lucide-react';
 import {
   getMyBrands, getBrandSubscription, listBrandPosts, createBrandPost, deleteBrandPost,
-  useBoost, submitReviewRequest, type MyBrand, type BrandSubscription, type BrandPost,
+  useBoost, submitReviewRequest, getBrandDetail, brandProductCount,
+  type MyBrand, type BrandSubscription, type BrandPost, type BrandDetail,
 } from '@/lib/brands';
+import { BrandOnboarding } from '@/components/BrandOnboarding';
+import { BrandDetailsEditor } from '@/components/BrandDetailsEditor';
 
 export function BrandDashboard() {
   const [loading, setLoading] = useState(true);
@@ -14,6 +17,8 @@ export function BrandDashboard() {
   const [active, setActive] = useState<MyBrand | null>(null);
   const [sub, setSub] = useState<BrandSubscription | null>(null);
   const [posts, setPosts] = useState<BrandPost[]>([]);
+  const [detail, setDetail] = useState<BrandDetail | null>(null);
+  const [productCount, setProductCount] = useState(0);
 
   useEffect(() => { (async () => {
     const mine = await getMyBrands();
@@ -23,6 +28,8 @@ export function BrandDashboard() {
   const reload = useCallback(async (b: MyBrand) => {
     setSub(await getBrandSubscription(b.id));
     setPosts(await listBrandPosts(b.id));
+    setDetail(await getBrandDetail(b.id));
+    setProductCount(await brandProductCount(b.slug));
   }, []);
   useEffect(() => { if (active) reload(active); }, [active, reload]);
 
@@ -76,7 +83,13 @@ export function BrandDashboard() {
         </div>
       </div>
 
+      {detail && (
+        <BrandOnboarding brandId={active.id} slug={active.slug} detail={detail} productCount={productCount} postCount={posts.length} onChange={() => reload(active)} />
+      )}
+
       <ReleasePromoPanel brandId={active.id} posts={posts} boostsLeft={isPremium ? Infinity : boostsLeft} onChange={() => reload(active)} />
+
+      {detail && <BrandDetailsEditor brandId={active.id} detail={detail} onSaved={() => reload(active)} />}
       <AnalyticsPanel premium={isPremium} />
       <ReviewRequestPanel brandId={active.id} premium={isPremium} />
       <SeatsPanel seats={sub?.seats ?? 2} premium={isPremium} />
@@ -104,7 +117,7 @@ function ReleasePromoPanel({ brandId, posts, boostsLeft, onChange }: { brandId: 
 
   const input = 'w-full rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 px-3 py-2 text-sm focus:border-ember-400/50 focus:outline-none';
   return (
-    <section className="mt-8">
+    <section id="brand-releases" className="mt-8 scroll-mt-24">
       <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Megaphone size={18} className="text-ember-400" /> Releases &amp; promos</h2>
       <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
         <div className="flex gap-2">
