@@ -231,9 +231,15 @@ async function isVerifiedLoungeOperator(uid: string): Promise<boolean> {
     const sb = supabaseBrowser();
     const { data } = await sb
       .from('lounge_members')
-      .select('lounge_id, lounges!inner(verified)')
+      .select('lounge_id, lounges!inner(verified, certified)')
       .eq('user_id', uid);
-    return (data ?? []).some((r) => (r as { lounges?: { verified?: boolean } }).lounges?.verified);
+    // A lounge owner can auto-publish if their lounge is certified OR verified.
+    // (Certification — not the rarely-set `verified` flag — is the real trust signal,
+    // so checking only `verified` left every legit lounge's submissions stuck pending.)
+    return (data ?? []).some((r) => {
+      const l = (r as { lounges?: { verified?: boolean; certified?: boolean } }).lounges;
+      return !!(l?.verified || l?.certified);
+    });
   } catch {
     return false;
   }

@@ -14,7 +14,10 @@
     "cap:ios": "npx cap sync ios && npx cap open ios",
     "cap:android": "npx cap sync android && npx cap open android",
     "cap:add:ios": "npx cap add ios",
-    "cap:add:android": "npx cap add android"
+    "cap:add:android": "npx cap add android",
+    "cap:permissions": "node scripts/native-setup.mjs",
+    "cap:assets": "npx @capacitor/assets generate --iconBackgroundColor '#14110d' --splashBackgroundColor '#14110d'",
+    "cap:setup": "node scripts/native-setup.mjs && npx cap sync"
   },
   "dependencies": {
     "@aparajita/capacitor-biometric-auth": "^10.0.0",

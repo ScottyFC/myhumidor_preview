@@ -51,5 +51,11 @@
 	<string> YES</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string> YES</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>MyHumidor lets you pick a cigar photo from your library to scan or share.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>MyHumidor can save the story image you create to your photos.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>MyHumidor uses your location to find cigar lounges near you.</string>
 </dict>
 </plist>
