@@ -1,3 +1,26 @@
+## phase88 — Auth hardening: rate-limiting + password reset (RUN THIS MIGRATION)
+
+Applies across both auth systems. Full write-up in docs/SECURITY_REVIEW.md.
+
+`phase88.sql` adds `auth_rate_limits` (DB-backed limiter, service-role only) and
+`brand_password_resets` (hashed one-time tokens).
+
+Brand-auth: session tokens now **hashed at rest** (SHA-256); login rate-limited per IP
+(12/15m) + per email (6/15m → 30m lock, cleared on success); signup per IP (5/hr); reset
+request/confirm rate-limited + reCAPTCHA-gated. New token-based password reset
+(1-hr, single-use, invalidates sessions): routes `/api/brand-auth/reset-request` +
+`/reset-confirm`, pages `/brand/forgot` + `/brand/reset`, "Forgot password?" on the login.
+Reset emails send via Resend if `RESEND_API_KEY` (+ `BRAND_EMAIL_FROM`) is set, else the
+token is created but not delivered (admin-assisted until a provider is configured).
+
+Supabase users + lounge/retailers: real built-in reset — `requestPasswordReset`
+(`resetPasswordForEmail`) + `/reset-password` (`updateUser`), `/forgot-password` page,
+"Forgot password?" link on sign-in. Login rate-limiting for the Supabase side is the
+GoTrue dashboard setting (authoritative) — enable it; our code can't throttle a
+client→GoTrue login without a server proxy (flagged, not built).
+
+`rate-limit.ts` is the shared limiter (fail-open). Run phase88. Compile-verified only —
+see the test checklist in SECURITY_REVIEW.md.
 ## phase87 — Brand-auth: standalone brand login portal (RUN THIS MIGRATION)
 
 Brands now have their own login system, fully separate from Supabase auth.users.

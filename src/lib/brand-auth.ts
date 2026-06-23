@@ -1,6 +1,6 @@
 import 'server-only';
 import { cookies } from 'next/headers';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { supabaseService } from '@/lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -12,6 +12,10 @@ export function svc(): SupabaseClient | null {
 
 export const BRAND_COOKIE = 'mh_brand';
 const SESSION_DAYS = 30;
+const RESET_TTL_MIN = 60;
+
+/** Hash opaque tokens (sessions, resets) before storing — DB never holds the raw value. */
+function hashToken(t: string): string { return createHash('sha256').update(t).digest('hex'); }
 
 export interface BrandSession {
   accountId: string;
@@ -47,7 +51,7 @@ export async function createBrandSession(accountId: string): Promise<string | nu
   if (!sb) return null;
   const token = randomBytes(32).toString('hex');
   const expires = new Date(Date.now() + SESSION_DAYS * 864e5).toISOString();
-  const { error } = await sb.from('brand_auth_sessions').insert({ token, account_id: accountId, expires_at: expires } as never);
+  const { error } = await sb.from('brand_auth_sessions').insert({ token: hashToken(token), account_id: accountId, expires_at: expires } as never);
   if (error) return null;
   await sb.from('brand_auth_accounts').update({ last_login_at: new Date().toISOString() } as never).eq('id', accountId);
   return token;
@@ -61,10 +65,10 @@ export async function getBrandSession(): Promise<BrandSession | null> {
   const token = (await cookies()).get(BRAND_COOKIE)?.value;
   if (!token) return null;
 
-  const { data: sess } = await sb.from('brand_auth_sessions').select('account_id, expires_at').eq('token', token).maybeSingle();
+  const { data: sess } = await sb.from('brand_auth_sessions').select('account_id, expires_at').eq('token', hashToken(token)).maybeSingle();
   if (!sess) return null;
   if (new Date((sess as { expires_at: string }).expires_at) < new Date()) {
-    await sb.from('brand_auth_sessions').delete().eq('token', token);
+    await sb.from('brand_auth_sessions').delete().eq('token', hashToken(token));
     return null;
   }
   const accountId = (sess as { account_id: string }).account_id;
@@ -83,7 +87,7 @@ export async function getBrandSession(): Promise<BrandSession | null> {
 export async function destroyBrandSession(): Promise<void> {
   const sb = svc();
   const token = (await cookies()).get(BRAND_COOKIE)?.value;
-  if (sb && token) await sb.from('brand_auth_sessions').delete().eq('token', token);
+  if (sb && token) await sb.from('brand_auth_sessions').delete().eq('token', hashToken(token));
 }
 
 export function sessionCookieOptions(maxAgeDays = SESSION_DAYS) {
@@ -95,4 +99,55 @@ export function sessionCookieOptions(maxAgeDays = SESSION_DAYS) {
     path: '/',
     maxAge: maxAgeDays * 86400,
   };
+}
+
+
+// ── Password reset (token-based, hashed at rest) ───────────────────────────
+/** Create a one-time reset token (returns the raw token for the email link). */
+export async function createPasswordReset(accountId: string): Promise<string | null> {
+  const sb = svc(); if (!sb) return null;
+  const token = randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + RESET_TTL_MIN * 60000).toISOString();
+  const { error } = await sb.from('brand_password_resets').insert({ token_hash: hashToken(token), account_id: accountId, expires_at: expires } as never);
+  return error ? null : token;
+}
+
+/** Validate + consume a reset token, returning the account id. */
+export async function consumePasswordReset(token: string): Promise<string | null> {
+  const sb = svc(); if (!sb || !token) return null;
+  const { data } = await sb.from('brand_password_resets').select('account_id, expires_at, used').eq('token_hash', hashToken(token)).maybeSingle();
+  const r = data as { account_id: string; expires_at: string; used: boolean } | null;
+  if (!r || r.used || new Date(r.expires_at) < new Date()) return null;
+  await sb.from('brand_password_resets').update({ used: true } as never).eq('token_hash', hashToken(token));
+  return r.account_id;
+}
+
+/** Set an account password and invalidate all its sessions (force re-login). */
+export async function setAccountPassword(accountId: string, password: string): Promise<boolean> {
+  const sb = svc(); if (!sb) return false;
+  const password_hash = await hashPassword(password);
+  const { error } = await sb.from('brand_auth_accounts').update({ password_hash } as never).eq('id', accountId);
+  if (error) return false;
+  await sb.from('brand_auth_sessions').delete().eq('account_id', accountId);
+  return true;
+}
+
+export async function getAccountByEmail(email: string): Promise<{ id: string; status: string } | null> {
+  const sb = svc(); if (!sb) return null;
+  const { data } = await sb.from('brand_auth_accounts').select('id, status').ilike('email', email).maybeSingle();
+  return (data as { id: string; status: string } | null) ?? null;
+}
+
+/** Send an email via Resend if RESEND_API_KEY is configured; returns whether it sent. */
+export async function sendBrandEmail(to: string, subject: string, html: string): Promise<boolean> {
+  const key = process.env.RESEND_API_KEY;
+  const from = process.env.BRAND_EMAIL_FROM || 'MyHumidor <no-reply@myhumidor.shop>';
+  if (!key) return false;
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to, subject, html }),
+    });
+    return r.ok;
+  } catch { return false; }
 }

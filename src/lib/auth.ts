@@ -363,3 +363,24 @@ export async function resendConfirmation(email: string): Promise<AuthResult> {
 export function getSession(): Session | null {
   return isSupabaseConfigured ? currentSession : demoGet();
 }
+
+// ── Password reset (Supabase users: consumers + lounge/retailers) ───────────
+/** Send a Supabase password-recovery email. Always returns ok to avoid revealing
+ *  whether an account exists. */
+export async function requestPasswordReset(email: string): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured) return { ok: false, error: 'Not configured' };
+  const sb = supabaseBrowser();
+  const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/reset-password` : undefined;
+  await sb.auth.resetPasswordForEmail(email, { redirectTo });
+  return { ok: true };
+}
+
+/** Set a new password for the current (recovery) session — used on /reset-password
+ *  after following the email link. */
+export async function updatePassword(password: string): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured) return { ok: false, error: 'Not configured' };
+  const sb = supabaseBrowser();
+  const { error } = await sb.auth.updateUser({ password });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
+}

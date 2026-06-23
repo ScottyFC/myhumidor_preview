@@ -44,6 +44,7 @@ export default function BrandLoginPage() {
       </div>
 
       <p className="mt-6 text-center text-xs text-smoke-400">
+        <Link href="/brand/forgot" className="text-ember-400 underline">Forgot password?</Link><br/>
         Don’t have a brand account? <Link href="/for-brands" className="text-ember-400 underline">Apply here</Link>.
       </p>
     </div>

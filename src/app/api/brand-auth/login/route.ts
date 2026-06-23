@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyPassword, verifyRecaptcha, createBrandSession, sessionCookieOptions, svc } from '@/lib/brand-auth';
+import { checkRateLimit, clearRateLimit, clientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -8,8 +9,15 @@ export async function POST(req: Request) {
   if (!b) return NextResponse.json({ ok: false, error: 'bad_request' }, { status: 400 });
   const { email, password, recaptchaToken } = b;
 
+  const ip = clientIp(req);
+  const ipLim = await checkRateLimit(`brandlogin:ip:${ip}`, { max: 12, windowSec: 900, lockSec: 900 });
+  if (!ipLim.allowed) return NextResponse.json({ ok: false, error: 'Too many attempts. Try again later.' }, { status: 429 });
+
   if (!(await verifyRecaptcha(recaptchaToken))) return NextResponse.json({ ok: false, error: 'Captcha failed. Please try again.' }, { status: 400 });
   if (!email || !password) return NextResponse.json({ ok: false, error: 'Enter your email and password.' }, { status: 400 });
+  const emailKey = `brandlogin:email:${String(email).toLowerCase()}`;
+  const emLim = await checkRateLimit(emailKey, { max: 6, windowSec: 900, lockSec: 1800 });
+  if (!emLim.allowed) return NextResponse.json({ ok: false, error: 'Too many attempts for this account. Try again later.' }, { status: 429 });
 
   const sb = svc();
   if (!sb) return NextResponse.json({ ok: false, error: 'Service unavailable.' }, { status: 503 });
@@ -22,6 +30,7 @@ export async function POST(req: Request) {
   if (a.status === 'pending') return NextResponse.json({ ok: false, error: 'Your application is still pending approval.' }, { status: 403 });
   if (a.status !== 'active' || !a.brand_id) return NextResponse.json({ ok: false, error: 'This account isn’t active. Contact MyHumidor.' }, { status: 403 });
 
+  await clearRateLimit(emailKey);
   const token = await createBrandSession(a.id);
   if (!token) return NextResponse.json({ ok: false, error: 'Could not start a session.' }, { status: 500 });
 

@@ -239,6 +239,9 @@ export default function RegisterPage() {
             Remember me on this device
           </label>
         )}
+        {mode === 'signin' && (
+          <a href="/forgot-password" className="block text-xs text-ember-400 hover:underline">Forgot password?</a>
+        )}
         {mode === 'signin' && bio.available && !bioHasCreds && (
           <label className="flex cursor-pointer items-center gap-2 text-xs text-smoke-300">
             <input type="checkbox" checked={enableBiometric} onChange={(e) => setEnableBiometric(e.target.checked)} className="accent-ember-400" />
