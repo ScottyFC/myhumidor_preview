@@ -1,3 +1,24 @@
+## CigarTV "Burn Rate" feature (no migration)
+
+Driven by the uploaded CSV → `src/data/burnrate.json` (8 episodes: cigar name, slug
+from the MyHumidor link, Burn Rate score, episode URL, air date, thumbnail; thumbnails
+forced to https for iOS ATS; sorted newest-first). `src/lib/burnrate.ts` resolves
+episodes, aired-state, and per-slug lookup.
+
+- **Home carousel** (`BurnRateCarousel` in `NativeHome`): episode thumbnail, the Burn
+  Rate score badge **once the episode has aired** ("Airs <date>" until then), and a
+  link to the cigar page. "View all" → `/shows/burn-rate`.
+- **Cigar page** (`BurnRateScore`): shows the Burn Rate score + "Featured on Burn Rate"
+  + watch link, only when that cigar was featured and the episode has aired.
+- `/shows/burn-rate` page lists every featured cigar with thumbnail + score.
+- Logo `public/shows/burn-rate.png` (black-on-transparent → `dark:invert`).
+- Removed the earlier generic shows scaffold in favor of this focused dataset.
+
+Caveats: `burnrate.json` is build-time data — updating episodes/scores means editing it
++ redeploy (easy to make CSV-driven again or admin-managed later). All CSV rows shared
+the same generic thumbnail, so every card shows the same image until per-episode
+thumbnails are provided. Carousel/cigar links assume each slug exists in the catalog.
+2 of 8 episodes are future-dated, so they correctly show "Airs <date>" and no score yet.
 ## phase83 — lounge cigar submissions reach the catalog (RUN THIS MIGRATION)
 
 Root cause: a verified-lounge submission auto-publishes into `catalog_cigars` only if

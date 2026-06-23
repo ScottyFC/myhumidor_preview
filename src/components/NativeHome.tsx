@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Search, Flame, Heart, Store, MapPin, Plus, Sparkles, Box, X, ArrowRight } from 'lucide-react';
 import { CigarThumb } from '@/components/CigarThumb';
+import { BurnRateCarousel } from '@/components/BurnRateCarousel';
 import { HomeWelcome } from '@/components/HomeWelcome';
 
 interface Feat { slug: string; brand: string; name: string; image_url?: string | null }
@@ -91,6 +92,8 @@ export function NativeHome({ featured }: { featured: Feat[] }) {
           </Link>
         </div>
       )}
+
+      <BurnRateCarousel />
 
       {/* Trending now */}
       <div className="mt-6 flex items-baseline justify-between">

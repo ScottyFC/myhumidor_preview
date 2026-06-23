@@ -11,6 +11,7 @@ import { RatingForm } from '@/components/RatingForm';
 import { MyCigarRatings } from '@/components/MyCigarRatings';
 import { CigarCommunity } from '@/components/CigarCommunity';
 import { CigarInsight } from '@/components/CigarInsight';
+import { BurnRateScore } from '@/components/BurnRateScore';
 import { CigarAging } from '@/components/CigarAging';
 import { ShareButton } from '@/components/ShareButton';
 import { CigarStoryShare } from '@/components/CigarStoryShare';
@@ -180,6 +181,7 @@ export default async function CigarPage({ params }: PageProps) {
             {view.msrp != null && <Stat label="MSRP" value={formatUSD(view.msrp)} />}
           </dl>
 
+          <BurnRateScore slug={slug} />
           <CigarInsight slug={slug} />
           <CigarAging slug={slug} />
 
