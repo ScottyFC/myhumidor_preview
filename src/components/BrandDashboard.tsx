@@ -1,0 +1,209 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { Loader2, Rocket, Trash2, BarChart3, Megaphone, Users, Store, Plus, Sparkles } from 'lucide-react';
+import {
+  getMyBrands, getBrandSubscription, listBrandPosts, createBrandPost, deleteBrandPost,
+  useBoost, submitReviewRequest, type MyBrand, type BrandSubscription, type BrandPost,
+} from '@/lib/brands';
+
+export function BrandDashboard() {
+  const [loading, setLoading] = useState(true);
+  const [brands, setBrands] = useState<MyBrand[]>([]);
+  const [active, setActive] = useState<MyBrand | null>(null);
+  const [sub, setSub] = useState<BrandSubscription | null>(null);
+  const [posts, setPosts] = useState<BrandPost[]>([]);
+
+  useEffect(() => { (async () => {
+    const mine = await getMyBrands();
+    setBrands(mine); setActive(mine[0] ?? null); setLoading(false);
+  })(); }, []);
+
+  const reload = useCallback(async (b: MyBrand) => {
+    setSub(await getBrandSubscription(b.id));
+    setPosts(await listBrandPosts(b.id));
+  }, []);
+  useEffect(() => { if (active) reload(active); }, [active, reload]);
+
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-ember-400" /></div>;
+
+  if (!active) {
+    return (
+      <div className="mx-auto max-w-lg px-6 py-20 text-center">
+        <Store size={28} className="mx-auto text-ember-400" />
+        <h1 className="mt-3 font-display text-2xl">No brand account yet</h1>
+        <p className="mt-2 text-sm text-smoke-300">Manage your listings, releases, promos, and analytics with a brand account.</p>
+        <Link href="/for-brands" className="mt-5 inline-block rounded-lg bg-ember-400 px-5 py-2.5 text-sm font-medium text-paper">Apply for a brand account</Link>
+      </div>
+    );
+  }
+
+  const isPremium = active.tier === 'premium';
+  const boostsLeft = sub ? Math.max(0, sub.monthlyBoostQuota - sub.boostsUsed) : 0;
+
+  return (
+    <div className="mx-auto max-w-4xl px-6 pt-10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="eyebrow mb-1">Brand dashboard</div>
+          <h1 className="font-display text-4xl tracking-tightest">{active.name}</h1>
+        </div>
+        {brands.length > 1 && (
+          <select value={active.id} onChange={(e) => setActive(brands.find((b) => b.id === e.target.value) ?? active)}
+            className="rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 px-3 py-2 text-sm">
+            {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+        )}
+      </div>
+
+      {/* Subscription summary */}
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">
+          <div className="text-xs text-smoke-400">Plan</div>
+          <div className="mt-1 flex items-center gap-1.5 font-display text-xl capitalize">{isPremium && <Sparkles size={15} className="text-ember-400" />}{active.tier}</div>
+          <div className="mt-0.5 text-xs text-smoke-400">{sub?.status ?? '—'}</div>
+        </div>
+        <div className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">
+          <div className="text-xs text-smoke-400">Boosts this month</div>
+          <div className="mt-1 font-display text-xl">{isPremium ? 'Unlimited' : `${boostsLeft} / ${sub?.monthlyBoostQuota ?? 3}`}</div>
+          <div className="mt-0.5 text-xs text-smoke-400">{isPremium ? 'Included' : 'Extra boosts billed as used'}</div>
+        </div>
+        <div className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">
+          <div className="text-xs text-smoke-400">Seats</div>
+          <div className="mt-1 font-display text-xl">{sub?.seats ?? (isPremium ? 'Custom' : 2)}</div>
+          <Link href={`/brands/${active.slug}`} className="mt-0.5 inline-block text-xs text-ember-400 hover:underline">View public page →</Link>
+        </div>
+      </div>
+
+      <ReleasePromoPanel brandId={active.id} posts={posts} boostsLeft={isPremium ? Infinity : boostsLeft} onChange={() => reload(active)} />
+      <AnalyticsPanel premium={isPremium} />
+      <ReviewRequestPanel brandId={active.id} premium={isPremium} />
+      <SeatsPanel seats={sub?.seats ?? 2} premium={isPremium} />
+    </div>
+  );
+}
+
+function ReleasePromoPanel({ brandId, posts, boostsLeft, onChange }: { brandId: string; posts: BrandPost[]; boostsLeft: number; onChange: () => void }) {
+  const [kind, setKind] = useState<BrandPost['kind']>('release');
+  const [title, setTitle] = useState(''); const [body, setBody] = useState('');
+  const [releaseDate, setReleaseDate] = useState(''); const [linkUrl, setLinkUrl] = useState('');
+  const [boost, setBoost] = useState(false); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState<string | null>(null);
+
+  async function add() {
+    if (!title.trim()) return;
+    setBusy(true); setMsg(null);
+    let boosted = false;
+    if (boost) { boosted = await useBoost(brandId); if (!boosted) setMsg('You’re out of boosts this month — posted without a boost.'); }
+    const res = await createBrandPost(brandId, { kind, title, body: body || undefined, releaseDate: kind === 'release' ? (releaseDate || undefined) : undefined, linkUrl: linkUrl || undefined, boosted });
+    setBusy(false);
+    if (!res.ok) { setMsg(res.error ?? 'Failed to post.'); return; }
+    setTitle(''); setBody(''); setReleaseDate(''); setLinkUrl(''); setBoost(false);
+    onChange();
+  }
+
+  const input = 'w-full rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 px-3 py-2 text-sm focus:border-ember-400/50 focus:outline-none';
+  return (
+    <section className="mt-8">
+      <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Megaphone size={18} className="text-ember-400" /> Releases &amp; promos</h2>
+      <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
+        <div className="flex gap-2">
+          {(['release', 'promo', 'announcement'] as const).map((k) => (
+            <button key={k} onClick={() => setKind(k)} className={`rounded-full px-3 py-1 text-xs capitalize ${kind === k ? 'bg-ember-400/15 text-ember-200' : 'bg-char/50 text-smoke-400'}`}>{k}</button>
+          ))}
+        </div>
+        <input className={input + ' mt-3'} placeholder={kind === 'release' ? 'Release name' : kind === 'promo' ? 'Promo headline' : 'Announcement'} value={title} onChange={(e) => setTitle(e.target.value)} />
+        <textarea className={input + ' mt-2'} rows={2} placeholder="Details (optional)" value={body} onChange={(e) => setBody(e.target.value)} />
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          {kind === 'release' && <input className={input} type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} />}
+          <input className={input} placeholder="Link (optional)" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
+        </div>
+        <div className="mt-3 flex items-center justify-between">
+          <label className="flex items-center gap-2 text-xs text-smoke-200">
+            <input type="checkbox" checked={boost} onChange={(e) => setBoost(e.target.checked)} className="accent-ember-400" />
+            <Rocket size={13} className="text-ember-400" /> Boost this post {Number.isFinite(boostsLeft) ? `(${boostsLeft} left)` : ''}
+          </label>
+          <button onClick={add} disabled={busy || !title.trim()} className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-4 py-2 text-sm font-medium text-paper disabled:opacity-50">
+            {busy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Post
+          </button>
+        </div>
+        {msg && <p className="mt-2 text-xs text-ember-200">{msg}</p>}
+      </div>
+
+      <div className="mt-3 space-y-2">
+        {posts.length === 0 && <p className="text-sm text-smoke-400">No posts yet.</p>}
+        {posts.map((p) => (
+          <div key={p.id} className="flex items-start justify-between gap-3 rounded-lg border-[0.5px] border-ember-400/10 bg-char/30 p-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-ember-400/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-ember-200">{p.kind}</span>
+                {p.boosted && <span className="inline-flex items-center gap-1 text-[10px] text-ember-300"><Rocket size={10} /> Boosted</span>}
+                {p.releaseDate && <span className="text-[10px] text-smoke-400">Drops {p.releaseDate}</span>}
+              </div>
+              <div className="mt-1 truncate text-sm font-medium">{p.title}</div>
+              {p.body && <div className="truncate text-xs text-smoke-400">{p.body}</div>}
+            </div>
+            <button onClick={async () => { await deleteBrandPost(p.id); onChange(); }} className="shrink-0 text-smoke-500 hover:text-red-300"><Trash2 size={15} /></button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AnalyticsPanel({ premium }: { premium: boolean }) {
+  return (
+    <section className="mt-8">
+      <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><BarChart3 size={18} className="text-ember-400" /> Analytics</h2>
+      <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-5 text-sm text-smoke-300">
+        {premium ? 'In-depth product analytics — popularity, humidor adds, rating trends, and lounge demand — populate here as activity comes in.'
+          : 'Real-time analytics — which of your cigars are trending by humidor adds and ratings — populate here as activity comes in.'}
+        <div className="mt-3 text-xs text-smoke-500">Live metrics activate once your listings start seeing engagement.</div>
+      </div>
+    </section>
+  );
+}
+
+function ReviewRequestPanel({ brandId, premium }: { brandId: string; premium: boolean }) {
+  const [cigarName, setCigarName] = useState(''); const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false); const [done, setDone] = useState(false); const [err, setErr] = useState<string | null>(null);
+  async function send() {
+    if (!cigarName.trim()) return;
+    setBusy(true); setErr(null);
+    const res = await submitReviewRequest(brandId, { cigarName, message: message || undefined, priority: premium });
+    setBusy(false);
+    if (!res.ok) { setErr(res.error ?? 'Failed to send.'); return; }
+    setDone(true);
+  }
+  const input = 'w-full rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 px-3 py-2 text-sm focus:border-ember-400/50 focus:outline-none';
+  return (
+    <section className="mt-8">
+      <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Megaphone size={18} className="text-ember-400" /> Request a CigarTV review {premium && <span className="rounded-full bg-ember-400/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-ember-200">Priority</span>}</h2>
+      <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
+        {done ? (
+          <p className="text-sm text-ember-200">Request sent{premium ? ' with priority' : ''} — CigarTV will be in touch.</p>
+        ) : (
+          <>
+            <input className={input} placeholder="Which cigar?" value={cigarName} onChange={(e) => setCigarName(e.target.value)} />
+            <textarea className={input + ' mt-2'} rows={2} placeholder="Anything CigarTV should know? (optional)" value={message} onChange={(e) => setMessage(e.target.value)} />
+            {err && <p className="mt-2 text-xs text-red-300">{err}</p>}
+            <button onClick={send} disabled={busy || !cigarName.trim()} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-4 py-2 text-sm font-medium text-paper disabled:opacity-50">
+              {busy ? <Loader2 size={14} className="animate-spin" /> : null} Send request
+            </button>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SeatsPanel({ seats, premium }: { seats: number; premium: boolean }) {
+  return (
+    <section className="mt-8 mb-12">
+      <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Users size={18} className="text-ember-400" /> Team seats</h2>
+      <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4 text-sm text-smoke-300">
+        Your plan includes <span className="text-paper">{premium ? 'custom' : seats}</span> seats. To add a teammate, send them an invite from your account settings (they’ll be added as a manager once they accept).
+      </div>
+    </section>
+  );
+}

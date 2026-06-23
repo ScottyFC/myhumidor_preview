@@ -7,6 +7,7 @@ import { applyOverrides, applyOverride, loadOverrides } from '@/lib/overrides';
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 import type { CatalogCigar } from '@/types';
 import { BrandLogo } from '@/components/BrandLogo';
+import { BrandAnnouncements } from '@/components/BrandAnnouncements';
 import { CigarThumb } from '@/components/CigarThumb';
 import { BrandCsvDownload } from '@/components/BrandCsvDownload';
 
@@ -100,6 +101,10 @@ export default async function BrandPage({ params }: PageProps) {
         slug: c.slug, brand: c.brand, name: c.name, country: c.country,
         price: c.price ?? null, image_url: c.image_url ?? null, buy_url: c.buyUrl ?? null,
       }))} />
+
+      <div className="mt-8">
+        <BrandAnnouncements slug={slug} />
+      </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {deduped.map((c) => (

@@ -93,6 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
           <div className="mx-auto mt-6 flex max-w-md flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-smoke-300">
             <a href="mailto:submissions@cigartv.com" className="hover:text-ember-100">Contact us</a>
+            <Link href="/for-brands" className="hover:text-ember-100">For Brands</Link>
             <Link href="/help" className="hover:text-ember-100">Help</Link>
             <Link href="/terms" className="hover:text-ember-100">Terms</Link>
           </div>

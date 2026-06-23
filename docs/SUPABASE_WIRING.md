@@ -1,3 +1,34 @@
+## phase84 — Brand accounts (RUN THIS MIGRATION)
+
+A full brand-account spine. Access is membership-based via `brand_members` (like
+lounge ownership) — no `profiles.account_type` change.
+
+New tables: `brands` (DB home for a managed brand page), `brand_members` (seats),
+`brand_subscriptions` (tier/status/seats/boost quota), `brand_signup_requests`
+(applications), `brand_posts` (releases/promos/announcements), `brand_review_requests`
+(product-review requests; premium = priority). RLS: public read of brands/posts;
+members manage their brand's content; applicants insert/read their own request; admins
+see all. RPCs: `can_manage_brand(_id)`, `approve_brand_signup` (super admin: links an
+existing brand by slug or creates one, attaches the applicant as owner, provisions the
+sub), `reject_brand_signup`, `brand_use_boost` (monthly quota, resets each month).
+
+UI: `/for-brands` (tiers + application form — Standard $300/mo collects details for
+post-approval billing; Premium = no payment, routed as a request for custom pricing),
+`/brand` dashboard (plan summary, releases/promos composer with boosts, analytics
+panel, CigarTV review request, seats — no CigarTV feed / location features), admin
+"Brand applications" queue (approve link-or-create / reject), and brand releases/promos
++ banner surfaced on the public `/brands/[slug]` page. Footer "For Brands" link added.
+Brand tables are newer than the generated types, so `lib/brands.ts` uses an untyped
+client view.
+
+NOT yet built (honest — next steps): Stripe billing is NOT wired (Standard approval
+creates an 'active' sub row but collects no real payment; "extra boosts charged" only
+enforces the quota, no charge); the post-approval **onboarding guide / first-product
+checklist** Scotty described isn't built (the dashboard is the management surface);
+analytics is a placeholder (no event tracking yet); premium-only **collectible brand
+badges** and **lounge direct-buy** are not implemented; **seat invites** show the count
+but don't yet add brand_members on accept. Run phase84. Compile-verified only — RLS /
+RPCs / Stripe untested here.
 ## CigarTV "Burn Rate" feature (no migration)
 
 Driven by the uploaded CSV → `src/data/burnrate.json` (8 episodes: cigar name, slug
