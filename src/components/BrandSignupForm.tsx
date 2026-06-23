@@ -2,24 +2,35 @@
 
 import { useState } from 'react';
 import { Loader2, CheckCircle2, Building2 } from 'lucide-react';
-import { submitBrandSignup, type BrandTier } from '@/lib/brands';
+import { Recaptcha } from '@/components/Recaptcha';
+import type { BrandTier } from '@/lib/brands';
 
 export function BrandSignupForm() {
   const [tier, setTier] = useState<BrandTier>('standard');
-  const [f, setF] = useState({ contactName: '', company: '', businessAddress: '', email: '', website: '', phone: '', taxId: '', notes: '' });
+  const [f, setF] = useState({ contactName: '', company: '', businessAddress: '', email: '', website: '', phone: '', taxId: '', notes: '', password: '', confirm: '' });
+  const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
-  const valid = f.contactName.trim() && f.company.trim() && f.email.trim() && (tier === 'premium' || f.taxId.trim());
+  const valid = f.contactName.trim() && f.company.trim() && f.email.trim() && f.password.length >= 8 && f.password === f.confirm && (tier === 'premium' || f.taxId.trim());
 
   async function submit() {
     setErr(null); setBusy(true);
-    const res = await submitBrandSignup({ ...f, tier });
-    setBusy(false);
-    if (!res.ok) { setErr(res.error ?? 'Something went wrong.'); return; }
-    setDone(true);
+    try {
+      const r = await fetch('/api/brand-auth/signup', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contactName: f.contactName, company: f.company, businessAddress: f.businessAddress, email: f.email,
+          website: f.website, phone: f.phone, taxId: f.taxId, notes: f.notes, password: f.password, tier, recaptchaToken: token,
+        }),
+      });
+      const j = await r.json();
+      setBusy(false);
+      if (!r.ok || !j.ok) { setErr(j.error ?? 'Something went wrong.'); return; }
+      setDone(true);
+    } catch { setBusy(false); setErr('Network error.'); }
   }
 
   if (done) {
@@ -30,7 +41,7 @@ export function BrandSignupForm() {
         <p className="mt-2 text-sm text-smoke-200">
           {tier === 'premium'
             ? 'Thanks — our team will reach out to discuss tailored Premium pricing for your marketing needs.'
-            : 'Thanks — a super admin will review your application. Once approved, we’ll help you set up billing and claim your brand page.'}
+            : 'Thanks — a super admin will review your application. Once approved, sign in at the brand portal with the email and password you just set.'}
         </p>
       </div>
     );
@@ -42,7 +53,6 @@ export function BrandSignupForm() {
     <div className="rounded-2xl border-[0.5px] border-ember-400/20 bg-char/30 p-5 sm:p-6">
       <div className="mb-4 flex items-center gap-2 text-sm font-medium"><Building2 size={16} className="text-ember-400" /> Brand application</div>
 
-      {/* Tier toggle */}
       <div className="mb-5 grid grid-cols-2 gap-2">
         {(['standard', 'premium'] as BrandTier[]).map((t) => (
           <button key={t} onClick={() => setTier(t)}
@@ -61,16 +71,20 @@ export function BrandSignupForm() {
         <input className={inputCls} placeholder="Contact number" value={f.phone} onChange={set('phone')} />
         <input className={inputCls} placeholder="Website" value={f.website} onChange={set('website')} />
         <input className={inputCls} placeholder={tier === 'premium' ? 'Federal / Tax ID' : 'Federal / Tax ID *'} value={f.taxId} onChange={set('taxId')} />
+        <input className={inputCls} type="password" placeholder="Create a password * (8+ chars)" value={f.password} onChange={set('password')} />
+        <input className={inputCls} type="password" placeholder="Confirm password *" value={f.confirm} onChange={set('confirm')} />
         <textarea className={inputCls + ' sm:col-span-2'} rows={3} placeholder={tier === 'premium' ? 'Tell us about your marketing needs' : 'Anything else? (optional)'} value={f.notes} onChange={set('notes')} />
       </div>
 
       <div className="mt-4 rounded-lg border-[0.5px] border-ember-400/15 bg-char/40 p-3 text-xs text-smoke-300">
         {tier === 'premium'
-          ? 'Premium is custom-priced. Submitting sends a request to MyHumidor — no payment now; our team will contact you to tailor a plan (direct-to-lounge sales, collectible brand badges, in-depth product analytics, custom seats, priority support, and priority CigarTV review requests).'
-          : 'Standard is $300/month and includes listing management, real-time analytics, 3 boosted posts/month (extra boosts billed separately), and one additional seat. Billing is set up after a super admin approves your application.'}
+          ? 'Premium is custom-priced. Submitting sends a request to MyHumidor — no payment now; our team will contact you to tailor a plan. Once approved, sign in at the brand portal.'
+          : 'Standard is $300/month: listing management, real-time analytics, 3 boosted posts/month (extra boosts billed separately), and one additional seat. Billing is set up after a super admin approves you; then sign in at the brand portal.'}
       </div>
 
+      <div className="mt-4"><Recaptcha onToken={setToken} /></div>
       {err && <p className="mt-3 text-sm text-red-300">{err}</p>}
+      {f.password && f.confirm && f.password !== f.confirm && <p className="mt-2 text-xs text-red-300">Passwords don’t match.</p>}
       <button onClick={submit} disabled={!valid || busy}
         className="mt-4 inline-flex items-center gap-2 rounded-lg bg-ember-400 px-5 py-2.5 text-sm font-medium text-paper disabled:opacity-50">
         {busy ? <><Loader2 size={15} className="animate-spin" /> Submitting…</> : tier === 'premium' ? 'Request Premium pricing' : 'Apply for a brand account'}

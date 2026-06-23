@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Loader2, Rocket, Trash2, BarChart3, Megaphone, Users, Store, Plus, Sparkles } from 'lucide-react';
 import {
-  getMyBrands, getBrandSubscription, listBrandPosts, createBrandPost, deleteBrandPost,
-  useBoost, submitReviewRequest, getBrandDetail, brandProductCount,
+  getMyBrands, brandState, brandLogout, createBrandPost, deleteBrandPost,
+  useBoost, submitReviewRequest,
   type MyBrand, type BrandSubscription, type BrandPost, type BrandDetail,
 } from '@/lib/brands';
 import { BrandOnboarding } from '@/components/BrandOnboarding';
@@ -25,11 +25,9 @@ export function BrandDashboard() {
     setBrands(mine); setActive(mine[0] ?? null); setLoading(false);
   })(); }, []);
 
-  const reload = useCallback(async (b: MyBrand) => {
-    setSub(await getBrandSubscription(b.id));
-    setPosts(await listBrandPosts(b.id));
-    setDetail(await getBrandDetail(b.id));
-    setProductCount(await brandProductCount(b.slug));
+  const reload = useCallback(async (_b: MyBrand) => {
+    const st = await brandState();
+    if (st) { setSub(st.subscription); setPosts(st.posts); setDetail(st.detail); setProductCount(st.productCount); }
   }, []);
   useEffect(() => { if (active) reload(active); }, [active, reload]);
 
@@ -40,8 +38,11 @@ export function BrandDashboard() {
       <div className="mx-auto max-w-lg px-6 py-20 text-center">
         <Store size={28} className="mx-auto text-ember-400" />
         <h1 className="mt-3 font-display text-2xl">No brand account yet</h1>
-        <p className="mt-2 text-sm text-smoke-300">Manage your listings, releases, promos, and analytics with a brand account.</p>
-        <Link href="/for-brands" className="mt-5 inline-block rounded-lg bg-ember-400 px-5 py-2.5 text-sm font-medium text-paper">Apply for a brand account</Link>
+        <p className="mt-2 text-sm text-smoke-300">Brand accounts are a separate division. Log in to your brand portal, or apply for an account.</p>
+        <div className="mt-5 flex items-center justify-center gap-3">
+          <Link href="/brand/login" className="rounded-lg bg-ember-400 px-5 py-2.5 text-sm font-medium text-paper">Brand portal login</Link>
+          <Link href="/for-brands" className="rounded-lg border-[0.5px] border-ember-400/30 px-5 py-2.5 text-sm text-ember-100">Apply</Link>
+        </div>
       </div>
     );
   }
@@ -56,6 +57,7 @@ export function BrandDashboard() {
           <div className="eyebrow mb-1">Brand dashboard</div>
           <h1 className="font-display text-4xl tracking-tightest">{active.name}</h1>
         </div>
+        <button onClick={async () => { await brandLogout(); location.href = '/brand/login'; }} className="rounded-lg border-[0.5px] border-ember-400/20 px-3 py-2 text-xs text-smoke-300 hover:text-paper">Sign out</button>
         {brands.length > 1 && (
           <select value={active.id} onChange={(e) => setActive(brands.find((b) => b.id === e.target.value) ?? active)}
             className="rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 px-3 py-2 text-sm">

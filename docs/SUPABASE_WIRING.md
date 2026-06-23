@@ -1,3 +1,35 @@
+## phase87 — Brand-auth: standalone brand login portal (RUN THIS MIGRATION)
+
+Brands now have their own login system, fully separate from Supabase auth.users.
+- New tables `brand_auth_accounts` (email + bcrypt password_hash + status + brand_id)
+  and `brand_auth_sessions` (opaque token + expiry). RLS denies the anon/authenticated
+  clients entirely — only the service role (server routes) touches them.
+- `approve_brand_signup` now also activates the matching brand-auth account by email
+  and binds it to the brand, so an approved applicant can log in.
+
+Server (Node-runtime route handlers, service role): `src/lib/brand-auth.ts`
+(bcrypt hash/verify, opaque session tokens, httpOnly+secure+sameSite cookie `mh_brand`,
+`getBrandSession`, server-side reCAPTCHA verify via SECRET_reCAPTCHA_KEY).
+Routes: `/api/brand-auth/{signup,login,logout,session}` and cookie-authed
+`/api/brand/{state,post,details,onboarding,review,boost}` (brand_id is always derived
+from the session — never trusted from the client; review priority is enforced as a
+premium entitlement server-side; deletes/updates are scoped to the session's brand).
+
+Client: `/brand/login` portal (email/password + reCAPTCHA), signup form now sets a
+password + reCAPTCHA and posts to the signup route, and `BrandDashboard` loads
+everything from `/api/brand/state`, mutates via the routes, and has a Sign out. The
+admin queue just approves (auto-activates the login by email — no manual operator link).
+
+SECURITY — this is hand-rolled auth; treat it as foundational and review before launch:
+bcrypt cost 12, opaque random session tokens, httpOnly/secure/sameSite=lax cookies,
+server-side reCAPTCHA, server-derived brand scoping. Known gaps to add next: login
+**rate-limiting / lockout** (no brute-force protection yet), **password reset / email
+verification** (none — a forgotten password needs admin help), CSRF tokens (sameSite=lax
+only), hashing session tokens at rest, and a transactional signup (request + account are
+two inserts). reCAPTCHA only protects if SECRET_reCAPTCHA_KEY + the public site key are
+set (otherwise verification is skipped). `secure` cookies need HTTPS (prod is fine; not
+http://localhost). Verify the reCAPTCHA widget renders inside the native webview.
+Run phase87. Compile-verified only — test signup → approve → login → dashboard end-to-end.
 ## phase86 — Brand applications without sign-in (RUN THIS MIGRATION)
 
 Brand accounts are now a separate division: applying no longer requires a consumer/lounge

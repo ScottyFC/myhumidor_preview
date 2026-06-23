@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, Check, X, Building2, ExternalLink } from 'lucide-react';
-import { listBrandSignups, approveBrandSignup, rejectBrandSignup, adminLinkBrandOwner, brandSlugify, type BrandSignupRow } from '@/lib/brands';
+import { listBrandSignups, approveBrandSignup, rejectBrandSignup, brandSlugify, type BrandSignupRow } from '@/lib/brands';
 
 export function BrandSignupQueue() {
   const [rows, setRows] = useState<BrandSignupRow[]>([]);
@@ -10,9 +10,6 @@ export function BrandSignupQueue() {
   const [busy, setBusy] = useState<string | null>(null);
   const [edits, setEdits] = useState<Record<string, { name: string; slug: string }>>({});
   const [msg, setMsg] = useState<string | null>(null);
-  const [toLink, setToLink] = useState<{ brandId: string; company: string }[]>([]);
-  const [linkVals, setLinkVals] = useState<Record<string, string>>({});
-  const [linkMsg, setLinkMsg] = useState<Record<string, string>>({});
 
   async function load() {
     setLoading(true);
@@ -28,12 +25,7 @@ export function BrandSignupQueue() {
     const res = await approveBrandSignup(row.id, e.name, e.slug);
     setBusy(null);
     if (!res.ok) { setMsg(res.error ?? 'Approve failed.'); return; }
-    if (!row.userId && res.brandId) {
-      setToLink((l) => [...l, { brandId: res.brandId!, company: e.name }]);
-      setMsg(`Approved — “${e.name}” created. It has no login yet; link a brand operator below when their account exists.`);
-    } else {
-      setMsg(`Approved — “${e.name}” is now managed by the applicant.`);
-    }
+    setMsg(`Approved — “${e.name}” can now sign in at the brand portal with the email they applied with.`);
     setRows((rs) => rs.filter((x) => x.id !== row.id));
   }
   async function reject(id: string) {
@@ -49,28 +41,6 @@ export function BrandSignupQueue() {
       <p className="mt-1 text-sm text-smoke-400">Approving links an existing brand (by slug) or creates a new one, attaches the applicant as owner, and provisions their subscription.</p>
       {msg && <p className="mt-3 rounded-lg border-[0.5px] border-ember-400/20 bg-ember-400/5 px-3 py-2 text-sm text-ember-200">{msg}</p>}
 
-      {toLink.length > 0 && (
-        <div className="mt-4 rounded-xl border-[0.5px] border-ember-400/20 bg-char/30 p-4">
-          <div className="text-sm font-medium text-paper">Brands awaiting an operator</div>
-          <p className="mt-1 text-xs text-smoke-400">These brands were approved without a login. Once their separate-division account exists, paste its user ID to grant dashboard access.</p>
-          <div className="mt-3 space-y-2">
-            {toLink.map((b) => (
-              <div key={b.brandId} className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-paper">{b.company}</span>
-                <input value={linkVals[b.brandId] ?? ''} onChange={(e) => setLinkVals({ ...linkVals, [b.brandId]: e.target.value })}
-                  placeholder="operator user ID (UUID)"
-                  className="w-64 rounded-md border-[0.5px] border-ember-400/20 bg-char/50 px-2 py-1.5 text-sm text-paper" />
-                <button onClick={async () => {
-                  const uid = (linkVals[b.brandId] ?? '').trim(); if (!uid) return;
-                  const r = await adminLinkBrandOwner(b.brandId, uid);
-                  setLinkMsg({ ...linkMsg, [b.brandId]: r.ok ? 'Linked ✓' : (r.error ?? 'Failed') });
-                }} className="rounded-lg bg-ember-400 px-3 py-1.5 text-xs font-medium text-paper">Link operator</button>
-                {linkMsg[b.brandId] && <span className="text-xs text-ember-200">{linkMsg[b.brandId]}</span>}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <div className="mt-4 space-y-3">
         {rows.length === 0 && <p className="text-sm text-smoke-400">No pending applications.</p>}
