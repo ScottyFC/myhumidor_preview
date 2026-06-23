@@ -1,3 +1,16 @@
+## phase88 FIX — self-sufficient (re-run phase88)
+
+phase88 failed with `relation "public.brand_auth_accounts" does not exist` because that
+table is created in **phase87**, which hadn't been applied first. phase88 now creates the
+brand-auth tables itself (idempotent), so it no longer depends on run order — just re-run
+phase88.sql.
+
+Important: for the brand system to actually FUNCTION you still need the full sequence
+applied — phase84 (brand columns), phase86 (anonymous signup policy), phase87 (brand-auth
+tables + the approve activation that flips a brand-auth account to active on approval),
+then phase88. phase88 self-creating the tables only prevents this error; phase87's
+approve-activation logic is still required for approved brands to be able to log in.
+phase85 is redundant (folded into phase84).
 ## phase88 — Auth hardening: rate-limiting + password reset (RUN THIS MIGRATION)
 
 Applies across both auth systems. Full write-up in docs/SECURITY_REVIEW.md.

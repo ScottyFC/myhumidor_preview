@@ -81,10 +81,14 @@ export async function supabaseServer() {
  * for trusted server work (e.g. serving ads, reconciliation jobs).
  */
 export function supabaseService() {
-  const serviceKey = process.env.SUPABASE_SERVICE_KEY;
-  if (!serviceKey || !SUPABASE_URL) return null;
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_KEY ??
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_SECRET_KEY;
+  const url = SUPABASE_URL || process.env.SUPABASE_URL || '';
+  if (!serviceKey || !url) return null;
   // Plain client, no cookies/session — auth is the service role itself.
-  return createServerClient<Database>(SUPABASE_URL, serviceKey, {
+  return createServerClient<Database>(url, serviceKey, {
     cookies: { getAll() { return []; }, setAll() { /* no-op */ } },
   });
 }
