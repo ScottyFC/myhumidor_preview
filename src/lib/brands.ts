@@ -30,12 +30,13 @@ function slugify(s: string): string {
   return s.toLowerCase().trim().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-/** Submit a brand-account application (pending super-admin approval). */
+/** Submit a brand-account application (pending super-admin approval). No sign-in
+ *  required — brand accounts are a separate division from user/lounge logins. */
 export async function submitBrandSignup(input: BrandSignupInput): Promise<{ ok: boolean; error?: string }> {
   if (!isSupabaseConfigured) return { ok: false, error: 'Not configured' };
+  // Attach a user_id only if the applicant happens to be signed in; otherwise null.
   const { data: auth } = await sb().auth.getUser();
-  const uid = auth?.user?.id;
-  if (!uid) return { ok: false, error: 'Please sign in first.' };
+  const uid = auth?.user?.id ?? null;
   const { error } = await sb().from('brand_signup_requests').insert({
     user_id: uid,
     contact_name: input.contactName,
@@ -191,4 +192,12 @@ export async function brandProductCount(slug: string): Promise<number> {
     const j = await res.json();
     return typeof j.count === 'number' ? j.count : 0;
   } catch { return 0; }
+}
+
+/** Super-admin: link a brand operator (separate-division login) to a brand by user id. */
+export async function adminLinkBrandOwner(brandId: string, userId: string): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured) return { ok: false, error: 'Not configured' };
+  const { error } = await sb().rpc('admin_link_brand_owner', { p_brand_id: brandId, p_user_id: userId.trim() });
+  if (error) return { ok: false, error: error.message };
+  return { ok: true };
 }

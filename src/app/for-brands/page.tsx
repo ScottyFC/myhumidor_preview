@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { Check, Megaphone, BarChart3, Rocket, Users, BadgeCheck, Store } from 'lucide-react';
 import { BrandSignupForm } from '@/components/BrandSignupForm';
 
@@ -61,7 +60,7 @@ export default function ForBrandsPage() {
           <p className="mt-2 text-sm text-smoke-300">
             Every application is reviewed by a super admin. If your brand is already in our catalog,
             we’ll link you to manage it; if not, we’ll create it on approval and walk you through listing your first product.
-            You’ll need to be <Link href="/register" className="text-ember-400 underline">signed in</Link> to apply.
+            Brand accounts are a separate division — no consumer sign-in required to apply.
           </p>
         </div>
         <BrandSignupForm />

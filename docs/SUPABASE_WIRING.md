@@ -1,3 +1,24 @@
+## phase86 — Brand applications without sign-in (RUN THIS MIGRATION)
+
+Brand accounts are now a separate division: applying no longer requires a consumer/lounge
+login.
+- RLS: `brand_signup_requests` insert is open to `anon` + `authenticated` (with check
+  true). `submitBrandSignup` drops the sign-in gate — `user_id` is set only if the
+  applicant happens to be logged in, else null.
+- `brands.contact_email` added; `approve_brand_signup` now tolerates a null user_id —
+  it creates/links the brand + subscription and stores the contact email, attaching an
+  owner member only when a user exists.
+- New `admin_link_brand_owner(brand_id, user_id)` RPC + an admin-queue panel ("Brands
+  awaiting an operator") to grant dashboard access by pasting the operator's user id
+  once their separate-division login exists.
+- `/for-brands` copy updated (no sign-in required).
+
+Honest boundaries: (1) anonymous inserts invite spam — add the project's reCAPTCHA to
+the brand form before launch. (2) The dashboard is still user-gated (RLS is per-user),
+so an approved login-free brand has NO dashboard access until an operator account is
+linked via admin_link_brand_owner — that linking IS the separate-division provisioning
+step (MyHumidor creates/issues the brand login out of band, then links it). A fully
+standalone brand-auth system isn't built. Run phase86. Compile-verified only.
 ## phase84 FIX — brands table already existed (re-run phase84)
 
 The first phase84 run failed with `column b.slug does not exist`: a `brands` table
