@@ -1,3 +1,19 @@
+## phase91 — feed login redirect + approval-implies-verified (RUN THIS MIGRATION)
+
+- Feed page now redirects to `/register` (consumer login) when not signed in.
+- `approve_brand_signup` now also sets `email_verified = true` when it activates the
+  brand-auth account. Reason: an approved brand was getting locked out of login when the
+  verification email failed to deliver. A super-admin approval is the real trust gate, so
+  approval now backstops verification. Self-serve verification still runs pre-approval
+  when email is configured.
+- Includes a one-off that verifies + activates `scott@cigartv.com` immediately.
+
+Why the email didn't arrive: with `RESEND_API_KEY` unset, no email is sent and signup
+auto-verifies (so login still works). With the key SET but the default sender
+`onboarding@resend.dev`, Resend only delivers to YOUR Resend account's own email — it will
+NOT deliver to arbitrary addresses like scott@cigartv.com. To email real recipients you
+must verify a domain in Resend and set `BRAND_EMAIL_FROM` to an address on it. The
+`[brand-email]` server log line shows the exact Resend rejection. Run phase91.
 ## phase90 — Brand MFA + CSRF + transactional signup (RUN THIS MIGRATION)
 
 Also addresses "verification email not arriving."
