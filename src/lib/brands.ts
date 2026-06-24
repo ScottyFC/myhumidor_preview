@@ -231,3 +231,12 @@ export async function updateBrandCigarStatus(id: string, status: CigarStatus): P
 export async function removeBrandCigar(id: string): Promise<boolean> {
   try { const r = await fetch(`/api/brand/cigars?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'x-csrf-token': csrfToken() } }); return r.ok; } catch { return false; }
 }
+
+export interface BulkCigarRow { name: string; size?: string; country?: string; price?: string | number | null; status?: string; imageUrl?: string }
+export async function bulkAddCigars(rows: BulkCigarRow[]): Promise<{ ok: boolean; inserted?: number; skipped?: number; errors?: string[]; error?: string }> {
+  try {
+    const r = await fetch('/api/brand/cigars/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken() }, body: JSON.stringify({ rows }) });
+    const j = await r.json();
+    return r.ok && j.ok ? { ok: true, inserted: j.inserted, skipped: j.skipped, errors: j.errors } : { ok: false, error: j.error, errors: j.errors };
+  } catch { return { ok: false, error: 'Network error.' }; }
+}

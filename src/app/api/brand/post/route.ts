@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     link_url: b.linkUrl ?? null, release_date: b.releaseDate ?? null, boosted: !!b.boosted,
   } as never);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  await notifyBrandFollowers(s.brandId, s.brand.name, s.brand.slug, `${s.brand.name}: ${b.title}`, 'brand_post');
+  await notifyBrandFollowers(s.brandId, s.brand.name, s.brand.slug, String(b.title), 'brand_post');
   return NextResponse.json({ ok: true });
 }
 

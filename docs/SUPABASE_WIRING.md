@@ -1,3 +1,20 @@
+## Brand follow deep-linking + bulk CSV cigar import (NO new migration)
+
+Follow deep-linking: `notifications` now supports `brand_post` / `brand_inventory` types —
+they link to `/brands/{slug}` and read as "{Brand} posted: {title}" / "{Brand} added {cigar}
+to their catalog". Brand post + add-cigar routes notify followers; bulk import notifies once
+("N new cigars"). (Brands with a DB row only; follow button is on the public brand page.)
+
+Bulk CSV import (brands): `/api/brand/cigars/bulk` (brand-auth + CSV, service role,
+brand_id locked, auto-approved). Columns: name (required), size, country, price, status
+(available/coming_soon/discontinued), image_url. Image links must be PUBLIC URLs (hosted on
+the brand's site or elsewhere) — no file upload in bulk. Slugs are generated under the brand
+and de-duped; ≤1000 rows/import. UI: "Bulk import" button in the dashboard Listed Cigars
+section → upload .csv or paste, with a downloadable template and a preview before import.
+
+Caveat: bulk import does NOT merge/upsert — re-importing the same CSV creates new rows
+(suffixed slugs), so it can duplicate. Notifications go to all followers (no per-user
+mute). Compile-verified only.
 ## phase94 — Follow brands + remove brand-account ratings + audience + Brand Tools (RUN MIGRATION)
 
 `phase94.sql` adds `brand_follows` (user↔brand, RLS: public read, owner write).

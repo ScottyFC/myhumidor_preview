@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     image_url: b.imageUrl || null,
   } as never).select('id, name, size, country, price, slug, status').single();
   if (error || !row) return NextResponse.json({ ok: false, error: error?.message ?? 'Could not add cigar.' }, { status: 500 });
-  if (status !== 'discontinued') await notifyBrandFollowers(s.brandId, s.brand.name, s.brand.slug, `${s.brand.name} added ${name}`, 'brand_inventory');
+  if (status !== 'discontinued') await notifyBrandFollowers(s.brandId, s.brand.name, s.brand.slug, name, 'brand_inventory');
   return NextResponse.json({ ok: true, cigar: row });
 }
 

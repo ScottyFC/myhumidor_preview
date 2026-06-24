@@ -1,8 +1,9 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Loader2, Cigarette, ExternalLink, Plus, Trash2, ImageIcon, Upload } from 'lucide-react';
+import { Loader2, Cigarette, ExternalLink, Plus, Trash2, ImageIcon, Upload, FileSpreadsheet } from 'lucide-react';
 import { getBrandCigars, addBrandCigar, updateBrandCigarStatus, removeBrandCigar, uploadBrandImage, type BrandCigar, type CigarStatus } from '@/lib/brands';
+import { CsvCigarImport } from '@/components/CsvCigarImport';
 
 const STATUS_OPTS: [CigarStatus, string][] = [['available', 'Available'], ['coming_soon', 'Coming Soon'], ['discontinued', 'Discontinued']];
 function StatusBadge({ s }: { s: CigarStatus }) {
@@ -14,6 +15,7 @@ function StatusBadge({ s }: { s: CigarStatus }) {
 export function ListedCigars({ slug }: { slug: string }) {
   const [rows, setRows] = useState<BrandCigar[] | null>(null);
   const [adding, setAdding] = useState(false);
+  const [bulk, setBulk] = useState(false);
   const [form, setForm] = useState({ name: '', size: '', country: '', price: '', status: 'available' as CigarStatus });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -59,6 +61,7 @@ export function ListedCigars({ slug }: { slug: string }) {
         <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Cigarette size={18} className="text-ember-400" /> Listed Cigars{rows && <span className="text-sm text-smoke-400">· {rows.length}</span>}</h2>
         <div className="flex items-center gap-3">
           <Link href={`/brands/${slug}`} className="inline-flex items-center gap-1.5 text-xs text-ember-400 hover:underline">View brand page <ExternalLink size={12} /></Link>
+          <button onClick={() => setBulk((v) => !v)} className="inline-flex items-center gap-1.5 rounded-lg border-[0.5px] border-ember-400/30 px-3 py-1.5 text-xs text-ember-100 hover:bg-ember-400/10"><FileSpreadsheet size={13} /> Bulk import</button>
           <button onClick={() => setAdding((v) => !v)} className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-3 py-1.5 text-xs font-medium text-paper"><Plus size={13} /> Add cigar</button>
         </div>
       </div>
@@ -93,6 +96,8 @@ export function ListedCigars({ slug }: { slug: string }) {
           {err && <p className="mt-2 text-sm text-red-300">{err}</p>}
         </div>
       )}
+
+      {bulk && <CsvCigarImport onImported={load} onClose={() => setBulk(false)} />}
 
       <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
         {rows === null ? <Loader2 className="animate-spin text-ember-400" /> : rows.length === 0 ? (

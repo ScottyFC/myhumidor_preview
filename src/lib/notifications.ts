@@ -16,7 +16,7 @@ function bind() {
   });
 }
 
-export type NotificationType = 'follow' | 'like' | 'comment' | 'lounge_post' | 'check_in' | 'system' | 'submission' | 'lounge_new' | 'inventory' | 'top_daily';
+export type NotificationType = 'follow' | 'like' | 'comment' | 'lounge_post' | 'check_in' | 'system' | 'submission' | 'lounge_new' | 'inventory' | 'top_daily' | 'brand_post' | 'brand_inventory';
 
 export interface AppNotification {
   id: string;
@@ -112,6 +112,9 @@ export function notificationHref(n: AppNotification): string | null {
       return null;
     case 'follow':
       return '/profile';
+    case 'brand_post':
+    case 'brand_inventory':
+      return id ? `/brands/${id}` : '/brands';
     case 'top_daily':
       return id ? `/cigars/${id}` : '/top';
     case 'system':
@@ -134,6 +137,8 @@ export function describeNotification(n: AppNotification): string {
     case 'submission': return `${who} submitted${what || ' something'} for review`;
     case 'lounge_new': return `New lounge near you:${what}`;
     case 'inventory': return `${who} added${what || ' a new cigar'} to their inventory`;
+    case 'brand_post': return `${who} posted:${what}`;
+    case 'brand_inventory': return `${who} added${what || ' a new cigar'} to their catalog`;
     case 'top_daily': return `Today’s top-rated:${what}`;
     default: return `${who} sent an update`;
   }
