@@ -215,3 +215,19 @@ export async function inviteTeamMember(email: string): Promise<{ ok: boolean; em
 export async function removeTeamMember(id: string): Promise<boolean> {
   try { const r = await fetch(`/api/brand/team?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'x-csrf-token': csrfToken() } }); return r.ok; } catch { return false; }
 }
+
+// ── Brand self-serve catalog ───────────────────────────────────────────────
+export type CigarStatus = 'available' | 'coming_soon' | 'discontinued';
+export interface BrandCigar { slug: string; name: string; size: string; country: string; price: number | null; status: CigarStatus; id: string | null; owned: boolean }
+export async function getBrandCigars(): Promise<BrandCigar[]> {
+  try { const r = await fetch('/api/brand/cigars'); const j = await r.json(); return j.cigars ?? []; } catch { return []; }
+}
+export async function addBrandCigar(input: { name: string; size?: string; country?: string; price?: string | number | null; status?: CigarStatus }) {
+  return postJSON('/api/brand/cigars', input);
+}
+export async function updateBrandCigarStatus(id: string, status: CigarStatus): Promise<boolean> {
+  try { const r = await fetch('/api/brand/cigars', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken() }, body: JSON.stringify({ id, status }) }); return r.ok; } catch { return false; }
+}
+export async function removeBrandCigar(id: string): Promise<boolean> {
+  try { const r = await fetch(`/api/brand/cigars?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'x-csrf-token': csrfToken() } }); return r.ok; } catch { return false; }
+}

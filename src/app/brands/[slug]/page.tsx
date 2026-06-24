@@ -29,16 +29,18 @@ export default async function BrandPage({ params }: PageProps) {
   // slug prefix (cigar slugs start with the brand slug) so we never miss a new
   // brand's cigars behind an arbitrary row cap.
   const merged: CatalogCigar[] = [...cigars];
+  const statusBySlug = new Map<string, string>();
   if (isSupabaseConfigured) {
     try {
       const sb = await supabaseServer();
-      const { data } = await sb
+      const { data } = await (sb as unknown as import('@supabase/supabase-js').SupabaseClient)
         .from('catalog_cigars')
-        .select('id, brand, name, country, price, size, slug')
+        .select('id, brand, name, country, price, size, slug, status')
         .or(`slug.eq.${slug},slug.ilike.${slug}-%`)
         .limit(500);
       for (const r of data ?? []) {
         if (brandSlug(r.brand as string) !== slug) continue;
+        if ((r as { status?: string }).status) statusBySlug.set(r.slug as string, (r as { status?: string }).status as string);
         if (merged.some((m) => m.slug === r.slug)) continue;
         merged.push({
           uuid: String(r.id), brand: r.brand as string, name: r.name as string,
@@ -130,7 +132,11 @@ export default async function BrandPage({ params }: PageProps) {
           >
             <CigarThumb slug={c.slug} brand={c.brand} src={c.image_url} fit="contain" rounded="rounded" className="h-16 w-12 shrink-0 text-xs" />
             <div className="min-w-0 flex-1">
-              <div className="font-display text-lg leading-snug group-hover:text-ember-100"><CigarName slug={c.slug} name={c.name} /></div>
+              <div className="flex items-center gap-2">
+                <div className="font-display text-lg leading-snug group-hover:text-ember-100"><CigarName slug={c.slug} name={c.name} /></div>
+                {statusBySlug.get(c.slug) === 'coming_soon' && <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-sky-300">Coming Soon</span>}
+                {statusBySlug.get(c.slug) === 'discontinued' && <span className="rounded-full bg-zinc-500/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-zinc-300">Discontinued</span>}
+              </div>
               <div className="mt-1 text-xs text-smoke-400">
                 {[c.size, c.country].filter(Boolean).join(' · ')}
               </div>

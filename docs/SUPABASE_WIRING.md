@@ -1,3 +1,26 @@
+## phase93 — Brand self-serve cigar catalog (RUN THIS MIGRATION)
+
+`phase93.sql` adds `catalog_cigars.brand_id` + `status` (available/coming_soon/discontinued)
+and gives `catalog_cigars.id` a `gen_random_uuid()` default.
+
+`/api/brand/cigars` now supports the full lifecycle (all brand-auth + CSRF, service-role):
+- GET — lists the brand's cigars: their own additions (with id/status, editable) plus any
+  static catalog cigars under the brand (read-only).
+- POST — add a cigar (name + optional size/country/MSRP + status). Slug is generated as
+  `${brandSlug}-${name}` so it groups onto the public brand page; de-duped on clash.
+- PATCH — change status (own cigars only).
+- DELETE — remove (own cigars only). Static catalog cigars can't be deleted by a brand.
+
+Dashboard "Listed Cigars" now has an Add form, per-cigar status dropdown
+(Available / Coming Soon / Discontinued) and remove, updating in real time. The public
+`/brands/[slug]` page renders additions immediately (it reads the DB per request) with
+Coming Soon / Discontinued badges, and `/cigars/[slug]` resolves them (it already falls
+back to catalog_cigars).
+
+Caveats: brands manage only rows where `brand_id` = their brand (enforced server-side);
+catalog_cigars is shared with lounge submissions, distinguished by brand_id. Discontinued
+cigars still appear (badged) — not hidden from search (adjustable). No per-cigar image
+upload yet (text fields only). Compile-verified only.
 ## Brand dashboard round 2 — logo upload fix, listed cigars, brand page, team seats (NO new migration)
 
 No new SQL — uses phase84/92 columns. Set the email sender to verify@myhumidor.shop.

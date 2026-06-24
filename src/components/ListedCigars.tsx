@@ -1,37 +1,110 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Loader2, Cigarette, ExternalLink } from 'lucide-react';
+import { Loader2, Cigarette, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { getBrandCigars, addBrandCigar, updateBrandCigarStatus, removeBrandCigar, type BrandCigar, type CigarStatus } from '@/lib/brands';
 
-interface Row { slug: string; name: string; size: string; country: string; price: number | null }
+const STATUS_OPTS: [CigarStatus, string][] = [['available', 'Available'], ['coming_soon', 'Coming Soon'], ['discontinued', 'Discontinued']];
+function StatusBadge({ s }: { s: CigarStatus }) {
+  if (s === 'available') return null;
+  const cls = s === 'coming_soon' ? 'bg-sky-500/15 text-sky-300' : 'bg-zinc-500/15 text-zinc-300';
+  return <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${cls}`}>{s === 'coming_soon' ? 'Coming Soon' : 'Discontinued'}</span>;
+}
 
 export function ListedCigars({ slug }: { slug: string }) {
-  const [rows, setRows] = useState<Row[] | null>(null);
-  useEffect(() => {
-    let off = false;
-    fetch('/api/brand/cigars').then((r) => r.json()).then((j) => { if (!off) setRows(j.cigars ?? []); }).catch(() => { if (!off) setRows([]); });
-    return () => { off = true; };
-  }, []);
+  const [rows, setRows] = useState<BrandCigar[] | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [form, setForm] = useState({ name: '', size: '', country: '', price: '', status: 'available' as CigarStatus });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const load = useCallback(async () => setRows(await getBrandCigars()), []);
+  useEffect(() => { load(); }, [load]);
+
+  async function add() {
+    setErr(null);
+    if (!form.name.trim()) { setErr('Enter a cigar name.'); return; }
+    setBusy(true);
+    const r = await addBrandCigar({ name: form.name.trim(), size: form.size.trim() || undefined, country: form.country.trim() || undefined, price: form.price.trim() || null, status: form.status });
+    setBusy(false);
+    if (!r.ok) { setErr(r.error ?? 'Could not add cigar.'); return; }
+    setForm({ name: '', size: '', country: '', price: '', status: 'available' }); setAdding(false); load();
+  }
+  async function setStatus(id: string, status: CigarStatus) { setRows((rs) => rs ? rs.map((c) => c.id === id ? { ...c, status } : c) : rs); await updateBrandCigarStatus(id, status); }
+  async function remove(id: string) { setRows((rs) => rs ? rs.filter((c) => c.id !== id) : rs); await removeBrandCigar(id); }
+
+  const input = 'rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 px-3 py-2 text-sm text-paper placeholder:text-smoke-500 focus:border-ember-400/50 focus:outline-none';
+  const owned = rows?.filter((c) => c.owned) ?? [];
+  const cataloged = rows?.filter((c) => !c.owned) ?? [];
 
   return (
     <section id="listed-cigars" className="mt-8 scroll-mt-24">
       <div className="flex items-center justify-between gap-3">
         <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Cigarette size={18} className="text-ember-400" /> Listed Cigars{rows && <span className="text-sm text-smoke-400">· {rows.length}</span>}</h2>
-        <Link href={`/brands/${slug}`} className="inline-flex items-center gap-1.5 text-xs text-ember-400 hover:underline">View brand page <ExternalLink size={12} /></Link>
+        <div className="flex items-center gap-3">
+          <Link href={`/brands/${slug}`} className="inline-flex items-center gap-1.5 text-xs text-ember-400 hover:underline">View brand page <ExternalLink size={12} /></Link>
+          <button onClick={() => setAdding((v) => !v)} className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-3 py-1.5 text-xs font-medium text-paper"><Plus size={13} /> Add cigar</button>
+        </div>
       </div>
+
+      {adding && (
+        <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/20 bg-char/40 p-4">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <input className={input} placeholder="Cigar name *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input className={input} placeholder="Size / vitola (e.g. Robusto 5×50)" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
+            <input className={input} placeholder="Country (e.g. Nicaragua)" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} />
+            <input className={input} inputMode="decimal" placeholder="MSRP (USD, optional)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <select className={input} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as CigarStatus })}>
+              {STATUS_OPTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
+            <button onClick={add} disabled={busy || !form.name.trim()} className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-4 py-2 text-sm font-medium text-paper disabled:opacity-50">
+              {busy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Add to catalog
+            </button>
+            <button onClick={() => { setAdding(false); setErr(null); }} className="text-xs text-smoke-400 hover:text-paper">Cancel</button>
+          </div>
+          {err && <p className="mt-2 text-sm text-red-300">{err}</p>}
+        </div>
+      )}
+
       <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
-        {rows === null ? <Loader2 className="animate-spin text-ember-400" />
-          : rows.length === 0 ? <p className="text-sm text-smoke-400">No cigars are listed under your brand yet. As cigars are added to the MyHumidor catalog under your brand, they’ll appear here and on your public page.</p>
-          : (
-            <div className="divide-y divide-ember-400/10">
-              {rows.map((c) => (
-                <Link key={c.slug} href={`/cigars/${c.slug}`} className="flex items-center justify-between gap-3 py-2.5 text-sm hover:text-ember-100">
-                  <span className="font-medium text-paper">{c.name}</span>
-                  <span className="text-xs text-smoke-400">{[c.size, c.country].filter(Boolean).join(' · ')}{typeof c.price === 'number' ? ` · $${c.price.toFixed(2)}` : ''}</span>
-                </Link>
-              ))}
-            </div>
-          )}
+        {rows === null ? <Loader2 className="animate-spin text-ember-400" /> : rows.length === 0 ? (
+          <p className="text-sm text-smoke-400">No cigars listed yet. Use <strong>Add cigar</strong> to build your catalog — they appear on your public brand page in real time.</p>
+        ) : (
+          <div className="space-y-4">
+            {owned.length > 0 && (
+              <div className="divide-y divide-ember-400/10">
+                <div className="pb-2 text-[11px] uppercase tracking-wide text-smoke-500">Your catalog</div>
+                {owned.map((c) => (
+                  <div key={c.slug} className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm">
+                    <div className="min-w-0">
+                      <Link href={`/cigars/${c.slug}`} className="font-medium text-paper hover:text-ember-100">{c.name}</Link>
+                      <span className="ml-2 text-xs text-smoke-400">{[c.size, c.country].filter(Boolean).join(' · ')}{typeof c.price === 'number' ? ` · $${c.price.toFixed(2)}` : ''}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select value={c.status} onChange={(e) => c.id && setStatus(c.id, e.target.value as CigarStatus)} className="rounded-lg border-[0.5px] border-ember-400/20 bg-char/60 px-2 py-1 text-xs text-paper focus:outline-none">
+                        {STATUS_OPTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                      </select>
+                      <button onClick={() => c.id && remove(c.id)} className="text-smoke-400 hover:text-red-300" aria-label="Remove"><Trash2 size={15} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {cataloged.length > 0 && (
+              <div className="divide-y divide-ember-400/10">
+                <div className="pb-2 text-[11px] uppercase tracking-wide text-smoke-500">From the MyHumidor catalog</div>
+                {cataloged.map((c) => (
+                  <Link key={c.slug} href={`/cigars/${c.slug}`} className="flex items-center justify-between gap-3 py-2.5 text-sm hover:text-ember-100">
+                    <span className="font-medium text-paper">{c.name}</span>
+                    <span className="flex items-center gap-2 text-xs text-smoke-400"><StatusBadge s={c.status} />{[c.size, c.country].filter(Boolean).join(' · ')}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
