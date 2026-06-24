@@ -4,13 +4,9 @@ import Link from 'next/link';
 import { Loader2, Cigarette, ExternalLink, Plus, Trash2, ImageIcon, Upload, FileSpreadsheet, Pencil, Check, X } from 'lucide-react';
 import { getBrandCigars, addBrandCigar, updateBrandCigarStatus, updateBrandCigar, removeBrandCigar, uploadBrandImage, type BrandCigar, type CigarStatus } from '@/lib/brands';
 import { CsvCigarImport } from '@/components/CsvCigarImport';
+import { CigarStatusBadge } from '@/components/CigarStatusBadge';
 
 const STATUS_OPTS: [CigarStatus, string][] = [['available', 'Available'], ['coming_soon', 'Coming Soon'], ['discontinued', 'Discontinued']];
-function StatusBadge({ s }: { s: CigarStatus }) {
-  if (s === 'available') return null;
-  const cls = s === 'coming_soon' ? 'bg-sky-500/15 text-sky-300' : 'bg-zinc-500/15 text-zinc-300';
-  return <span className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide ${cls}`}>{s === 'coming_soon' ? 'Coming Soon' : 'Discontinued'}</span>;
-}
 
 export function ListedCigars({ slug }: { slug: string }) {
   const [rows, setRows] = useState<BrandCigar[] | null>(null);
@@ -118,7 +114,7 @@ export function ListedCigars({ slug }: { slug: string }) {
                 {cataloged.map((c) => (
                   <Link key={c.slug} href={`/cigars/${c.slug}`} className="flex items-center justify-between gap-3 py-2.5 text-sm hover:text-ember-100">
                     <span className="font-medium text-paper">{c.name}</span>
-                    <span className="flex items-center gap-2 text-xs text-smoke-400"><StatusBadge s={c.status} />{[c.size, c.country].filter(Boolean).join(' · ')}</span>
+                    <span className="flex items-center gap-2 text-xs text-smoke-400"><CigarStatusBadge status={c.status} />{[c.size, c.country].filter(Boolean).join(' · ')}</span>
                   </Link>
                 ))}
               </div>

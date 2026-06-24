@@ -9,6 +9,7 @@ import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
 import { getBrandSession } from '@/lib/brand-auth';
+import { CigarStatusBadge } from '@/components/CigarStatusBadge';
 import { MyCigarRatings } from '@/components/MyCigarRatings';
 import { CigarCommunity } from '@/components/CigarCommunity';
 import { CigarInsight } from '@/components/CigarInsight';
@@ -60,13 +61,14 @@ export default async function CigarPage({ params }: PageProps) {
   const { slug } = await params;
 
   // Every cigar resolves from the real 23.7k-row catalog.
+  let cigarStatus = 'available';
   let cat = findCatalogCigarBySlug(slug);
   // Approved submissions live only in the DB until the next static rebuild.
   if (!cat && isSupabaseConfigured) {
     const sb = await supabaseServer();
-    const { data } = await sb
+    const { data } = await (sb as unknown as import('@supabase/supabase-js').SupabaseClient)
       .from('catalog_cigars')
-      .select('id, brand, name, country, price, size, slug, image_url')
+      .select('id, brand, name, country, price, size, slug, image_url, status')
       .eq('slug', slug)
       .single();
     if (data) {
@@ -74,6 +76,7 @@ export default async function CigarPage({ params }: PageProps) {
         uuid: data.id, brand: data.brand, name: data.name, country: data.country ?? '',
         price: data.price, size: data.size ?? '', slug: data.slug, image_url: data.image_url ?? null,
       };
+      cigarStatus = (data.status as string) ?? 'available';
     }
   }
   if (!cat) notFound();
@@ -128,6 +131,7 @@ export default async function CigarPage({ params }: PageProps) {
           <h1 className="font-display text-4xl leading-[1.0] tracking-tightest">
             <CigarName slug={slug} name={view.headline} mode="name" />
           </h1>
+          {cigarStatus !== 'available' && <div className="mt-2"><CigarStatusBadge status={cigarStatus} /></div>}
         </div>
 
         {/* ─── Visual ─────────────────────────────────────────────────── */}

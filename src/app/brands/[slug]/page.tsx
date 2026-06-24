@@ -3,6 +3,7 @@ import { CigarName } from '@/components/CigarName';
 import { notFound } from 'next/navigation';
 import { FollowBrandButton } from '@/components/FollowBrandButton';
 import { BrandBadgeShowcase } from '@/components/BrandBadgeShowcase';
+import { CigarStatusBadge } from '@/components/CigarStatusBadge';
 import { Boxes, ArrowLeft } from 'lucide-react';
 import { cigarsByBrand, brandSlug, findCatalogCigarBySlug } from '@/lib/catalog';
 import { applyOverrides, applyOverride, loadOverrides } from '@/lib/overrides';
@@ -137,10 +138,9 @@ export default async function BrandPage({ params }: PageProps) {
           >
             <CigarThumb slug={c.slug} brand={c.brand} src={c.image_url} fit="contain" rounded="rounded" className="h-16 w-12 shrink-0 text-xs" />
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <div className="font-display text-lg leading-snug group-hover:text-ember-100"><CigarName slug={c.slug} name={c.name} /></div>
-                {statusBySlug.get(c.slug) === 'coming_soon' && <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-sky-300">Coming Soon</span>}
-                {statusBySlug.get(c.slug) === 'discontinued' && <span className="rounded-full bg-zinc-500/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-zinc-300">Discontinued</span>}
+                <CigarStatusBadge status={statusBySlug.get(c.slug)} />
               </div>
               <div className="mt-1 text-xs text-smoke-400">
                 {[c.size, c.country].filter(Boolean).join(' · ')}

@@ -1,3 +1,12 @@
+## Consistent, themed status badge (NO new migration)
+
+New shared `CigarStatusBadge` used on the brand page, dashboard Listed Cigars, and the cigar
+detail page. Fixes: (1) identical size everywhere — `shrink-0 whitespace-nowrap` so the pill
+never shrinks/wraps its text; the card row is `flex-wrap` so a long title pushes the whole
+pill to the next line at full size. (2) Site palette with dark/light switching — uses the
+CSS-variable tokens (ember for "Coming Soon", smoke for "Discontinued") instead of fixed
+sky/zinc, so it adapts to theme. (3) The badge now also renders on `/cigars/[slug]` under the
+title (detail query gained `status`, cast untyped). Compile-verified only.
 ## Edit brand inventory details + photo (NO new migration)
 
 Each owned cigar in the dashboard Listed Cigars now has an Edit (pencil) button → inline
