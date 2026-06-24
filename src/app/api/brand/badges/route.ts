@@ -53,6 +53,25 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true, id: (row as { id: string }).id });
 }
 
+export async function PATCH(req: Request) {
+  const s = await getBrandSession();
+  if (!s) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  if (!(await validateCsrf(req))) return NextResponse.json({ ok: false, error: 'Invalid request token.' }, { status: 403 });
+  const sb = svc() as unknown as SupabaseClient | null;
+  if (!sb) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
+  const b = await req.json().catch(() => ({}));
+  if (!b.id) return NextResponse.json({ ok: false, error: 'Missing badge.' }, { status: 400 });
+  const patch: Record<string, unknown> = {};
+  if (typeof b.title === 'string' && b.title.trim()) patch.name = b.title.trim();
+  if (typeof b.trigger === 'string' && b.trigger.trim()) patch.criteria = b.trigger.trim();
+  if (b.imageUrl !== undefined) { patch.image_url = b.imageUrl || null; patch.needs_artwork = !b.imageUrl; }
+  if (b.targetSlug !== undefined) patch.target_slug = b.targetSlug || null;
+  if (Object.keys(patch).length === 0) return NextResponse.json({ ok: false, error: 'Nothing to update.' }, { status: 400 });
+  const { error } = await sb.from('badges').update(patch as never).eq('id', b.id).eq('brand_id', s.brandId);
+  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
+
 export async function DELETE(req: Request) {
   const s = await getBrandSession();
   if (!s) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });

@@ -256,6 +256,9 @@ export async function createBrandBadge(input: { title: string; trigger: string; 
 export async function deleteBrandBadge(id: string): Promise<boolean> {
   try { const r = await fetch(`/api/brand/badges?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'x-csrf-token': csrfToken() } }); return r.ok; } catch { return false; }
 }
+export async function updateBrandBadge(id: string, fields: { title?: string; trigger?: string; imageUrl?: string | null; targetSlug?: string | null }): Promise<{ ok: boolean; error?: string }> {
+  try { const r = await fetch('/api/brand/badges', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken() }, body: JSON.stringify({ id, ...fields }) }); const j = await r.json().catch(() => ({})); return { ok: r.ok && j.ok !== false, error: j.error }; } catch { return { ok: false, error: 'Network error.' }; }
+}
 export interface BadgeHolder { handle: string; displayName: string; earnedAt: string }
 export async function getBadgeHolders(badgeId: string): Promise<{ badge: string; holders: BadgeHolder[] } | null> {
   try { const r = await fetch(`/api/brand/badges/holders?badgeId=${encodeURIComponent(badgeId)}`); const j = await r.json(); return r.ok && j.ok ? { badge: j.badge, holders: j.holders } : null; } catch { return null; }

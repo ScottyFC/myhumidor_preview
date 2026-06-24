@@ -1,3 +1,20 @@
+## Edit badges + artwork on profile + award celebration (NO new migration)
+
+1. **Edit badges**: each badge in the dashboard has an Edit (pencil) button → change title,
+   trigger, and replace artwork. PATCH `/api/brand/badges` (brand_id locked). Note: the edit
+   form takes the trigger as free text, so re-typing it may stop auto-awarding unless it
+   matches a recognized rule (warned inline).
+2. **Artwork on profiles**: `BadgeMedal` previously rendered an icon medallion even when a
+   badge had uploaded artwork. It now shows the REAL `image_url` (circular-cropped in the
+   tier ring). If a brand badge has no artwork, it falls back to the brand's LOGO styled onto
+   a dark disc. `badges.ts` embeds `brands(logo_url)` into the listing (with a graceful
+   fallback to base columns if the relationship can't resolve, so the list never breaks), and
+   `evaluateAndAward` now returns the awarded BadgeDef[] instead of a count.
+3. **Award celebration**: when `evaluateAndAward` grants new badge(s), `BadgesSection` shows a
+   full-screen `BadgeCelebration` modal — dependency-free canvas confetti + the earned
+   medal(s) + a Collect button. Pure canvas/CSS, so it works on web and in the Capacitor
+   webview. It fires when the Badges section evaluates awards (i.e. when the user opens their
+   profile after qualifying), not instantly at rating time. Compile-verified only.
 ## Consistent, themed status badge (NO new migration)
 
 New shared `CigarStatusBadge` used on the brand page, dashboard Listed Cigars, and the cigar

@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { Loader2, Award, Plus, Trash2, Upload, ImageIcon, Download, Users } from 'lucide-react';
-import { getBrandBadges, createBrandBadge, deleteBrandBadge, getBadgeHolders, uploadBrandImage, getBrandCigars, type BrandBadgeState, type BrandCigar } from '@/lib/brands';
+import { Loader2, Award, Plus, Trash2, Upload, ImageIcon, Download, Users, Pencil, Check, X } from 'lucide-react';
+import { getBrandBadges, createBrandBadge, updateBrandBadge, deleteBrandBadge, getBadgeHolders, uploadBrandImage, getBrandCigars, type BrandBadgeState, type BrandBadge, type BrandCigar } from '@/lib/brands';
 
 export function BrandBadges({ brandName }: { brandName: string }) {
   const [state, setState] = useState<BrandBadgeState | null | undefined>(undefined);
@@ -119,25 +119,78 @@ export function BrandBadges({ brandName }: { brandName: string }) {
             <div className="mt-3 space-y-2">
               {state.badges.length === 0 && !adding && <p className="text-sm text-smoke-400">No badges yet. Create one members can earn.</p>}
               {state.badges.map((b) => (
-                <div key={b.id} className="flex items-center justify-between gap-3 rounded-lg border-[0.5px] border-ember-400/10 bg-char/40 p-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    {b.imageUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={b.imageUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg object-contain bg-char/60" /> : <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-char/60 text-smoke-600"><Award size={18} /></span>}
-                    <div className="min-w-0">
-                      <div className="font-medium text-paper">{b.title}</div>
-                      <div className="truncate text-xs text-smoke-400">{b.trigger}</div>
-                      <div className="mt-0.5 flex items-center gap-1 text-[11px] text-smoke-500"><Users size={11} /> {b.holders} holder{b.holders === 1 ? '' : 's'}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {state.premium && <button onClick={() => exportHolders(b.id, b.title)} className="inline-flex items-center gap-1 rounded-md border-[0.5px] border-ember-400/20 px-2.5 py-1.5 text-xs text-ember-100 hover:bg-ember-400/10"><Download size={12} /> Holders</button>}
-                    <button onClick={() => remove(b.id)} className="text-smoke-400 hover:text-red-300" aria-label="Delete"><Trash2 size={15} /></button>
-                  </div>
-                </div>
+                <BadgeRow key={b.id} b={b} premium={state.premium} onChanged={load} onExport={exportHolders} onRemove={remove} />
               ))}
             </div>
           </>
         )}
       </div>
     </section>
+  );
+}
+
+
+function BadgeRow({ b, premium, onChanged, onExport, onRemove }: { b: BrandBadge; premium: boolean; onChanged: () => void; onExport: (id: string, title: string) => void; onRemove: (id: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [title, setTitle] = useState(b.title);
+  const [trigger, setTrigger] = useState(b.trigger);
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  function pick(f?: File) { setErr(null); if (!f) { setFile(null); setPreview(null); return; } if (!f.type.startsWith('image/')) return setErr('Choose an image.'); if (f.size > 8 * 1024 * 1024) return setErr('Under 8 MB please.'); setFile(f); setPreview(URL.createObjectURL(f)); }
+  async function save() {
+    setErr(null);
+    if (!title.trim()) return setErr('Title is required.');
+    setBusy(true);
+    let imageUrl: string | undefined;
+    if (file) { const up = await uploadBrandImage('badge', file); if (up.error || !up.url) { setBusy(false); return setErr(up.error ?? 'Artwork upload failed.'); } imageUrl = up.url; }
+    const r = await updateBrandBadge(b.id, { title: title.trim(), trigger: trigger.trim(), ...(imageUrl ? { imageUrl } : {}) });
+    setBusy(false);
+    if (!r.ok) return setErr(r.error ?? 'Could not save.');
+    setEditing(false); setFile(null); setPreview(null); onChanged();
+  }
+
+  const input = 'w-full rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 px-2.5 py-1.5 text-sm text-paper placeholder:text-smoke-500 focus:border-ember-400/50 focus:outline-none';
+  const thumb = preview ?? b.imageUrl;
+
+  if (editing) {
+    return (
+      <div className="rounded-lg border-[0.5px] border-ember-400/20 bg-char/40 p-3">
+        <div className="flex items-start gap-3">
+          {thumb ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={thumb} alt="" className="h-14 w-14 shrink-0 rounded-lg object-contain bg-char/60" /> : <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-char/60 text-smoke-600"><Award size={18} /></span>}
+          <div className="flex-1 space-y-2">
+            <input className={input} placeholder="Badge title" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <input className={input} placeholder="Trigger (how members earn it)" value={trigger} onChange={(e) => setTrigger(e.target.value)} />
+          </div>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/30 px-3 py-1.5 text-xs text-ember-100 hover:bg-ember-400/10"><Upload size={13} /> {file ? 'Change artwork' : 'Replace artwork'}<input type="file" accept="image/*" className="hidden" onChange={(e) => pick(e.target.files?.[0])} /></label>
+          <button onClick={save} disabled={busy} className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-3 py-1.5 text-sm font-medium text-paper disabled:opacity-50">{busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Save</button>
+          <button onClick={() => { setEditing(false); setErr(null); setTitle(b.title); setTrigger(b.trigger); setFile(null); setPreview(null); }} className="inline-flex items-center gap-1 text-xs text-smoke-400 hover:text-paper"><X size={13} /> Cancel</button>
+        </div>
+        <p className="mt-1 text-[11px] text-smoke-500">Editing the trigger as free text may stop it auto-awarding unless it matches a known rule.</p>
+        {err && <p className="mt-1 text-sm text-red-300">{err}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-lg border-[0.5px] border-ember-400/10 bg-char/40 p-3">
+      <div className="flex min-w-0 items-center gap-3">
+        {b.imageUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={b.imageUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg object-contain bg-char/60" /> : <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-char/60 text-smoke-600"><Award size={18} /></span>}
+        <div className="min-w-0">
+          <div className="font-medium text-paper">{b.title}</div>
+          <div className="truncate text-xs text-smoke-400">{b.trigger}</div>
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] text-smoke-500"><Users size={11} /> {b.holders} holder{b.holders === 1 ? '' : 's'}</div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {premium && <button onClick={() => onExport(b.id, b.title)} className="inline-flex items-center gap-1 rounded-md border-[0.5px] border-ember-400/20 px-2.5 py-1.5 text-xs text-ember-100 hover:bg-ember-400/10"><Download size={12} /> Holders</button>}
+        <button onClick={() => setEditing(true)} className="text-smoke-400 hover:text-ember-100" aria-label="Edit"><Pencil size={15} /></button>
+        <button onClick={() => onRemove(b.id)} className="text-smoke-400 hover:text-red-300" aria-label="Delete"><Trash2 size={15} /></button>
+      </div>
+    </div>
   );
 }

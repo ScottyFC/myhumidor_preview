@@ -247,3 +247,5 @@ html.camera-active body::before { display: none !important; }
 
 /* Ultra-shiny holographic ring for rare badges */
 @keyframes holoHue { to { filter: hue-rotate(360deg); } }
+
+@keyframes badgePop { 0% { transform: scale(0.3); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }

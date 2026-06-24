@@ -18,27 +18,34 @@ export interface BadgeDef {
   imageUrl?: string;
   loungeId?: string | null;
   brandId?: string | null;
+  brandLogoUrl?: string | null;
   aficionadoOnly?: boolean;
   targetSlug?: string | null;
 }
 
 type Row = {
   id: string; slug: string; name: string; criteria: string | null;
-  tier: string | null; image_url: string | null; lounge_id: string | null; brand_id?: string | null; aficionado_only: boolean | null; status?: string | null; needs_artwork?: boolean | null; billable?: boolean | null; target_slug?: string | null;
+  tier: string | null; image_url: string | null; lounge_id: string | null; brand_id?: string | null; aficionado_only: boolean | null; status?: string | null; needs_artwork?: boolean | null; billable?: boolean | null; target_slug?: string | null; brands?: { logo_url: string | null } | null;
 };
 function rowTo(r: Row): BadgeDef {
   return {
     id: r.id, slug: r.slug, name: r.name, criteria: r.criteria ?? undefined,
-    tier: (r.tier as BadgeTier) ?? 'bronze', imageUrl: r.image_url ?? undefined, loungeId: r.lounge_id, brandId: r.brand_id ?? null, aficionadoOnly: r.aficionado_only ?? false, status: r.status ?? 'active', needsArtwork: !!r.needs_artwork, billable: !!r.billable, targetSlug: r.target_slug ?? null,
+    tier: (r.tier as BadgeTier) ?? 'bronze', imageUrl: r.image_url ?? undefined, loungeId: r.lounge_id, brandId: r.brand_id ?? null, brandLogoUrl: r.brands?.logo_url ?? null, aficionadoOnly: r.aficionado_only ?? false, status: r.status ?? 'active', needsArtwork: !!r.needs_artwork, billable: !!r.billable, targetSlug: r.target_slug ?? null,
   };
 }
-const SELECT = 'id, slug, name, criteria, tier, image_url, lounge_id, brand_id, aficionado_only, status, needs_artwork, billable, target_slug';
+const SELECT_BASE = 'id, slug, name, criteria, tier, image_url, lounge_id, brand_id, aficionado_only, status, needs_artwork, billable, target_slug';
+const SELECT = SELECT_BASE + ', brands(logo_url)';
 
 export async function listBadges(): Promise<BadgeDef[]> {
   if (!isSupabaseConfigured) return [];
   try {
     const { data, error } = await supabaseBrowser().from('badges').select(SELECT);
-    if (error) { console.error('[badges] list failed:', error.message); return []; }
+    if (error) {
+      // Brand-logo embed couldn't resolve — fall back to the base columns so badges still load.
+      const { data: d2, error: e2 } = await supabaseBrowser().from('badges').select(SELECT_BASE);
+      if (e2) { console.error('[badges] list failed:', e2.message); return []; }
+      return ((d2 ?? []) as unknown as Row[]).map((r) => rowTo(r));
+    }
     return ((data ?? []) as unknown as Row[]).map((r) => rowTo(r));
   } catch { return []; }
 }
@@ -46,7 +53,7 @@ export async function listBadges(): Promise<BadgeDef[]> {
 export async function listLoungeBadges(loungeId: string): Promise<BadgeDef[]> {
   if (!isSupabaseConfigured || !loungeId) return [];
   try {
-    const { data } = await supabaseBrowser().from('badges').select(SELECT).eq('lounge_id', loungeId);
+    const { data } = await supabaseBrowser().from('badges').select(SELECT_BASE).eq('lounge_id', loungeId);
     return ((data ?? []) as unknown as Row[]).map((r) => rowTo(r));
   } catch { return []; }
 }
@@ -189,8 +196,8 @@ export function evaluateCriteria(criteria: string | undefined, s: BadgeStats): {
   return { recognized: false, met: false };
 }
 
-export async function evaluateAndAward(userId: string, badges: BadgeDef[], stats: BadgeStats, isMember = false): Promise<number> {
-  if (!isSupabaseConfigured || !userId) return 0;
+export async function evaluateAndAward(userId: string, badges: BadgeDef[], stats: BadgeStats, isMember = false): Promise<BadgeDef[]> {
+  if (!isSupabaseConfigured || !userId) return [];
   const already = await earnedBadgeIds(userId);
   const toAward = badges.filter((b) => {
     if (b.loungeId || already.has(b.id)) return false;
@@ -200,12 +207,12 @@ export async function evaluateAndAward(userId: string, badges: BadgeDef[], stats
     const r = evaluateCriteria(b.criteria, stats);
     return r.recognized && r.met;
   });
-  if (toAward.length === 0) return 0;
+  if (toAward.length === 0) return [];
   try {
     const { error } = await supabaseBrowser().from('user_badges').insert(toAward.map((b) => ({ user_id: userId, badge_id: b.id })));
-    if (error) { console.error('[badges] award failed:', error.message); return 0; }
-    return toAward.length;
-  } catch { return 0; }
+    if (error) { console.error('[badges] award failed:', error.message); return []; }
+    return toAward;
+  } catch { return []; }
 }
 
 export async function collectBadge(userId: string, badgeId: string): Promise<boolean> {
@@ -261,7 +268,7 @@ export async function awardLoungeBadgesOnCheckin(loungeId: string, userId: strin
 export async function listPendingBadgeArtwork(): Promise<Array<BadgeDef & { loungeName?: string }>> {
   if (!isSupabaseConfigured) return [];
   const sb = supabaseBrowser();
-  const { data } = await sb.from('badges').select(SELECT + ', lounges(name)').eq('status', 'pending_artwork');
+  const { data } = await sb.from('badges').select(SELECT_BASE + ', lounges(name)').eq('status', 'pending_artwork');
   /* eslint-disable @typescript-eslint/no-explicit-any */
   return ((data ?? []) as any[]).map((r) => ({ ...rowTo(r), loungeName: r.lounges?.name }));
 }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Award } from 'lucide-react';
 import { BadgeMedal } from '@/components/BadgeMedal';
+import { BadgeCelebration } from '@/components/BadgeCelebration';
 import { listBadges, earnedBadgeIds, evaluateAndAward, buildStats, type BadgeDef } from '@/lib/badges';
 import { subscribeAficionado } from '@/lib/aficionado';
 import type { CollectionItem } from '@/lib/collection';
@@ -19,6 +20,7 @@ export function BadgesSection({
   const [earned, setEarned] = useState<Set<string>>(new Set());
   const [member, setMember] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [celebration, setCelebration] = useState<BadgeDef[]>([]);
 
   useEffect(() => (self ? subscribeAficionado(setMember) : undefined), [self]);
 
@@ -41,7 +43,8 @@ export function BadgesSection({
         } catch {
           /* price/country badges just won't evaluate */
         }
-        await evaluateAndAward(userId, all, buildStats(humidor, ratings, enrich), member);
+        const awarded = await evaluateAndAward(userId, all, buildStats(humidor, ratings, enrich), member);
+        if (!off && awarded.length) setCelebration(awarded);
       }
       const mine = await earnedBadgeIds(userId);
       if (!off) { setBadges(all); setEarned(mine); }
@@ -69,6 +72,7 @@ export function BadgesSection({
 
   return (
     <div className="mt-12">
+      {celebration.length > 0 && <BadgeCelebration badges={celebration} onClose={() => setCelebration([])} />}
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-display text-2xl tracking-tightest">Badges</h2>
         <span className="eyebrow">{earnedList.length} of {total} earned</span>
