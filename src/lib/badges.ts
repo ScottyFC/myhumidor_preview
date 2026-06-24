@@ -17,27 +17,29 @@ export interface BadgeDef {
   tier: BadgeTier;
   imageUrl?: string;
   loungeId?: string | null;
+  brandId?: string | null;
   aficionadoOnly?: boolean;
+  targetSlug?: string | null;
 }
 
 type Row = {
   id: string; slug: string; name: string; criteria: string | null;
-  tier: string | null; image_url: string | null; lounge_id: string | null; aficionado_only: boolean | null; status?: string | null; needs_artwork?: boolean | null; billable?: boolean | null;
+  tier: string | null; image_url: string | null; lounge_id: string | null; brand_id?: string | null; aficionado_only: boolean | null; status?: string | null; needs_artwork?: boolean | null; billable?: boolean | null; target_slug?: string | null;
 };
 function rowTo(r: Row): BadgeDef {
   return {
     id: r.id, slug: r.slug, name: r.name, criteria: r.criteria ?? undefined,
-    tier: (r.tier as BadgeTier) ?? 'bronze', imageUrl: r.image_url ?? undefined, loungeId: r.lounge_id, aficionadoOnly: r.aficionado_only ?? false, status: r.status ?? 'active', needsArtwork: !!r.needs_artwork, billable: !!r.billable,
+    tier: (r.tier as BadgeTier) ?? 'bronze', imageUrl: r.image_url ?? undefined, loungeId: r.lounge_id, brandId: r.brand_id ?? null, aficionadoOnly: r.aficionado_only ?? false, status: r.status ?? 'active', needsArtwork: !!r.needs_artwork, billable: !!r.billable, targetSlug: r.target_slug ?? null,
   };
 }
-const SELECT = 'id, slug, name, criteria, tier, image_url, lounge_id, aficionado_only, status, needs_artwork, billable';
+const SELECT = 'id, slug, name, criteria, tier, image_url, lounge_id, brand_id, aficionado_only, status, needs_artwork, billable, target_slug';
 
 export async function listBadges(): Promise<BadgeDef[]> {
   if (!isSupabaseConfigured) return [];
   try {
     const { data, error } = await supabaseBrowser().from('badges').select(SELECT);
     if (error) { console.error('[badges] list failed:', error.message); return []; }
-    return ((data ?? []) as Row[]).map((r) => rowTo(r));
+    return ((data ?? []) as unknown as Row[]).map((r) => rowTo(r));
   } catch { return []; }
 }
 
@@ -45,7 +47,7 @@ export async function listLoungeBadges(loungeId: string): Promise<BadgeDef[]> {
   if (!isSupabaseConfigured || !loungeId) return [];
   try {
     const { data } = await supabaseBrowser().from('badges').select(SELECT).eq('lounge_id', loungeId);
-    return ((data ?? []) as Row[]).map((r) => rowTo(r));
+    return ((data ?? []) as unknown as Row[]).map((r) => rowTo(r));
   } catch { return []; }
 }
 
@@ -193,6 +195,8 @@ export async function evaluateAndAward(userId: string, badges: BadgeDef[], stats
   const toAward = badges.filter((b) => {
     if (b.loungeId || already.has(b.id)) return false;
     if (b.aficionadoOnly && !isMember) return false; // exclusive tier
+    // Specific-cigar badge (e.g. a brand's new release): earned by rating that cigar.
+    if (b.targetSlug) return stats.rated.some((r) => r.slug === b.targetSlug);
     const r = evaluateCriteria(b.criteria, stats);
     return r.recognized && r.met;
   });

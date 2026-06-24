@@ -247,7 +247,7 @@ export interface BrandBadgeState { badges: BrandBadge[]; premium: boolean; usedT
 export async function getBrandBadges(): Promise<BrandBadgeState | null> {
   try { const r = await fetch('/api/brand/badges'); const j = await r.json(); return r.ok && j.ok ? { badges: j.badges, premium: j.premium, usedThisQuarter: j.usedThisQuarter, limit: j.limit } : null; } catch { return null; }
 }
-export async function createBrandBadge(input: { title: string; trigger: string; imageUrl?: string | null }) {
+export async function createBrandBadge(input: { title: string; trigger: string; imageUrl?: string | null; targetSlug?: string | null }) {
   return postJSON('/api/brand/badges', input);
 }
 export async function deleteBrandBadge(id: string): Promise<boolean> {

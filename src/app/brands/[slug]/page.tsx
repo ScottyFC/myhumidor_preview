@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CigarName } from '@/components/CigarName';
 import { notFound } from 'next/navigation';
 import { FollowBrandButton } from '@/components/FollowBrandButton';
+import { BrandBadgeShowcase } from '@/components/BrandBadgeShowcase';
 import { Boxes, ArrowLeft } from 'lucide-react';
 import { cigarsByBrand, brandSlug, findCatalogCigarBySlug } from '@/lib/catalog';
 import { applyOverrides, applyOverride, loadOverrides } from '@/lib/overrides';
@@ -113,6 +114,7 @@ export default async function BrandPage({ params }: PageProps) {
       </div>
       {dbBrand?.description && <p className="mt-4 max-w-2xl text-sm leading-relaxed text-smoke-200">{dbBrand.description}</p>}
       {dbBrand?.id && <div className="mt-4"><FollowBrandButton brandId={dbBrand.id} /></div>}
+      {dbBrand?.id && <BrandBadgeShowcase brandId={dbBrand.id} />}
 
       <BrandCsvDownload brand={finalLabel} rows={deduped.map((c) => ({
         slug: c.slug, brand: c.brand, name: c.name, country: c.country,

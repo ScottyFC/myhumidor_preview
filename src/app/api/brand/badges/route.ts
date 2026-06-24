@@ -47,6 +47,7 @@ export async function POST(req: Request) {
   const { data: row, error } = await sb.from('badges').insert({
     slug, name: title, criteria: trigger, tier: 'gold', image_url: b.imageUrl || null,
     brand_id: s.brandId, status: 'active', aficionado_only: false, needs_artwork: !b.imageUrl, billable: false,
+    target_slug: b.targetSlug || null,
   } as never).select('id').single();
   if (error || !row) return NextResponse.json({ ok: false, error: error?.message ?? 'Could not create badge.' }, { status: 500 });
   return NextResponse.json({ ok: true, id: (row as { id: string }).id });

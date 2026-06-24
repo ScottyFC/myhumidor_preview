@@ -1,3 +1,21 @@
+## phase96 — Public badge showcase + specific-cigar ("new release") triggers (RUN MIGRATION)
+
+`phase96.sql` adds `badges.target_slug`.
+
+- **Users see brands' badges**: `/brands/[slug]` now shows a "Badges to earn" grid (artwork,
+  title, how-to-earn) — and marks ones the signed-in user has already earned. Reads the
+  public `badges` table by brand_id (component `BrandBadgeShowcase`).
+- **Refined triggers** (badge creation now has 3 templates):
+  1. "Rate cigars from our brand" → `Rate N different cigars from {Brand}` (auto-awards).
+  2. "Rate a specific cigar / new release" → brand picks a cigar from their catalog; stored
+     as `target_slug`. `evaluateAndAward` grants it the moment the user has rated THAT cigar
+     — perfect for "I just rated your new release."
+  3. "Custom (advanced)" → free text, warned it won't auto-grant unless it matches a rule.
+
+`badges.ts` gained `targetSlug`/`brandId` on BadgeDef + a target-slug branch in
+`evaluateAndAward` (earned if the user rated that slug). Awarding is evaluated when a member
+opens their Badges section (existing engine). Run phase95 (if not yet) + phase96.
+Compile-verified only.
 ## Templated badge triggers (NO new migration)
 
 Brand badge creation no longer takes free text. The trigger is now a template:

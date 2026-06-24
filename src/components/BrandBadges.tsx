@@ -1,37 +1,45 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, Award, Plus, Trash2, Upload, ImageIcon, Download, Users } from 'lucide-react';
-import { getBrandBadges, createBrandBadge, deleteBrandBadge, getBadgeHolders, uploadBrandImage, type BrandBadgeState } from '@/lib/brands';
+import { getBrandBadges, createBrandBadge, deleteBrandBadge, getBadgeHolders, uploadBrandImage, getBrandCigars, type BrandBadgeState, type BrandCigar } from '@/lib/brands';
 
 export function BrandBadges({ brandName }: { brandName: string }) {
   const [state, setState] = useState<BrandBadgeState | null | undefined>(undefined);
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState('');
-  const [tType, setTType] = useState<'rate_brand' | 'custom'>('rate_brand');
+  const [tType, setTType] = useState<'rate_brand' | 'specific' | 'custom'>('rate_brand');
   const [count, setCount] = useState(3);
   const [trigger, setTrigger] = useState('');
+  const [cigars, setCigars] = useState<BrandCigar[]>([]);
+  const [targetSlug, setTargetSlug] = useState('');
   const [file, setFile] = useState<File | null>(null); const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => setState((await getBrandBadges()) ?? null), []);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (adding && cigars.length === 0) getBrandCigars().then((cs) => { setCigars(cs); if (cs[0]) setTargetSlug(cs[0].slug); }); }, [adding, cigars.length]);
 
   function pick(f?: File) { setErr(null); if (!f) { setFile(null); setPreview(null); return; } if (!f.type.startsWith('image/')) { setErr('Choose an image.'); return; } if (f.size > 8 * 1024 * 1024) { setErr('Under 8 MB please.'); return; } setFile(f); setPreview(URL.createObjectURL(f)); }
 
   async function create() {
     setErr(null);
     if (!title.trim()) return setErr('Add a title.');
+    const picked = cigars.find((c) => c.slug === targetSlug);
     const criteria = tType === 'rate_brand'
       ? `Rate ${count} different cigars from ${brandName}`
-      : trigger.trim();
+      : tType === 'specific'
+        ? (picked ? `Rate ${picked.name}` : '')
+        : trigger.trim();
+    if (tType === 'specific' && !picked) return setErr('Pick a cigar for this badge.');
     if (!criteria) return setErr('Describe how members earn it.');
+    const badgeTarget = tType === 'specific' ? targetSlug : null;
     setBusy(true);
     let imageUrl: string | null = null;
     if (file) { const up = await uploadBrandImage('badge', file); if (up.error || !up.url) { setBusy(false); return setErr(up.error ?? 'Artwork upload failed.'); } imageUrl = up.url; }
-    const r = await createBrandBadge({ title: title.trim(), trigger: criteria, imageUrl });
+    const r = await createBrandBadge({ title: title.trim(), trigger: criteria, imageUrl, targetSlug: badgeTarget });
     setBusy(false);
     if (!r.ok) return setErr(r.error ?? 'Could not create badge.');
-    setTitle(''); setTrigger(''); setCount(3); setTType('rate_brand'); setFile(null); setPreview(null); setAdding(false); load();
+    setTitle(''); setTrigger(''); setCount(3); setTType('rate_brand'); setTargetSlug(cigars[0]?.slug ?? ''); setFile(null); setPreview(null); setAdding(false); load();
   }
   async function remove(id: string) { await deleteBrandBadge(id); load(); }
   async function exportHolders(id: string, title: string) {
@@ -64,8 +72,9 @@ export function BrandBadges({ brandName }: { brandName: string }) {
                 <input className={input} placeholder="Badge title (e.g. Founders Club)" value={title} onChange={(e) => setTitle(e.target.value)} />
                 <div className="space-y-2">
                   <label className="text-[11px] uppercase tracking-wide text-smoke-500">Trigger — how members earn it</label>
-                  <select className={input} value={tType} onChange={(e) => setTType(e.target.value as 'rate_brand' | 'custom')}>
+                  <select className={input} value={tType} onChange={(e) => setTType(e.target.value as 'rate_brand' | 'specific' | 'custom')}>
                     <option value="rate_brand">Rate cigars from our brand (auto-awards)</option>
+                    <option value="specific">Rate a specific cigar / new release (auto-awards)</option>
                     <option value="custom">Custom wording (advanced)</option>
                   </select>
                   {tType === 'rate_brand' ? (
@@ -75,6 +84,17 @@ export function BrandBadges({ brandName }: { brandName: string }) {
                         {[1, 2, 3, 5, 10].map((n) => <option key={n} value={n}>{n}</option>)}
                       </select>
                       different {brandName} cigars
+                    </div>
+                  ) : tType === 'specific' ? (
+                    <div className="text-sm text-smoke-200">
+                      {cigars.length === 0 ? <span className="text-smoke-400">Add a cigar to your catalog first, then tie a badge to it.</span> : (
+                        <>Rate this cigar:
+                          <select className={input + ' mt-1'} value={targetSlug} onChange={(e) => setTargetSlug(e.target.value)}>
+                            {cigars.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+                          </select>
+                          <p className="mt-1 text-xs text-smoke-500">Great for a new release — members earn it the moment they rate this cigar.</p>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <>
