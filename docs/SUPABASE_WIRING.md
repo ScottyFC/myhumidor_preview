@@ -1,3 +1,16 @@
+## Templated badge triggers (NO new migration)
+
+Brand badge creation no longer takes free text. The trigger is now a template:
+- "Rate cigars from our brand" (recommended, default) → generates the exact criteria
+  `Rate {N} different cigars from {BrandName}` that the existing badge evaluator recognizes,
+  so it AUTO-AWARDS. N is a dropdown (1/2/3/5/10).
+- "Custom wording (advanced)" → free text, with a clear warning it won't grant
+  automatically unless it matches a known rule.
+
+Awarding runs through the existing `evaluateAndAward` (in BadgesSection), which already
+includes brand badges (it only skips lounge badges). So a member earns the badge once they
+have rated N different cigars from that brand — evaluated when their Badges section loads.
+Compile-verified only.
 ## phase95 — Idempotent CSV sync + brand badges (RUN THIS MIGRATION)
 
 `phase95.sql` adds `badges.brand_id` + `badges.created_at` (brand badges reuse the existing

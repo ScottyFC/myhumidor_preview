@@ -3,10 +3,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { Loader2, Award, Plus, Trash2, Upload, ImageIcon, Download, Users } from 'lucide-react';
 import { getBrandBadges, createBrandBadge, deleteBrandBadge, getBadgeHolders, uploadBrandImage, type BrandBadgeState } from '@/lib/brands';
 
-export function BrandBadges() {
+export function BrandBadges({ brandName }: { brandName: string }) {
   const [state, setState] = useState<BrandBadgeState | null | undefined>(undefined);
   const [adding, setAdding] = useState(false);
-  const [title, setTitle] = useState(''); const [trigger, setTrigger] = useState('');
+  const [title, setTitle] = useState('');
+  const [tType, setTType] = useState<'rate_brand' | 'custom'>('rate_brand');
+  const [count, setCount] = useState(3);
+  const [trigger, setTrigger] = useState('');
   const [file, setFile] = useState<File | null>(null); const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
 
@@ -18,14 +21,17 @@ export function BrandBadges() {
   async function create() {
     setErr(null);
     if (!title.trim()) return setErr('Add a title.');
-    if (!trigger.trim()) return setErr('Describe how members earn it.');
+    const criteria = tType === 'rate_brand'
+      ? `Rate ${count} different cigars from ${brandName}`
+      : trigger.trim();
+    if (!criteria) return setErr('Describe how members earn it.');
     setBusy(true);
     let imageUrl: string | null = null;
     if (file) { const up = await uploadBrandImage('badge', file); if (up.error || !up.url) { setBusy(false); return setErr(up.error ?? 'Artwork upload failed.'); } imageUrl = up.url; }
-    const r = await createBrandBadge({ title: title.trim(), trigger: trigger.trim(), imageUrl });
+    const r = await createBrandBadge({ title: title.trim(), trigger: criteria, imageUrl });
     setBusy(false);
     if (!r.ok) return setErr(r.error ?? 'Could not create badge.');
-    setTitle(''); setTrigger(''); setFile(null); setPreview(null); setAdding(false); load();
+    setTitle(''); setTrigger(''); setCount(3); setTType('rate_brand'); setFile(null); setPreview(null); setAdding(false); load();
   }
   async function remove(id: string) { await deleteBrandBadge(id); load(); }
   async function exportHolders(id: string, title: string) {
@@ -56,7 +62,28 @@ export function BrandBadges() {
             {adding && (
               <div className="mt-3 space-y-2 rounded-lg border-[0.5px] border-ember-400/20 bg-char/40 p-3">
                 <input className={input} placeholder="Badge title (e.g. Founders Club)" value={title} onChange={(e) => setTitle(e.target.value)} />
-                <textarea className={input + ' min-h-[70px]'} placeholder="Trigger — how members earn it (e.g. Rate 3 of our cigars)" value={trigger} onChange={(e) => setTrigger(e.target.value)} />
+                <div className="space-y-2">
+                  <label className="text-[11px] uppercase tracking-wide text-smoke-500">Trigger — how members earn it</label>
+                  <select className={input} value={tType} onChange={(e) => setTType(e.target.value as 'rate_brand' | 'custom')}>
+                    <option value="rate_brand">Rate cigars from our brand (auto-awards)</option>
+                    <option value="custom">Custom wording (advanced)</option>
+                  </select>
+                  {tType === 'rate_brand' ? (
+                    <div className="flex items-center gap-2 text-sm text-smoke-200">
+                      Rate
+                      <select className={input + ' w-20'} value={count} onChange={(e) => setCount(parseInt(e.target.value, 10))}>
+                        {[1, 2, 3, 5, 10].map((n) => <option key={n} value={n}>{n}</option>)}
+                      </select>
+                      different {brandName} cigars
+                    </div>
+                  ) : (
+                    <>
+                      <textarea className={input + ' min-h-[70px]'} placeholder="e.g. Rate 3 different cigars from us" value={trigger} onChange={(e) => setTrigger(e.target.value)} />
+                      <p className="text-xs text-amber-300/90">Custom triggers display to members but won’t grant automatically unless they match a known rule. The template above is recommended.</p>
+                    </>
+                  )}
+                  {tType === 'rate_brand' && <p className="text-xs text-smoke-500">Members earn this by rating {count} different {brandName} {count === 1 ? 'cigar' : 'cigars'}. Awards automatically.</p>}
+                </div>
                 <div className="flex items-center gap-3">
                   {preview ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={preview} alt="" className="h-14 w-14 rounded-lg object-contain bg-char/60" /> : <span className="flex h-14 w-14 items-center justify-center rounded-lg bg-char/60 text-smoke-500"><ImageIcon size={16} /></span>}
                   <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/30 px-3 py-2 text-xs text-ember-100 hover:bg-ember-400/10"><Upload size={13} /> {file ? 'Change artwork' : 'Upload artwork'}<input type="file" accept="image/*" className="hidden" onChange={(e) => pick(e.target.files?.[0])} /></label>

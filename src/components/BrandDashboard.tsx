@@ -103,7 +103,7 @@ export function BrandDashboard() {
 
       <ListedCigars slug={active.slug} />
       <AudiencePanel premium={isPremium} />
-      <BrandBadges />
+      <BrandBadges brandName={active.name} />
 
       {detail && (
         <BrandOnboarding brandId={active.id} slug={active.slug} detail={detail} productCount={productCount} postCount={posts.length} onChange={() => reload(active)} />
