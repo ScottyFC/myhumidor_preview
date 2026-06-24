@@ -1,4 +1,5 @@
 import { Check, Megaphone, BarChart3, Rocket, Users, BadgeCheck, Store } from 'lucide-react';
+import Link from 'next/link';
 import { BrandSignupForm } from '@/components/BrandSignupForm';
 
 export const metadata = { title: 'For Brands · MyHumidor by CigarTV' };
@@ -21,7 +22,10 @@ const PREMIUM = [
 export default function ForBrandsPage() {
   return (
     <div className="mx-auto max-w-5xl px-6 pt-12">
-      <div className="eyebrow mb-2">For Brands</div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="eyebrow">For Brands</span>
+        <Link href="/brand/login" className="text-xs text-ember-400 hover:underline">Brand login →</Link>
+      </div>
       <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">Put your brand in front of the people who love cigars.</h1>
       <p className="mt-4 max-w-2xl text-smoke-200">
         Manage your listings, announce upcoming releases, run promos, and advertise across MyHumidor —

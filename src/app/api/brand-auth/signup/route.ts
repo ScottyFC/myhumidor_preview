@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { hashPassword, verifyRecaptcha, svc } from '@/lib/brand-auth';
+import { hashPassword, verifyRecaptcha, svc, createEmailVerification, sendVerificationEmail, markEmailVerified, emailProviderConfigured } from '@/lib/brand-auth';
 import { checkRateLimit, clientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -31,8 +31,20 @@ export async function POST(req: Request) {
   if (reqErr) return NextResponse.json({ ok: false, error: reqErr.message }, { status: 500 });
 
   const password_hash = await hashPassword(String(password));
-  const { error: acctErr } = await sb.from('brand_auth_accounts').insert({ email, password_hash, status: 'pending' } as never);
-  if (acctErr) return NextResponse.json({ ok: false, error: acctErr.message }, { status: 500 });
+  const { data: acct, error: acctErr } = await sb.from('brand_auth_accounts').insert({ email, password_hash, status: 'pending' } as never).select('id').single();
+  if (acctErr || !acct) return NextResponse.json({ ok: false, error: acctErr?.message ?? 'Could not create account.' }, { status: 500 });
+  const accountId = (acct as { id: string }).id;
 
-  return NextResponse.json({ ok: true });
+  // Email verification: send a link if an email provider is configured; otherwise
+  // auto-verify (can't verify an address with no way to email it) so the brand isn't
+  // locked out — configure RESEND_API_KEY to enforce real verification.
+  let emailSent = false;
+  if (emailProviderConfigured()) {
+    const token = await createEmailVerification(accountId);
+    if (token) emailSent = await sendVerificationEmail(String(email), new URL(req.url).origin, token);
+  } else {
+    await markEmailVerified(accountId);
+  }
+
+  return NextResponse.json({ ok: true, emailSent });
 }

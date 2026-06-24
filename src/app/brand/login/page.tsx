@@ -11,6 +11,7 @@ export default function BrandLoginPage() {
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [unverified, setUnverified] = useState(false);
 
   async function login() {
     setBusy(true); setErr(null);
@@ -20,7 +21,7 @@ export default function BrandLoginPage() {
         body: JSON.stringify({ email, password, recaptchaToken: token }),
       });
       const j = await r.json();
-      if (!r.ok || !j.ok) { setErr(j.error ?? 'Login failed.'); setBusy(false); return; }
+      if (!r.ok || !j.ok) { setErr(j.error ?? 'Login failed.'); setUnverified(j.code === 'unverified'); setBusy(false); return; }
       location.href = '/brand';
     } catch { setErr('Network error.'); setBusy(false); }
   }
@@ -38,13 +39,14 @@ export default function BrandLoginPage() {
           onKeyDown={(e) => { if (e.key === 'Enter') login(); }} />
         <Recaptcha onToken={setToken} />
         {err && <p className="text-sm text-red-300">{err}</p>}
+        {unverified && <Link href="/brand/verify" className="block text-xs text-ember-400 underline">Verify your email →</Link>}
         <button onClick={login} disabled={busy || !email || !password} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ember-400 px-5 py-2.5 text-sm font-medium text-paper disabled:opacity-50">
           {busy ? <><Loader2 size={15} className="animate-spin" /> Signing in…</> : 'Sign in'}
         </button>
       </div>
 
       <p className="mt-6 text-center text-xs text-smoke-400">
-        <Link href="/brand/forgot" className="text-ember-400 underline">Forgot password?</Link><br/>
+        <Link href="/brand/forgot" className="text-ember-400 underline">Forgot password?</Link> · <Link href="/brand/verify" className="text-ember-400 underline">Verify email</Link><br/>
         Don’t have a brand account? <Link href="/for-brands" className="text-ember-400 underline">Apply here</Link>.
       </p>
     </div>

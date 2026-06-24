@@ -151,3 +151,38 @@ export async function sendBrandEmail(to: string, subject: string, html: string):
     return r.ok;
   } catch { return false; }
 }
+
+// ── Email verification (token-based, hashed at rest) ───────────────────────
+export function emailProviderConfigured(): boolean {
+  return !!process.env.RESEND_API_KEY;
+}
+
+export async function createEmailVerification(accountId: string): Promise<string | null> {
+  const sb = svc(); if (!sb) return null;
+  const token = randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 24 * 3600 * 1000).toISOString(); // 24h
+  const { error } = await sb.from('brand_email_verifications').insert({ token_hash: hashToken(token), account_id: accountId, expires_at: expires } as never);
+  return error ? null : token;
+}
+
+export async function consumeEmailVerification(token: string): Promise<boolean> {
+  const sb = svc(); if (!sb || !token) return false;
+  const { data } = await sb.from('brand_email_verifications').select('account_id, expires_at, used').eq('token_hash', hashToken(token)).maybeSingle();
+  const r = data as { account_id: string; expires_at: string; used: boolean } | null;
+  if (!r || r.used || new Date(r.expires_at) < new Date()) return false;
+  await sb.from('brand_email_verifications').update({ used: true } as never).eq('token_hash', hashToken(token));
+  await sb.from('brand_auth_accounts').update({ email_verified: true } as never).eq('id', r.account_id);
+  return true;
+}
+
+export async function markEmailVerified(accountId: string): Promise<void> {
+  const sb = svc(); if (!sb) return;
+  await sb.from('brand_auth_accounts').update({ email_verified: true } as never).eq('id', accountId);
+}
+
+/** Send a verification email; returns whether it was sent. */
+export async function sendVerificationEmail(email: string, origin: string, token: string): Promise<boolean> {
+  const link = `${origin}/brand/verify?token=${token}`;
+  return sendBrandEmail(email, 'Verify your MyHumidor brand email',
+    `<p>Confirm your email to finish your MyHumidor brand application (valid 24 hours):</p><p><a href="${link}">${link}</a></p>`);
+}

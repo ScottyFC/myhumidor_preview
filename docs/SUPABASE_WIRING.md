@@ -1,3 +1,24 @@
+## phase89 — Brand email verification + login page wiring (RUN THIS MIGRATION)
+
+`phase89.sql` adds `brand_auth_accounts.email_verified` and a hashed-token
+`brand_email_verifications` table.
+
+- Signup creates the account and, if an email provider is configured (RESEND_API_KEY),
+  emails a 24h verification link; with NO provider it auto-verifies (can't verify an
+  address you can't email — avoids lockout). Routes: `/api/brand-auth/verify` (consume
+  link) and `/verify-resend` (rate-limited + reCAPTCHA, generic response). Page
+  `/brand/verify` handles both the link click and resend.
+- Login now requires `email_verified` (returns code `unverified` → the login page shows
+  a "Verify your email" link). Order of gates: verified → approved/active → in.
+- Brand login page (`/brand/login`, already built) is now discoverable: linked from the
+  `/for-brands` header, the signup success screen ("Go to brand login"), and the
+  dashboard empty state; the login page itself links to Forgot password + Verify email.
+
+Caveats: real verification needs RESEND_API_KEY (same dependency as password reset);
+without it signup auto-verifies. The admin queue doesn't display verified status yet
+(RLS hides brand_auth_accounts from the admin browser client — a small service-role read
+or admin RLS policy would add it) — login enforces verification regardless. Run phase89.
+Compile-verified only.
 ## phase88 FIX — self-sufficient (re-run phase88)
 
 phase88 failed with `relation "public.brand_auth_accounts" does not exist` because that

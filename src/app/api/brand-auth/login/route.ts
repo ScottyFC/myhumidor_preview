@@ -22,11 +22,12 @@ export async function POST(req: Request) {
   const sb = svc();
   if (!sb) return NextResponse.json({ ok: false, error: 'Service unavailable.' }, { status: 503 });
 
-  const { data } = await sb.from('brand_auth_accounts').select('id, password_hash, status, brand_id').ilike('email', String(email)).maybeSingle();
-  const a = data as { id: string; password_hash: string; status: string; brand_id: string | null } | null;
+  const { data } = await sb.from('brand_auth_accounts').select('id, password_hash, status, brand_id, email_verified').ilike('email', String(email)).maybeSingle();
+  const a = data as { id: string; password_hash: string; status: string; brand_id: string | null; email_verified: boolean } | null;
   // Always run a compare to reduce timing leakage on unknown emails.
   const ok = a ? await verifyPassword(String(password), a.password_hash) : await verifyPassword(String(password), '$2a$12$0000000000000000000000000000000000000000000000000000');
   if (!a || !ok) return NextResponse.json({ ok: false, error: 'Invalid email or password.' }, { status: 401 });
+  if (!a.email_verified) return NextResponse.json({ ok: false, error: 'Please verify your email first — check your inbox, or resend from the verify page.', code: 'unverified' }, { status: 403 });
   if (a.status === 'pending') return NextResponse.json({ ok: false, error: 'Your application is still pending approval.' }, { status: 403 });
   if (a.status !== 'active' || !a.brand_id) return NextResponse.json({ ok: false, error: 'This account isn’t active. Contact MyHumidor.' }, { status: 403 });
 

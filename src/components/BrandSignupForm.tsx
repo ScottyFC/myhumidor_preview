@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Loader2, CheckCircle2, Building2 } from 'lucide-react';
 import { Recaptcha } from '@/components/Recaptcha';
 import type { BrandTier } from '@/lib/brands';
@@ -11,6 +12,7 @@ export function BrandSignupForm() {
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
@@ -29,6 +31,7 @@ export function BrandSignupForm() {
       const j = await r.json();
       setBusy(false);
       if (!r.ok || !j.ok) { setErr(j.error ?? 'Something went wrong.'); return; }
+      setEmailSent(!!j.emailSent);
       setDone(true);
     } catch { setBusy(false); setErr('Network error.'); }
   }
@@ -43,6 +46,8 @@ export function BrandSignupForm() {
             ? 'Thanks — our team will reach out to discuss tailored Premium pricing for your marketing needs.'
             : 'Thanks — a super admin will review your application. Once approved, sign in at the brand portal with the email and password you just set.'}
         </p>
+        {emailSent && <p className="mt-2 text-sm text-ember-200">We’ve emailed you a link to verify your address — please confirm it before logging in.</p>}
+        <Link href="/brand/login" className="mt-4 inline-block rounded-lg border-[0.5px] border-ember-400/30 px-4 py-2 text-sm text-ember-100">Go to brand login</Link>
       </div>
     );
   }
