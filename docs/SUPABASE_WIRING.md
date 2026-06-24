@@ -1,3 +1,26 @@
+## Brand dashboard round 2 — logo upload fix, listed cigars, brand page, team seats (NO new migration)
+
+No new SQL — uses phase84/92 columns. Set the email sender to verify@myhumidor.shop.
+
+- **Logo/banner upload fixed**: brand owners aren't Supabase users, so the lounge uploader
+  (client Storage + lounge RLS) rejected them ("…signed in as the lounge owner"). New
+  `/api/brand/upload` uploads via the service role to the `submissions` bucket and writes
+  `brands.logo_url/banner_url` immediately. Editor's button now reads **Publish**.
+- **Listed Cigars**: new dashboard section (+ anchor-nav "tab") backed by
+  `/api/brand/cigars` (catalog + catalog_cigars under the brand slug).
+- **View brand page**: links in the dashboard header card + Listed Cigars + nav.
+- **Approved brand shows on site with zero cigars**: `/brands/[slug]` now renders from the
+  `brands` DB row (logo, bio, announcements) with a "No cigars listed yet" state instead of
+  404ing. NOTE: this fixes the brand PAGE; the brands *directory/index* may still be
+  catalog-derived, so a cigar-less brand might not appear in listings until it has cigars —
+  a follow-up if you want them in the index immediately.
+- **Team seats**: `/api/brand/team` (list/invite/remove) + a Team section in `/brand/settings`.
+  Invite creates an active+verified seat and emails a set-password link (needs RESEND);
+  enforces the plan seat count (standard 2 / premium 5). You can't remove your own seat.
+
+Caveats: the `submissions` storage bucket must be public (it already is for lounges).
+Adding cigars to a brand still goes through the catalog submission flow (no direct
+"add product" button in the brand dashboard yet). Compile-verified only.
 ## phase92 — Brand billing/invoices, support tickets, review workflow, premium activation (RUN MIGRATION)
 
 Email default sender corrected to verify@myhumidor.shop (the verified domain).

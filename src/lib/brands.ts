@@ -192,3 +192,26 @@ export async function updateTicketStatus(id: string, status: string): Promise<bo
 export async function changeBrandPassword(current: string, next: string) {
   return postJSON('/api/brand/password', { current, next });
 }
+
+/** Upload a brand logo/banner via the service-role route (brand-auth, not Supabase user). */
+export async function uploadBrandImage(kind: 'logo' | 'banner', file: File): Promise<{ url: string | null; error: string | null }> {
+  try {
+    const fd = new FormData(); fd.append('file', file); fd.append('kind', kind);
+    const r = await fetch('/api/brand/upload', { method: 'POST', headers: { 'x-csrf-token': csrfToken() }, body: fd });
+    const j = await r.json();
+    return r.ok && j.ok ? { url: j.url, error: null } : { url: null, error: j.error ?? 'Upload failed.' };
+  } catch { return { url: null, error: 'Network error.' }; }
+}
+
+// ── Brand: team seats ──────────────────────────────────────────────────────
+export interface TeamMember { id: string; email: string; status: string; emailVerified: boolean }
+export interface TeamState { seats: number; self: string; members: TeamMember[] }
+export async function getBrandTeam(): Promise<TeamState | null> {
+  try { const r = await fetch('/api/brand/team'); const j = await r.json(); return r.ok && j.ok ? { seats: j.seats, self: j.self, members: j.members } : null; } catch { return null; }
+}
+export async function inviteTeamMember(email: string): Promise<{ ok: boolean; emailed?: boolean; error?: string }> {
+  try { const r = await fetch('/api/brand/team', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken() }, body: JSON.stringify({ email }) }); const j = await r.json(); return r.ok && j.ok ? { ok: true, emailed: j.emailed } : { ok: false, error: j.error }; } catch { return { ok: false, error: 'Network error.' }; }
+}
+export async function removeTeamMember(id: string): Promise<boolean> {
+  try { const r = await fetch(`/api/brand/team?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'x-csrf-token': csrfToken() } }); return r.ok; } catch { return false; }
+}

@@ -50,8 +50,17 @@ export default async function BrandPage({ params }: PageProps) {
   }
 
   const label = brand ?? (merged[0]?.brand ?? null);
-  if (!label || merged.length === 0) {
-    // Even with no static match, an override may have moved cigars into this brand.
+
+  // Approved brands exist in the DB even with zero catalog cigars — load the row so the
+  // page renders (with logo/bio/announcements) the moment a brand is approved.
+  type DbBrand = { name: string; logo_url: string | null; banner_url: string | null; description: string | null; tier: string | null };
+  let dbBrand: DbBrand | null = null;
+  if (isSupabaseConfigured) {
+    try {
+      const sb = await supabaseServer();
+      const { data } = await (sb as unknown as import('@supabase/supabase-js').SupabaseClient).from('brands').select('name, logo_url, banner_url, description, tier').eq('slug', slug).maybeSingle();
+      dbBrand = (data as unknown as DbBrand | null) ?? null;
+    } catch { /* ignore */ }
   }
 
   const visible = await applyOverrides(merged);
@@ -68,8 +77,8 @@ export default async function BrandPage({ params }: PageProps) {
     if (m && brandSlug(m.brand) === slug) { pooled.push(m); have.add(s); }
   }
 
-  const finalLabel = pooled[0]?.brand ?? label;
-  if (!finalLabel || pooled.length === 0) notFound();
+  const finalLabel = pooled[0]?.brand ?? label ?? dbBrand?.name ?? null;
+  if (!finalLabel || (pooled.length === 0 && !dbBrand)) notFound();
 
   // Collapse any duplicate rows (e.g. a static cigar plus a re-submitted DB copy
   // under a different slug) by normalized brand+name.
@@ -88,7 +97,9 @@ export default async function BrandPage({ params }: PageProps) {
         <Boxes size={14} strokeWidth={1.5} className="text-ember-400" /> Brand
       </div>
       <div className="flex items-center gap-4">
-        <BrandLogo brand={finalLabel} className="h-16 w-16 shrink-0 text-2xl" rounded="rounded-xl" />
+        {dbBrand?.logo_url
+          ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={dbBrand.logo_url} alt={finalLabel} className="h-16 w-16 shrink-0 rounded-xl object-cover" />
+          : <BrandLogo brand={finalLabel} className="h-16 w-16 shrink-0 text-2xl" rounded="rounded-xl" />}
         <div>
           <h1 className="font-display text-5xl tracking-tightest">{finalLabel}</h1>
           <p className="mt-1 text-sm text-smoke-400">
@@ -96,6 +107,7 @@ export default async function BrandPage({ params }: PageProps) {
           </p>
         </div>
       </div>
+      {dbBrand?.description && <p className="mt-4 max-w-2xl text-sm leading-relaxed text-smoke-200">{dbBrand.description}</p>}
 
       <BrandCsvDownload brand={finalLabel} rows={deduped.map((c) => ({
         slug: c.slug, brand: c.brand, name: c.name, country: c.country,
@@ -107,6 +119,9 @@ export default async function BrandPage({ params }: PageProps) {
       </div>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {deduped.length === 0 && (
+          <p className="col-span-full rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-6 text-sm text-smoke-400">No cigars listed yet — check back soon.</p>
+        )}
         {deduped.map((c) => (
           <Link
             key={c.slug}

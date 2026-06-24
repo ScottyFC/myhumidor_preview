@@ -6,6 +6,7 @@ import { Loader2, KeyRound, ArrowLeft } from 'lucide-react';
 import { getMyBrands, changeBrandPassword, type MyBrand } from '@/lib/brands';
 import { SecurityPanel } from '@/components/BrandDashboard';
 import { SupportTicketForm } from '@/components/SupportTicketForm';
+import { TeamSeats } from '@/components/TeamSeats';
 
 export default function BrandSettingsPage() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function BrandSettingsPage() {
 
       <ChangePassword />
       <SecurityPanel mfaEnabled={!!brand.mfaEnabled} onChange={load} />
+      <TeamSeats />
       <SupportTicketForm />
 
       <section className="mt-8">

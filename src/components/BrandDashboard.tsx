@@ -10,6 +10,7 @@ import {
 } from '@/lib/brands';
 import { BrandOnboarding } from '@/components/BrandOnboarding';
 import { BrandDetailsEditor } from '@/components/BrandDetailsEditor';
+import { ListedCigars } from '@/components/ListedCigars';
 
 export function BrandDashboard() {
   const [loading, setLoading] = useState(true);
@@ -87,6 +88,16 @@ export function BrandDashboard() {
           <Link href={`/brands/${active.slug}`} className="mt-0.5 inline-block text-xs text-ember-400 hover:underline">View public page →</Link>
         </div>
       </div>
+
+      <nav className="mt-6 flex flex-wrap gap-1 border-b border-ember-400/10 pb-2 text-sm">
+        <a href="#listed-cigars" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Listed Cigars</a>
+        <a href="#releases" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Releases</a>
+        <a href="#brand-details" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Brand page</a>
+        <a href="#reviews" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Reviews</a>
+        <Link href="/brand/settings" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Settings</Link>
+      </nav>
+
+      <ListedCigars slug={active.slug} />
 
       {detail && (
         <BrandOnboarding brandId={active.id} slug={active.slug} detail={detail} productCount={productCount} postCount={posts.length} onChange={() => reload(active)} />
@@ -172,7 +183,7 @@ function ReleasePromoPanel({ brandId, posts, boostsLeft, onChange }: { brandId: 
 
 function AnalyticsPanel({ premium }: { premium: boolean }) {
   return (
-    <section className="mt-8">
+    <section id="releases" className="mt-8">
       <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><BarChart3 size={18} className="text-ember-400" /> Analytics</h2>
       <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-5 text-sm text-smoke-300">
         {premium ? 'In-depth product analytics — popularity, humidor adds, rating trends, and lounge demand — populate here as activity comes in.'
@@ -196,7 +207,7 @@ function ReviewRequestPanel({ brandId, premium }: { brandId: string; premium: bo
   }
   const input = 'w-full rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 px-3 py-2 text-sm focus:border-ember-400/50 focus:outline-none';
   return (
-    <section className="mt-8">
+    <section id="reviews" className="mt-8">
       <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Megaphone size={18} className="text-ember-400" /> Request a CigarTV review {premium && <span className="rounded-full bg-ember-400/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-ember-200">Priority</span>}</h2>
       <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
         {done ? (
