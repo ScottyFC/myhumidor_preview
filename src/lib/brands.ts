@@ -228,6 +228,9 @@ export async function addBrandCigar(input: { name: string; size?: string; countr
 export async function updateBrandCigarStatus(id: string, status: CigarStatus): Promise<boolean> {
   try { const r = await fetch('/api/brand/cigars', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken() }, body: JSON.stringify({ id, status }) }); return r.ok; } catch { return false; }
 }
+export async function updateBrandCigar(id: string, fields: { name?: string; size?: string; country?: string; price?: string | number | null; imageUrl?: string | null; status?: CigarStatus }): Promise<{ ok: boolean; error?: string }> {
+  try { const r = await fetch('/api/brand/cigars', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken() }, body: JSON.stringify({ id, ...fields }) }); const j = await r.json().catch(() => ({})); return { ok: r.ok && j.ok !== false, error: j.error }; } catch { return { ok: false, error: 'Network error.' }; }
+}
 export async function removeBrandCigar(id: string): Promise<boolean> {
   try { const r = await fetch(`/api/brand/cigars?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'x-csrf-token': csrfToken() } }); return r.ok; } catch { return false; }
 }

@@ -1,3 +1,13 @@
+## Edit brand inventory details + photo (NO new migration)
+
+Each owned cigar in the dashboard Listed Cigars now has an Edit (pencil) button → inline
+form to change name, size, country, MSRP and REPLACE the photo, then Save. PATCH
+`/api/brand/cigars` was broadened from status-only to accept any of
+{name, size, country, price, image_url, status}, scoped to the brand (brand_id locked);
+photo replacement uploads via the brand upload route and stores the new image_url. The
+slug is left stable on rename so links/grouping don't break. Changes are live immediately —
+the public brand page and `/cigars/[slug]` read the DB per request, and the dashboard
+reloads on save. Static catalog cigars stay read-only. Compile-verified only.
 ## phase96 — Public badge showcase + specific-cigar ("new release") triggers (RUN MIGRATION)
 
 `phase96.sql` adds `badges.target_slug`.

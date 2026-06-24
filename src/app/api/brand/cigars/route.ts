@@ -62,9 +62,22 @@ export async function PATCH(req: Request) {
   if (!s) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   if (!(await validateCsrf(req))) return NextResponse.json({ ok: false, error: 'Invalid request token.' }, { status: 403 });
   const sb = svc(); if (!sb) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
-  const { id, status } = await req.json().catch(() => ({}));
-  if (!id || !STATUSES.includes(status)) return NextResponse.json({ ok: false, error: 'Bad request.' }, { status: 400 });
-  const { error } = await sb.from('catalog_cigars').update({ status } as never).eq('id', id).eq('brand_id', s.brandId);
+  const b = await req.json().catch(() => ({}));
+  if (!b.id) return NextResponse.json({ ok: false, error: 'Missing cigar.' }, { status: 400 });
+
+  // Build an update from only the fields provided (status-only calls still work; full
+  // detail edits + photo replacement also supported). Slug is intentionally left stable so
+  // existing links and the public brand grouping don't break.
+  const patch: Record<string, unknown> = {};
+  if (typeof b.name === 'string' && b.name.trim()) patch.name = b.name.trim();
+  if (b.size !== undefined) patch.size = b.size || null;
+  if (b.country !== undefined) patch.country = b.country || null;
+  if (b.price !== undefined) { const p = b.price === '' || b.price == null ? null : Number(b.price); patch.price = Number.isFinite(p as number) ? p : null; }
+  if (b.imageUrl !== undefined) patch.image_url = b.imageUrl || null;
+  if (b.status !== undefined) { if (!STATUSES.includes(b.status)) return NextResponse.json({ ok: false, error: 'Bad status.' }, { status: 400 }); patch.status = b.status; }
+  if (Object.keys(patch).length === 0) return NextResponse.json({ ok: false, error: 'Nothing to update.' }, { status: 400 });
+
+  const { error } = await sb.from('catalog_cigars').update(patch as never).eq('id', b.id).eq('brand_id', s.brandId);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

@@ -1,8 +1,8 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Loader2, Cigarette, ExternalLink, Plus, Trash2, ImageIcon, Upload, FileSpreadsheet } from 'lucide-react';
-import { getBrandCigars, addBrandCigar, updateBrandCigarStatus, removeBrandCigar, uploadBrandImage, type BrandCigar, type CigarStatus } from '@/lib/brands';
+import { Loader2, Cigarette, ExternalLink, Plus, Trash2, ImageIcon, Upload, FileSpreadsheet, Pencil, Check, X } from 'lucide-react';
+import { getBrandCigars, addBrandCigar, updateBrandCigarStatus, updateBrandCigar, removeBrandCigar, uploadBrandImage, type BrandCigar, type CigarStatus } from '@/lib/brands';
 import { CsvCigarImport } from '@/components/CsvCigarImport';
 
 const STATUS_OPTS: [CigarStatus, string][] = [['available', 'Available'], ['coming_soon', 'Coming Soon'], ['discontinued', 'Discontinued']];
@@ -108,23 +108,7 @@ export function ListedCigars({ slug }: { slug: string }) {
               <div className="divide-y divide-ember-400/10">
                 <div className="pb-2 text-[11px] uppercase tracking-wide text-smoke-500">Your catalog</div>
                 {owned.map((c) => (
-                  <div key={c.slug} className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm">
-                    <div className="flex min-w-0 items-center gap-3">
-                      {c.imageUrl
-                        ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={c.imageUrl} alt="" className="h-12 w-9 shrink-0 rounded object-cover" />
-                        : <span className="flex h-12 w-9 shrink-0 items-center justify-center rounded bg-char/60 text-smoke-600"><ImageIcon size={14} /></span>}
-                      <div className="min-w-0">
-                      <Link href={`/cigars/${c.slug}`} className="font-medium text-paper hover:text-ember-100">{c.name}</Link>
-                      <span className="ml-2 text-xs text-smoke-400">{[c.size, c.country].filter(Boolean).join(' · ')}{typeof c.price === 'number' ? ` · $${c.price.toFixed(2)}` : ''}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <select value={c.status} onChange={(e) => c.id && setStatus(c.id, e.target.value as CigarStatus)} className="rounded-lg border-[0.5px] border-ember-400/20 bg-char/60 px-2 py-1 text-xs text-paper focus:outline-none">
-                        {STATUS_OPTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                      </select>
-                      <button onClick={() => c.id && remove(c.id)} className="text-smoke-400 hover:text-red-300" aria-label="Remove"><Trash2 size={15} /></button>
-                    </div>
-                  </div>
+                  <OwnedRow key={c.slug} c={c} onStatus={setStatus} onRemove={remove} onSaved={load} />
                 ))}
               </div>
             )}
@@ -143,5 +127,75 @@ export function ListedCigars({ slug }: { slug: string }) {
         )}
       </div>
     </section>
+  );
+}
+
+
+const ROW_STATUS: [CigarStatus, string][] = [['available', 'Available'], ['coming_soon', 'Coming Soon'], ['discontinued', 'Discontinued']];
+
+function OwnedRow({ c, onStatus, onRemove, onSaved }: { c: BrandCigar; onStatus: (id: string, s: CigarStatus) => void; onRemove: (id: string) => void; onSaved: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ name: c.name, size: c.size, country: c.country, price: c.price != null ? String(c.price) : '' });
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  function pick(f?: File) { setErr(null); if (!f) { setFile(null); setPreview(null); return; } if (!f.type.startsWith('image/')) return setErr('Choose an image.'); if (f.size > 8 * 1024 * 1024) return setErr('Under 8 MB please.'); setFile(f); setPreview(URL.createObjectURL(f)); }
+  async function save() {
+    if (!c.id) return;
+    setErr(null);
+    if (!form.name.trim()) return setErr('Name is required.');
+    setBusy(true);
+    let imageUrl: string | undefined;
+    if (file) { const up = await uploadBrandImage('cigar', file); if (up.error || !up.url) { setBusy(false); return setErr(up.error ?? 'Photo upload failed.'); } imageUrl = up.url; }
+    const r = await updateBrandCigar(c.id, { name: form.name.trim(), size: form.size, country: form.country, price: form.price || null, ...(imageUrl ? { imageUrl } : {}) });
+    setBusy(false);
+    if (!r.ok) return setErr(r.error ?? 'Could not save.');
+    setEditing(false); setFile(null); setPreview(null); onSaved();
+  }
+
+  const input = 'rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 px-2.5 py-1.5 text-sm text-paper placeholder:text-smoke-500 focus:border-ember-400/50 focus:outline-none';
+  const thumb = preview ?? c.imageUrl;
+
+  if (editing) {
+    return (
+      <div className="py-3">
+        <div className="flex items-start gap-3">
+          {thumb ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={thumb} alt="" className="h-16 w-12 shrink-0 rounded object-cover" /> : <span className="flex h-16 w-12 shrink-0 items-center justify-center rounded bg-char/60 text-smoke-600"><ImageIcon size={16} /></span>}
+          <div className="grid flex-1 gap-2 sm:grid-cols-2">
+            <input className={input} placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <input className={input} placeholder="Size / vitola" value={form.size} onChange={(e) => setForm({ ...form, size: e.target.value })} />
+            <input className={input} placeholder="Country" value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} />
+            <input className={input} inputMode="decimal" placeholder="MSRP (USD)" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+          </div>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/30 px-3 py-1.5 text-xs text-ember-100 hover:bg-ember-400/10"><Upload size={13} /> {file ? 'Change photo' : 'Replace photo'}<input type="file" accept="image/*" className="hidden" onChange={(e) => pick(e.target.files?.[0])} /></label>
+          <button onClick={save} disabled={busy} className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-3 py-1.5 text-sm font-medium text-paper disabled:opacity-50">{busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Save</button>
+          <button onClick={() => { setEditing(false); setFile(null); setPreview(null); setErr(null); setForm({ name: c.name, size: c.size, country: c.country, price: c.price != null ? String(c.price) : '' }); }} className="inline-flex items-center gap-1 text-xs text-smoke-400 hover:text-paper"><X size={13} /> Cancel</button>
+        </div>
+        {err && <p className="mt-1 text-sm text-red-300">{err}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm">
+      <div className="flex min-w-0 items-center gap-3">
+        {c.imageUrl ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={c.imageUrl} alt="" className="h-12 w-9 shrink-0 rounded object-cover" /> : <span className="flex h-12 w-9 shrink-0 items-center justify-center rounded bg-char/60 text-smoke-600"><ImageIcon size={14} /></span>}
+        <div className="min-w-0">
+          <Link href={`/cigars/${c.slug}`} className="font-medium text-paper hover:text-ember-100">{c.name}</Link>
+          <span className="ml-2 text-xs text-smoke-400">{[c.size, c.country].filter(Boolean).join(' · ')}{typeof c.price === 'number' ? ` · $${c.price.toFixed(2)}` : ''}</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <select value={c.status} onChange={(e) => c.id && onStatus(c.id, e.target.value as CigarStatus)} className="rounded-lg border-[0.5px] border-ember-400/20 bg-char/60 px-2 py-1 text-xs text-paper focus:outline-none">
+          {ROW_STATUS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <button onClick={() => setEditing(true)} className="text-smoke-400 hover:text-ember-100" aria-label="Edit"><Pencil size={15} /></button>
+        <button onClick={() => c.id && onRemove(c.id)} className="text-smoke-400 hover:text-red-300" aria-label="Remove"><Trash2 size={15} /></button>
+      </div>
+    </div>
   );
 }
