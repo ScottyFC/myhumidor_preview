@@ -1,3 +1,26 @@
+## phase94 — Follow brands + remove brand-account ratings + audience + Brand Tools (RUN MIGRATION)
+
+`phase94.sql` adds `brand_follows` (user↔brand, RLS: public read, owner write).
+
+Built this round:
+- **Follow a brand**: Follow/Following button on `/brands/[slug]` (consumer/Supabase auth;
+  signed-out → /register). When a brand POSTS or ADDS a cigar, all followers get a
+  notification (server-side insert into `notifications`, type `brand_post` / `brand_inventory`).
+- **Ratings hidden for brand accounts**: `/cigars/[slug]` checks the brand-auth session and
+  hides the RatingForm + MyCigarRatings when a brand is signed in.
+- **Audience panel** (dashboard): follower count, recent ratings (ratings carry the brand
+  name) and recent comments on the brand's cigars. **Premium** gets an "Export CSV" of
+  followers + ratings + comments.
+- **Admin "Brand applications" → "Brand Tools"** with a new **Overview** sub-tab
+  (pending apps, approved/active brands, open reviews, open tickets; click a stat to jump).
+
+DEFERRED (next): brand-created badges (artwork upload, trigger, title; standard 1/quarter,
+premium unlimited; premium downloads the user list of who holds the badge) — a full feature
+on its own, not started this round.
+
+Notes: brand notifications appear in the bell by name; deep-linking 'brand' entity_type may
+need a small case in the notification UI. Follow works only for brands with a DB row
+(approved brands), not catalog-only brands. Compile-verified only.
 ## Brand cigar submission with photo (NO new migration)
 
 Signed-in brand users can now submit a cigar WITH a picture; it is auto-approved and

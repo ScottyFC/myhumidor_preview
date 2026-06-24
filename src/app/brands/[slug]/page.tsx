@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CigarName } from '@/components/CigarName';
 import { notFound } from 'next/navigation';
+import { FollowBrandButton } from '@/components/FollowBrandButton';
 import { Boxes, ArrowLeft } from 'lucide-react';
 import { cigarsByBrand, brandSlug, findCatalogCigarBySlug } from '@/lib/catalog';
 import { applyOverrides, applyOverride, loadOverrides } from '@/lib/overrides';
@@ -56,12 +57,12 @@ export default async function BrandPage({ params }: PageProps) {
 
   // Approved brands exist in the DB even with zero catalog cigars — load the row so the
   // page renders (with logo/bio/announcements) the moment a brand is approved.
-  type DbBrand = { name: string; logo_url: string | null; banner_url: string | null; description: string | null; tier: string | null };
+  type DbBrand = { id: string; name: string; logo_url: string | null; banner_url: string | null; description: string | null; tier: string | null };
   let dbBrand: DbBrand | null = null;
   if (isSupabaseConfigured) {
     try {
       const sb = await supabaseServer();
-      const { data } = await (sb as unknown as import('@supabase/supabase-js').SupabaseClient).from('brands').select('name, logo_url, banner_url, description, tier').eq('slug', slug).maybeSingle();
+      const { data } = await (sb as unknown as import('@supabase/supabase-js').SupabaseClient).from('brands').select('id, name, logo_url, banner_url, description, tier').eq('slug', slug).maybeSingle();
       dbBrand = (data as unknown as DbBrand | null) ?? null;
     } catch { /* ignore */ }
   }
@@ -111,6 +112,7 @@ export default async function BrandPage({ params }: PageProps) {
         </div>
       </div>
       {dbBrand?.description && <p className="mt-4 max-w-2xl text-sm leading-relaxed text-smoke-200">{dbBrand.description}</p>}
+      {dbBrand?.id && <div className="mt-4"><FollowBrandButton brandId={dbBrand.id} /></div>}
 
       <BrandCsvDownload brand={finalLabel} rows={deduped.map((c) => ({
         slug: c.slug, brand: c.brand, name: c.name, country: c.country,

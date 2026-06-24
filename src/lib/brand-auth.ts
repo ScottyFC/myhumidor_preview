@@ -235,3 +235,16 @@ export async function setAccountTotpSecret(accountId: string, secret: string | n
   const { error } = await sb.from('brand_auth_accounts').update({ totp_secret: secret, mfa_enabled: enabled } as never).eq('id', accountId);
   return !error;
 }
+
+/** Notify all followers of a brand (service-role insert into notifications). */
+export async function notifyBrandFollowers(brandId: string, brandName: string, slug: string, summary: string, type: 'brand_post' | 'brand_inventory'): Promise<void> {
+  const sb = svc(); if (!sb) return;
+  try {
+    const { data } = await sb.from('brand_follows').select('user_id').eq('brand_id', brandId).limit(5000);
+    const ids = (data ?? []).map((r: { user_id: string }) => r.user_id);
+    if (!ids.length) return;
+    const rows = ids.map((uid) => ({ user_id: uid, type, actor_name: brandName, entity_type: 'brand', entity_id: slug, entity_name: summary, read: false }));
+    // chunk inserts to stay well within limits
+    for (let i = 0; i < rows.length; i += 500) await sb.from('notifications').insert(rows.slice(i, i + 500) as never);
+  } catch { /* best effort */ }
+}

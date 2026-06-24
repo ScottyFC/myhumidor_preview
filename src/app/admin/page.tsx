@@ -92,7 +92,7 @@ export default function AdminPage() {
     { id: 'owners', label: 'Cert & owners', icon: UserCog },
     { id: 'invites', label: 'Invites', icon: Mail },
     { id: 'claimreqs', label: 'Claim requests', icon: Building2 },
-    { id: 'brands', label: 'Brand applications', icon: Boxes },
+    { id: 'brands', label: 'Brand Tools', icon: Boxes },
     { id: 'badgeart', label: 'Badge artwork', icon: Award },
     { id: 'requests', label: 'Change requests', icon: MessageSquare },
     { id: 'log', label: 'Activity log', icon: History },

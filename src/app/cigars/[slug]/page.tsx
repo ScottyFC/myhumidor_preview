@@ -8,6 +8,7 @@ import { findCatalogCigarBySlug, featuredLounges, moreFromBrand, similarCigars, 
 import { isSupabaseConfigured, supabaseServer } from '@/lib/supabase';
 import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
+import { getBrandSession } from '@/lib/brand-auth';
 import { MyCigarRatings } from '@/components/MyCigarRatings';
 import { CigarCommunity } from '@/components/CigarCommunity';
 import { CigarInsight } from '@/components/CigarInsight';
@@ -85,6 +86,8 @@ export default async function CigarPage({ params }: PageProps) {
 
   // Community averages come from the live `ratings` table once users start
   // rating. Until then every cigar shows the "not yet rated" state.
+  const isBrandUser = !!(await getBrandSession());
+
   const view: CigarView = {
     id: cat.uuid,
     brand: cat.brand,
@@ -223,13 +226,15 @@ export default async function CigarPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* ─── Rating Form ──────────────────────────────────────────────── */}
-      <div className="mt-12">
-        <MyCigarRatings cigarId={view.id} slug={slug} />
-        <RatingForm
-          seed={{ cigarId: view.id, slug, brand: view.brand, name: view.headline, size: view.vitola }}
-        />
-      </div>
+      {/* ─── Rating Form (hidden for brand accounts — they don't rate) ─── */}
+      {!isBrandUser && (
+        <div className="mt-12">
+          <MyCigarRatings cigarId={view.id} slug={slug} />
+          <RatingForm
+            seed={{ cigarId: view.id, slug, brand: view.brand, name: view.headline, size: view.vitola }}
+          />
+        </div>
+      )}
 
       {/* ─── Where to buy near you (certified lounges ≤25mi) ──────────── */}
       <div className="mt-8">

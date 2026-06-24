@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getBrandSession, svc, validateCsrf } from '@/lib/brand-auth';
+import { getBrandSession, svc, validateCsrf, notifyBrandFollowers } from '@/lib/brand-auth';
 
 export const runtime = 'nodejs';
 
@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     link_url: b.linkUrl ?? null, release_date: b.releaseDate ?? null, boosted: !!b.boosted,
   } as never);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  await notifyBrandFollowers(s.brandId, s.brand.name, s.brand.slug, `${s.brand.name}: ${b.title}`, 'brand_post');
   return NextResponse.json({ ok: true });
 }
 

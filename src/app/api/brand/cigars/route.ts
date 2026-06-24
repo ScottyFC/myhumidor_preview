@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getBrandSession, svc, validateCsrf } from '@/lib/brand-auth';
+import { getBrandSession, svc, validateCsrf, notifyBrandFollowers } from '@/lib/brand-auth';
 import { cigarsByBrand, brandSlug } from '@/lib/catalog';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -53,6 +53,7 @@ export async function POST(req: Request) {
     image_url: b.imageUrl || null,
   } as never).select('id, name, size, country, price, slug, status').single();
   if (error || !row) return NextResponse.json({ ok: false, error: error?.message ?? 'Could not add cigar.' }, { status: 500 });
+  if (status !== 'discontinued') await notifyBrandFollowers(s.brandId, s.brand.name, s.brand.slug, `${s.brand.name} added ${name}`, 'brand_inventory');
   return NextResponse.json({ ok: true, cigar: row });
 }
 

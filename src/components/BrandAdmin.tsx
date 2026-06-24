@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Loader2, Gem, Send, Inbox, Boxes, MessageSquare, LifeBuoy, CreditCard } from 'lucide-react';
+import { Loader2, Gem, Send, Inbox, Boxes, MessageSquare, LifeBuoy, CreditCard, LayoutGrid } from 'lucide-react';
 import { BrandSignupQueue } from '@/components/BrandSignupQueue';
 import {
   listApprovedBrands, setSubscriptionStatus, setPaymentMethod, createInvoice,
   listReviewRequests, updateReviewStatus, listSupportTickets, updateTicketStatus,
+  listBrandSignups,
   type ApprovedBrandRow, type ReviewReqRow, type TicketRow,
 } from '@/lib/brands';
 
-type Sub = 'apps' | 'brands' | 'reviews' | 'tickets';
+type Sub = 'overview' | 'apps' | 'brands' | 'reviews' | 'tickets';
 const STATUSES = [['awaiting', 'Awaiting Response'], ['in_progress', 'In Progress'], ['done', 'Done']] as const;
 const money = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'usd' });
 
@@ -23,8 +24,9 @@ function StatusSelect({ value, onChange }: { value: string; onChange: (v: string
 }
 
 export function BrandAdmin() {
-  const [sub, setSub] = useState<Sub>('apps');
+  const [sub, setSub] = useState<Sub>('overview');
   const subs: { id: Sub; label: string; icon: typeof Inbox }[] = [
+    { id: 'overview', label: 'Overview', icon: LayoutGrid },
     { id: 'apps', label: 'Applications', icon: Boxes },
     { id: 'brands', label: 'Brands & billing', icon: CreditCard },
     { id: 'reviews', label: 'CigarTV reviews', icon: MessageSquare },
@@ -40,6 +42,7 @@ export function BrandAdmin() {
           </button>
         ); })}
       </div>
+      {sub === 'overview' && <BrandToolsOverview onJump={setSub} />}
       {sub === 'apps' && <BrandSignupQueue />}
       {sub === 'brands' && <BrandsBilling />}
       {sub === 'reviews' && <ReviewQueue />}
@@ -165,6 +168,47 @@ function TicketQueue() {
           <p className="mt-1.5 whitespace-pre-wrap text-sm text-smoke-200">{t.body}</p>
         </div>
       ))}
+    </div>
+  );
+}
+
+
+function Stat({ label, value, onClick }: { label: string; value: number | string; onClick?: () => void }) {
+  return (
+    <button onClick={onClick} disabled={!onClick} className={`rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4 text-left ${onClick ? 'hover:border-ember-400/40' : ''}`}>
+      <div className="font-display text-3xl text-ember-100">{value}</div>
+      <div className="mt-1 text-xs uppercase tracking-wide text-smoke-400">{label}</div>
+    </button>
+  );
+}
+
+function BrandToolsOverview({ onJump }: { onJump: (s: Sub) => void }) {
+  const [c, setC] = useState<{ apps: number; brands: number; activeBrands: number; reviews: number; openReviews: number; tickets: number; openTickets: number } | null>(null);
+  useEffect(() => { (async () => {
+    const [apps, brands, reviews, tickets] = await Promise.all([listBrandSignups('pending'), listApprovedBrands(), listReviewRequests(), listSupportTickets()]);
+    setC({
+      apps: apps.length,
+      brands: brands.length,
+      activeBrands: brands.filter((b) => b.subStatus === 'active').length,
+      reviews: reviews.length, openReviews: reviews.filter((r) => r.status !== 'done').length,
+      tickets: tickets.length, openTickets: tickets.filter((t) => t.status !== 'done').length,
+    });
+  })(); }, []);
+  if (!c) return <Loader2 className="animate-spin text-ember-400" />;
+  return (
+    <div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Pending applications" value={c.apps} onClick={() => onJump('apps')} />
+        <Stat label="Approved brands" value={c.brands} onClick={() => onJump('brands')} />
+        <Stat label="Open review requests" value={c.openReviews} onClick={() => onJump('reviews')} />
+        <Stat label="Open support tickets" value={c.openTickets} onClick={() => onJump('tickets')} />
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <Stat label="Active subscriptions" value={c.activeBrands} />
+        <Stat label="Total review requests" value={c.reviews} />
+        <Stat label="Total tickets" value={c.tickets} />
+      </div>
+      {c.apps > 0 && <p className="mt-4 text-sm text-ember-200">You have {c.apps} brand application{c.apps === 1 ? '' : 's'} awaiting review.</p>}
     </div>
   );
 }
