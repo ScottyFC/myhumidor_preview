@@ -143,7 +143,7 @@ export async function getAccountByEmail(email: string): Promise<{ id: string; st
 /** Send an email via Resend if RESEND_API_KEY is configured; returns whether it sent. */
 export async function sendBrandEmail(to: string, subject: string, html: string): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.BRAND_EMAIL_FROM || 'MyHumidor <onboarding@resend.dev>';
+  const from = process.env.BRAND_EMAIL_FROM || 'MyHumidor <verify@myhumidor.com>';
   if (!key) { console.warn('[brand-email] RESEND_API_KEY not set — email not sent to', to); return false; }
   try {
     const r = await fetch('https://api.resend.com/emails', {

@@ -1,3 +1,14 @@
+## Email setup — Resend + DNS (see docs/EMAIL_SETUP.md)
+
+Sending address chosen: verify@myhumidor.com. Default sender in code is now
+`MyHumidor <verify@myhumidor.com>` (override with BRAND_EMAIL_FROM). Full walkthrough —
+add domain myhumidor.com in Resend, add the DKIM/SPF/return-path-MX/DMARC records it shows
+(values are region-specific; copy from Resend), verify, set RESEND_API_KEY (+ optionally
+BRAND_EMAIL_FROM) in Vercel, redeploy, test. The `[brand-email]` server log prints the
+exact Resend rejection. Note: myhumidor.com (sending) is a different domain than the site
+(myhumidor.shop) — records go on myhumidor.com. Consumer/lounge reset emails are sent by
+Supabase (separate) — point Supabase SMTP at Resend for consistency. Full doc:
+docs/EMAIL_SETUP.md.
 ## phase91 — feed login redirect + approval-implies-verified (RUN THIS MIGRATION)
 
 - Feed page now redirects to `/register` (consumer login) when not signed in.
