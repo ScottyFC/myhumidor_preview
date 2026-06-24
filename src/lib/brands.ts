@@ -14,7 +14,7 @@ export interface BrandSignupInput {
   contactName: string; company: string; businessAddress?: string; email: string;
   website?: string; phone?: string; taxId?: string; tier: BrandTier; notes?: string;
 }
-export interface MyBrand { id: string; slug: string; name: string; role: string; tier: BrandTier; }
+export interface MyBrand { id: string; slug: string; name: string; role: string; tier: BrandTier; mfaEnabled?: boolean; }
 export interface BrandSubscription { tier: BrandTier; status: string; seats: number; monthlyBoostQuota: number; boostsUsed: number; }
 export interface BrandPost { id: string; kind: 'release' | 'promo' | 'announcement'; title: string; body?: string; imageUrl?: string; linkUrl?: string; releaseDate?: string; boosted: boolean; createdAt: string; }
 export interface BrandSignupRow extends BrandSignupInput { id: string; status: string; createdAt: string; userId?: string; linkedBrandId?: string; }
@@ -25,9 +25,15 @@ function slugify(s: string): string {
   return s.toLowerCase().trim().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
+function csrfToken(): string {
+  if (typeof document === 'undefined') return '';
+  const m = document.cookie.match(/(?:^|; )mh_brand_csrf=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
 async function postJSON(url: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
   try {
-    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken() }, body: JSON.stringify(body) });
     const j = await r.json().catch(() => ({}));
     return { ok: r.ok && j.ok !== false, error: j.error };
   } catch { return { ok: false, error: 'Network error.' }; }
@@ -40,7 +46,7 @@ export async function getMyBrands(): Promise<MyBrand[]> {
     const r = await fetch('/api/brand-auth/session');
     const j = await r.json();
     if (!j.brand) return [];
-    return [{ id: j.brand.id, slug: j.brand.slug, name: j.brand.name, tier: j.brand.tier, role: 'owner' }];
+    return [{ id: j.brand.id, slug: j.brand.slug, name: j.brand.name, tier: j.brand.tier, role: 'owner', mfaEnabled: !!j.mfaEnabled }];
   } catch { return []; }
 }
 
@@ -53,7 +59,7 @@ export async function createBrandPost(_brandId: string, post: Omit<BrandPost, 'i
   return postJSON('/api/brand/post', post);
 }
 export async function deleteBrandPost(id: string): Promise<boolean> {
-  try { const r = await fetch(`/api/brand/post?id=${encodeURIComponent(id)}`, { method: 'DELETE' }); return r.ok; } catch { return false; }
+  try { const r = await fetch(`/api/brand/post?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'x-csrf-token': csrfToken() } }); return r.ok; } catch { return false; }
 }
 export async function useBoost(_brandId: string): Promise<boolean> {
   return (await postJSON('/api/brand/boost', {})).ok;
@@ -67,6 +73,17 @@ export async function updateBrandDetails(_brandId: string, patch: { logoUrl?: st
 export async function setBrandOnboarding(_brandId: string, onboarding: BrandDetail['onboarding']): Promise<boolean> {
   return (await postJSON('/api/brand/onboarding', { onboarding })).ok;
 }
+
+export interface MfaSetup { secret: string; uri: string; qr: string | null }
+export async function mfaSetup(): Promise<{ ok: boolean; setup?: MfaSetup; error?: string }> {
+  try {
+    const r = await fetch('/api/brand/mfa/setup', { method: 'POST', headers: { 'x-csrf-token': csrfToken() } });
+    const j = await r.json();
+    return r.ok && j.ok ? { ok: true, setup: { secret: j.secret, uri: j.uri, qr: j.qr } } : { ok: false, error: j.error };
+  } catch { return { ok: false, error: 'Network error.' }; }
+}
+export async function mfaEnable(code: string) { return postJSON('/api/brand/mfa/enable', { code }); }
+export async function mfaDisable(code: string) { return postJSON('/api/brand/mfa/disable', { code }); }
 
 export async function brandLogout(): Promise<void> {
   try { await fetch('/api/brand-auth/logout', { method: 'POST' }); } catch { /* ignore */ }

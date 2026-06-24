@@ -12,15 +12,18 @@ export default function BrandLoginPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [unverified, setUnverified] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [code, setCode] = useState('');
 
   async function login() {
     setBusy(true); setErr(null);
     try {
       const r = await fetch('/api/brand-auth/login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, recaptchaToken: token }),
+        body: JSON.stringify({ email, password, recaptchaToken: token, code: mfaRequired ? code : undefined }),
       });
       const j = await r.json();
+      if (j.mfaRequired) { setMfaRequired(true); setBusy(false); setErr(null); return; }
       if (!r.ok || !j.ok) { setErr(j.error ?? 'Login failed.'); setUnverified(j.code === 'unverified'); setBusy(false); return; }
       location.href = '/brand';
     } catch { setErr('Network error.'); setBusy(false); }
@@ -37,6 +40,10 @@ export default function BrandLoginPage() {
         <input className={input} type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
         <input className={input} type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') login(); }} />
+        {mfaRequired && (
+          <input className={input} inputMode="numeric" autoFocus placeholder="6-digit authentication code" value={code}
+            onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') login(); }} />
+        )}
         <Recaptcha onToken={setToken} />
         {err && <p className="text-sm text-red-300">{err}</p>}
         {unverified && <Link href="/brand/verify" className="block text-xs text-ember-400 underline">Verify your email →</Link>}

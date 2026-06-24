@@ -19,31 +19,27 @@ export async function POST(req: Request) {
   const sb = svc();
   if (!sb) return NextResponse.json({ ok: false, error: 'Service unavailable.' }, { status: 503 });
 
-  // One account per email.
-  const { data: existing } = await sb.from('brand_auth_accounts').select('id').ilike('email', String(email)).maybeSingle();
-  if (existing) return NextResponse.json({ ok: false, error: 'An application already exists for this email.' }, { status: 409 });
-
-  const { error: reqErr } = await sb.from('brand_signup_requests').insert({
-    user_id: null, contact_name: contactName, company, business_address: businessAddress ?? null,
-    email, website: website ?? null, phone: phone ?? null, tax_id: taxId ?? null,
-    tier: tier === 'premium' ? 'premium' : 'standard', notes: notes ?? null,
-  } as never);
-  if (reqErr) return NextResponse.json({ ok: false, error: reqErr.message }, { status: 500 });
-
+  // Atomic: request + account inserted in one transaction (no orphan rows).
   const password_hash = await hashPassword(String(password));
-  const { data: acct, error: acctErr } = await sb.from('brand_auth_accounts').insert({ email, password_hash, status: 'pending' } as never).select('id').single();
-  if (acctErr || !acct) return NextResponse.json({ ok: false, error: acctErr?.message ?? 'Could not create account.' }, { status: 500 });
-  const accountId = (acct as { id: string }).id;
+  const { data: accountId, error } = await sb.rpc('create_brand_signup', {
+    p_contact_name: contactName, p_company: company, p_email: email, p_password_hash: password_hash,
+    p_tier: tier === 'premium' ? 'premium' : 'standard', p_business_address: businessAddress ?? null,
+    p_website: website ?? null, p_phone: phone ?? null, p_tax_id: taxId ?? null, p_notes: notes ?? null,
+  });
+  if (error || !accountId) {
+    if (error?.message?.includes('account exists')) return NextResponse.json({ ok: false, error: 'An application already exists for this email.' }, { status: 409 });
+    return NextResponse.json({ ok: false, error: error?.message ?? 'Could not create account.' }, { status: 500 });
+  }
 
   // Email verification: send a link if an email provider is configured; otherwise
   // auto-verify (can't verify an address with no way to email it) so the brand isn't
   // locked out — configure RESEND_API_KEY to enforce real verification.
   let emailSent = false;
   if (emailProviderConfigured()) {
-    const token = await createEmailVerification(accountId);
+    const token = await createEmailVerification(accountId as string);
     if (token) emailSent = await sendVerificationEmail(String(email), new URL(req.url).origin, token);
   } else {
-    await markEmailVerified(accountId);
+    await markEmailVerified(accountId as string);
   }
 
   return NextResponse.json({ ok: true, emailSent });

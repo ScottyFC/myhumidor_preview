@@ -4,6 +4,8 @@ import { randomBytes, createHash } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { supabaseService } from '@/lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { authenticator } from 'otplib';
+import QRCode from 'qrcode';
 
 /** Untyped service-role client (brand_* tables aren't in the generated Database type). */
 export function svc(): SupabaseClient | null {
@@ -141,15 +143,23 @@ export async function getAccountByEmail(email: string): Promise<{ id: string; st
 /** Send an email via Resend if RESEND_API_KEY is configured; returns whether it sent. */
 export async function sendBrandEmail(to: string, subject: string, html: string): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.BRAND_EMAIL_FROM || 'MyHumidor <no-reply@myhumidor.shop>';
-  if (!key) return false;
+  const from = process.env.BRAND_EMAIL_FROM || 'MyHumidor <onboarding@resend.dev>';
+  if (!key) { console.warn('[brand-email] RESEND_API_KEY not set — email not sent to', to); return false; }
   try {
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ from, to, subject, html }),
     });
-    return r.ok;
-  } catch { return false; }
+    if (!r.ok) {
+      const body = await r.text().catch(() => '');
+      console.error(`[brand-email] Resend rejected (${r.status}) from="${from}" to="${to}": ${body}`);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error('[brand-email] send failed:', e);
+    return false;
+  }
 }
 
 // ── Email verification (token-based, hashed at rest) ───────────────────────
@@ -185,4 +195,43 @@ export async function sendVerificationEmail(email: string, origin: string, token
   const link = `${origin}/brand/verify?token=${token}`;
   return sendBrandEmail(email, 'Verify your MyHumidor brand email',
     `<p>Confirm your email to finish your MyHumidor brand application (valid 24 hours):</p><p><a href="${link}">${link}</a></p>`);
+}
+
+// ── CSRF (double-submit cookie) ────────────────────────────────────────────
+export const BRAND_CSRF_COOKIE = 'mh_brand_csrf';
+export function generateCsrf(): string { return randomBytes(24).toString('hex'); }
+export function csrfCookieOptions(maxAgeDays = SESSION_DAYS) {
+  // NOT httpOnly — the client reads it to echo back in the x-csrf-token header.
+  return { name: BRAND_CSRF_COOKIE, httpOnly: false as const, secure: true as const, sameSite: 'lax' as const, path: '/', maxAge: maxAgeDays * 86400 };
+}
+/** Validate the double-submit CSRF token on a state-changing request. */
+export async function validateCsrf(req: Request): Promise<boolean> {
+  const header = req.headers.get('x-csrf-token');
+  const cookie = (await cookies()).get(BRAND_CSRF_COOKIE)?.value;
+  return !!header && !!cookie && header === cookie;
+}
+
+// ── MFA (TOTP) ─────────────────────────────────────────────────────────────
+
+export function generateTotpSecret(): string { return authenticator.generateSecret(); }
+export function totpUri(email: string, secret: string): string {
+  return authenticator.keyuri(email, 'MyHumidor', secret);
+}
+export function verifyTotp(token: string, secret: string): boolean {
+  try { return authenticator.verify({ token: String(token).replace(/\s/g, ''), secret }); } catch { return false; }
+}
+export async function totpQrDataUrl(uri: string): Promise<string | null> {
+  try { return await QRCode.toDataURL(uri, { margin: 1, width: 200 }); } catch { return null; }
+}
+
+export async function getAccountMfa(accountId: string): Promise<{ enabled: boolean; secret: string | null } | null> {
+  const sb = svc(); if (!sb) return null;
+  const { data } = await sb.from('brand_auth_accounts').select('mfa_enabled, totp_secret').eq('id', accountId).maybeSingle();
+  const a = data as { mfa_enabled: boolean; totp_secret: string | null } | null;
+  return a ? { enabled: !!a.mfa_enabled, secret: a.totp_secret } : null;
+}
+export async function setAccountTotpSecret(accountId: string, secret: string | null, enabled: boolean): Promise<boolean> {
+  const sb = svc(); if (!sb) return false;
+  const { error } = await sb.from('brand_auth_accounts').update({ totp_secret: secret, mfa_enabled: enabled } as never).eq('id', accountId);
+  return !error;
 }

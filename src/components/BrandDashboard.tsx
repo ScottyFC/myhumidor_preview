@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Loader2, Rocket, Trash2, BarChart3, Megaphone, Users, Store, Plus, Sparkles } from 'lucide-react';
+import { Loader2, Rocket, Trash2, BarChart3, Megaphone, Users, Store, Plus, Sparkles, ShieldCheck, ShieldOff } from 'lucide-react';
 import {
   getMyBrands, brandState, brandLogout, createBrandPost, deleteBrandPost,
-  useBoost, submitReviewRequest,
+  useBoost, submitReviewRequest, mfaSetup, mfaEnable, mfaDisable, type MfaSetup,
   type MyBrand, type BrandSubscription, type BrandPost, type BrandDetail,
 } from '@/lib/brands';
 import { BrandOnboarding } from '@/components/BrandOnboarding';
@@ -93,6 +93,7 @@ export function BrandDashboard() {
 
       {detail && <BrandDetailsEditor brandId={active.id} detail={detail} onSaved={() => reload(active)} />}
       <AnalyticsPanel premium={isPremium} />
+      <SecurityPanel mfaEnabled={!!active.mfaEnabled} onChange={() => reload(active)} />
       <ReviewRequestPanel brandId={active.id} premium={isPremium} />
       <SeatsPanel seats={sub?.seats ?? 2} premium={isPremium} />
     </div>
@@ -218,6 +219,64 @@ function SeatsPanel({ seats, premium }: { seats: number; premium: boolean }) {
       <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Users size={18} className="text-ember-400" /> Team seats</h2>
       <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4 text-sm text-smoke-300">
         Your plan includes <span className="text-paper">{premium ? 'custom' : seats}</span> seats. To add a teammate, send them an invite from your account settings (they’ll be added as a manager once they accept).
+      </div>
+    </section>
+  );
+}
+
+
+function SecurityPanel({ mfaEnabled, onChange }: { mfaEnabled: boolean; onChange: () => void }) {
+  const [setup, setSetup] = useState<MfaSetup | null>(null);
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [disabling, setDisabling] = useState(false);
+
+  async function begin() { setErr(null); setBusy(true); const r = await mfaSetup(); setBusy(false); if (!r.ok || !r.setup) { setErr(r.error ?? 'Could not start setup.'); return; } setSetup(r.setup); }
+  async function confirm() { setErr(null); setBusy(true); const r = await mfaEnable(code); setBusy(false); if (!r.ok) { setErr(r.error ?? 'Invalid code.'); return; } setSetup(null); setCode(''); onChange(); }
+  async function disable() { setErr(null); setBusy(true); const r = await mfaDisable(code); setBusy(false); if (!r.ok) { setErr(r.error ?? 'Invalid code.'); return; } setDisabling(false); setCode(''); onChange(); }
+
+  const input = 'w-full rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 px-3 py-2 text-sm focus:border-ember-400/50 focus:outline-none';
+  return (
+    <section className="mt-8">
+      <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><ShieldCheck size={18} className="text-ember-400" /> Security</h2>
+      <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <div className="text-sm font-medium text-paper">Two-factor authentication {mfaEnabled && <span className="ml-1 rounded-full bg-ember-400/15 px-2 py-0.5 text-[10px] uppercase tracking-wide text-ember-200">On</span>}</div>
+            <div className="text-xs text-smoke-400">Require a 6-digit authenticator code at login.</div>
+          </div>
+          {!mfaEnabled && !setup && <button onClick={begin} disabled={busy} className="rounded-lg bg-ember-400 px-4 py-2 text-sm font-medium text-paper disabled:opacity-50">Enable</button>}
+          {mfaEnabled && !disabling && <button onClick={() => setDisabling(true)} className="inline-flex items-center gap-1.5 rounded-lg border-[0.5px] border-ember-400/20 px-3 py-2 text-xs text-smoke-300 hover:text-red-300"><ShieldOff size={14} /> Disable</button>}
+        </div>
+
+        {setup && (
+          <div className="mt-4 border-t border-ember-400/10 pt-4">
+            <p className="text-sm text-smoke-200">Scan this with your authenticator app, then enter the code to confirm.</p>
+            <div className="mt-3 flex flex-wrap items-center gap-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {setup.qr && <img src={setup.qr} alt="MFA QR code" className="h-40 w-40 rounded-lg bg-white p-2" />}
+              <div className="text-xs text-smoke-400">Can’t scan? Enter this key manually:<br /><code className="mt-1 inline-block break-all text-ember-100">{setup.secret}</code></div>
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <input className={input + ' max-w-[180px]'} inputMode="numeric" placeholder="6-digit code" value={code} onChange={(e) => setCode(e.target.value)} />
+              <button onClick={confirm} disabled={busy || !code} className="rounded-lg bg-ember-400 px-4 py-2 text-sm font-medium text-paper disabled:opacity-50">Confirm</button>
+              <button onClick={() => { setSetup(null); setCode(''); }} className="text-xs text-smoke-400 hover:text-paper">Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {disabling && (
+          <div className="mt-4 border-t border-ember-400/10 pt-4">
+            <p className="text-sm text-smoke-200">Enter a current authenticator code to turn off MFA.</p>
+            <div className="mt-3 flex items-center gap-2">
+              <input className={input + ' max-w-[180px]'} inputMode="numeric" placeholder="6-digit code" value={code} onChange={(e) => setCode(e.target.value)} />
+              <button onClick={disable} disabled={busy || !code} className="rounded-lg border-[0.5px] border-red-400/30 px-4 py-2 text-sm text-red-200 disabled:opacity-50">Disable MFA</button>
+              <button onClick={() => { setDisabling(false); setCode(''); }} className="text-xs text-smoke-400 hover:text-paper">Cancel</button>
+            </div>
+          </div>
+        )}
+        {err && <p className="mt-2 text-xs text-red-300">{err}</p>}
       </div>
     </section>
   );

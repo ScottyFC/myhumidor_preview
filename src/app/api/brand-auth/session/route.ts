@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getBrandSession } from '@/lib/brand-auth';
+import { getBrandSession, getAccountMfa } from '@/lib/brand-auth';
 
 export const runtime = 'nodejs';
 
 export async function GET() {
   const s = await getBrandSession();
-  return NextResponse.json({ brand: s?.brand ?? null });
+  if (!s) return NextResponse.json({ brand: null });
+  const mfa = await getAccountMfa(s.accountId);
+  return NextResponse.json({ brand: s.brand, mfaEnabled: !!mfa?.enabled });
 }

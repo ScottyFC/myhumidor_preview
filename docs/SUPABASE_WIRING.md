@@ -1,3 +1,29 @@
+## phase90 — Brand MFA + CSRF + transactional signup (RUN THIS MIGRATION)
+
+Also addresses "verification email not arriving."
+
+phase90.sql: adds `brand_auth_accounts.totp_secret` + `mfa_enabled`, and a
+`create_brand_signup` RPC (atomic request+account insert).
+
+- **Email fix**: `sendBrandEmail` now logs the exact Resend rejection (status + body) to
+  the server console, and the default From is `onboarding@resend.dev` (Resend's shared
+  testing sender — delivers only to YOUR Resend account email). Most "no email" cases are
+  (a) `RESEND_API_KEY` unset → nothing sends (signup auto-verifies), or (b) key set but
+  the From domain isn't verified in Resend → rejected. For production: verify
+  myhumidor.shop in Resend and set `BRAND_EMAIL_FROM` to an address on it. Check Vercel
+  logs for the `[brand-email]` line to see the real reason.
+- **CSRF**: double-submit token — a non-httpOnly `mh_brand_csrf` cookie is set at login;
+  the client echoes it as `x-csrf-token`; every `/api/brand/*` mutation + MFA route
+  validates it. NOTE: brands logged in before this deploy must log in again to get the
+  cookie (otherwise mutations 403).
+- **MFA (TOTP)**: enroll/enable/disable from the dashboard Security panel (QR via qrcode,
+  codes via otplib); login adds a code step when enabled. Routes under `/api/brand/mfa/*`.
+- **Transactional signup**: the signup route now calls `create_brand_signup` (one
+  transaction) — no orphan request/account rows on partial failure.
+
+Run phase89 (if not yet) + phase90. Residual: TOTP secret stored unencrypted at rest
+(encrypt for extra safety); no MFA recovery codes yet (a locked-out brand needs an admin
+to clear mfa_enabled). Compile-verified only.
 ## phase89 — Brand email verification + login page wiring (RUN THIS MIGRATION)
 
 `phase89.sql` adds `brand_auth_accounts.email_verified` and a hashed-token

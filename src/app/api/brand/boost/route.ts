@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getBrandSession, svc } from '@/lib/brand-auth';
+import { getBrandSession, svc, validateCsrf } from '@/lib/brand-auth';
 
 export const runtime = 'nodejs';
 
 // Consume one monthly boost (resets at the start of each month). Premium = unlimited.
-export async function POST() {
+export async function POST(req: Request) {
   const s = await getBrandSession();
   if (!s) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  if (!(await validateCsrf(req))) return NextResponse.json({ ok: false, error: 'Invalid request token.' }, { status: 403 });
   const sb = svc();
   if (!sb) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
 

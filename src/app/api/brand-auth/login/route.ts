@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { verifyPassword, verifyRecaptcha, createBrandSession, sessionCookieOptions, svc } from '@/lib/brand-auth';
+import { verifyPassword, verifyRecaptcha, createBrandSession, sessionCookieOptions, svc, verifyTotp, generateCsrf, csrfCookieOptions } from '@/lib/brand-auth';
 import { checkRateLimit, clearRateLimit, clientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export async function POST(req: Request) {
   const b = await req.json().catch(() => null);
   if (!b) return NextResponse.json({ ok: false, error: 'bad_request' }, { status: 400 });
-  const { email, password, recaptchaToken } = b;
+  const { email, password, recaptchaToken, code } = b;
 
   const ip = clientIp(req);
   const ipLim = await checkRateLimit(`brandlogin:ip:${ip}`, { max: 12, windowSec: 900, lockSec: 900 });
@@ -22,8 +22,8 @@ export async function POST(req: Request) {
   const sb = svc();
   if (!sb) return NextResponse.json({ ok: false, error: 'Service unavailable.' }, { status: 503 });
 
-  const { data } = await sb.from('brand_auth_accounts').select('id, password_hash, status, brand_id, email_verified').ilike('email', String(email)).maybeSingle();
-  const a = data as { id: string; password_hash: string; status: string; brand_id: string | null; email_verified: boolean } | null;
+  const { data } = await sb.from('brand_auth_accounts').select('id, password_hash, status, brand_id, email_verified, mfa_enabled, totp_secret').ilike('email', String(email)).maybeSingle();
+  const a = data as { id: string; password_hash: string; status: string; brand_id: string | null; email_verified: boolean; mfa_enabled: boolean; totp_secret: string | null } | null;
   // Always run a compare to reduce timing leakage on unknown emails.
   const ok = a ? await verifyPassword(String(password), a.password_hash) : await verifyPassword(String(password), '$2a$12$0000000000000000000000000000000000000000000000000000');
   if (!a || !ok) return NextResponse.json({ ok: false, error: 'Invalid email or password.' }, { status: 401 });
@@ -31,11 +31,17 @@ export async function POST(req: Request) {
   if (a.status === 'pending') return NextResponse.json({ ok: false, error: 'Your application is still pending approval.' }, { status: 403 });
   if (a.status !== 'active' || !a.brand_id) return NextResponse.json({ ok: false, error: 'This account isn’t active. Contact MyHumidor.' }, { status: 403 });
 
+  if (a.mfa_enabled) {
+    if (!code) return NextResponse.json({ ok: false, mfaRequired: true });
+    if (!a.totp_secret || !verifyTotp(String(code), a.totp_secret)) return NextResponse.json({ ok: false, error: 'Invalid authentication code.' }, { status: 401 });
+  }
+
   await clearRateLimit(emailKey);
   const token = await createBrandSession(a.id);
   if (!token) return NextResponse.json({ ok: false, error: 'Could not start a session.' }, { status: 500 });
 
   const res = NextResponse.json({ ok: true });
   res.cookies.set({ ...sessionCookieOptions(), value: token });
+  res.cookies.set({ ...csrfCookieOptions(), value: generateCsrf() });
   return res;
 }
