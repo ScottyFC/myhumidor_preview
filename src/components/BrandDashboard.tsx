@@ -12,6 +12,7 @@ import { BrandOnboarding } from '@/components/BrandOnboarding';
 import { BrandDetailsEditor } from '@/components/BrandDetailsEditor';
 import { ListedCigars } from '@/components/ListedCigars';
 import { AudiencePanel } from '@/components/AudiencePanel';
+import { BrandBadges } from '@/components/BrandBadges';
 
 export function BrandDashboard() {
   const [loading, setLoading] = useState(true);
@@ -93,6 +94,7 @@ export function BrandDashboard() {
       <nav className="mt-6 flex flex-wrap gap-1 border-b border-ember-400/10 pb-2 text-sm">
         <a href="#listed-cigars" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Listed Cigars</a>
         <a href="#audience" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Audience</a>
+        <a href="#badges" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Badges</a>
         <a href="#releases" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Releases</a>
         <a href="#brand-details" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Brand page</a>
         <a href="#reviews" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Reviews</a>
@@ -101,6 +103,7 @@ export function BrandDashboard() {
 
       <ListedCigars slug={active.slug} />
       <AudiencePanel premium={isPremium} />
+      <BrandBadges />
 
       {detail && (
         <BrandOnboarding brandId={active.id} slug={active.slug} detail={detail} productCount={productCount} postCount={posts.length} onChange={() => reload(active)} />

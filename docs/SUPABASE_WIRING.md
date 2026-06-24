@@ -1,3 +1,26 @@
+## phase95 — Idempotent CSV sync + brand badges (RUN THIS MIGRATION)
+
+`phase95.sql` adds `badges.brand_id` + `badges.created_at` (brand badges reuse the existing
+badges/user_badges system).
+
+CSV bulk import is now an idempotent SYNC: rows match existing cigars by name
+(case-insensitive, within the brand) and UPDATE price/status/size/country/image (only fields
+the CSV provides — blanks don't wipe data); unmatched names are inserted. Re-importing the
+same file no longer duplicates. Result reads "X added, Y updated". (No deletes — removing a
+row from the CSV does not remove the cigar.)
+
+Brand badges (dashboard → Badges): create a badge with title, trigger (how members earn it),
+and uploaded artwork (via the brand upload route, `kind=badge`, upload-only). Quota:
+Standard = 1 badge per calendar quarter (enforced server-side); Premium = unlimited. Each
+badge shows a holder count; Premium can download a CSV of who holds it
+(`/api/brand/badges/holders`, premium-gated + ownership-checked). Routes under
+`/api/brand/badges`.
+
+Important: the trigger is stored as the badge `criteria`, so AUTOMATIC awarding depends on
+the existing criteria evaluator recognizing the phrasing (e.g. "rate N cigars from {Brand}").
+Free-text triggers display fine but won't auto-grant unless they match a recognized pattern —
+a rules/auto-award follow-up would close that. Standard 1/quarter is calendar-quarter (UTC).
+Compile-verified only.
 ## Brand follow deep-linking + bulk CSV cigar import (NO new migration)
 
 Follow deep-linking: `notifications` now supports `brand_post` / `brand_inventory` types —

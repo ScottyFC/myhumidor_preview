@@ -57,7 +57,7 @@ export function CsvCigarImport({ onImported, onClose }: { onImported: () => void
   async function importNow() {
     setBusy(true); const r = await bulkAddCigars(rows); setBusy(false);
     if (!r.ok) { setResult(r.error ?? 'Import failed.'); return; }
-    setResult(`Imported ${r.inserted} cigar${r.inserted === 1 ? '' : 's'}${r.skipped ? `, skipped ${r.skipped}` : ''}.`);
+    setResult(`Synced: ${r.inserted ?? 0} added${r.updated ? `, ${r.updated} updated` : ''}.`);
     setText(''); setRows([]); onImported();
   }
 
@@ -68,7 +68,7 @@ export function CsvCigarImport({ onImported, onClose }: { onImported: () => void
         <div className="flex items-center gap-2 text-sm font-medium text-paper"><FileSpreadsheet size={16} className="text-ember-400" /> Bulk import (CSV)</div>
         <button onClick={onClose} className="text-smoke-400 hover:text-paper"><X size={16} /></button>
       </div>
-      <p className="mt-1 text-xs text-smoke-400">Columns: <code className="text-ember-100">{COLS.join(', ')}</code>. Image links must be public URLs (hosted on your site or elsewhere). Status: available, coming_soon, or discontinued.</p>
+      <p className="mt-1 text-xs text-smoke-400">Columns: <code className="text-ember-100">{COLS.join(', ')}</code>. Image links must be public URLs. Status: available, coming_soon, or discontinued. Re-importing matches by name and updates price/status — no duplicates.</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/30 px-3 py-2 text-xs text-ember-100 hover:bg-ember-400/10"><Upload size={13} /> Upload .csv<input type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => onFile(e.target.files?.[0])} /></label>
         <button onClick={template} className="inline-flex items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/20 px-3 py-2 text-xs text-smoke-200 hover:text-paper"><Download size={13} /> Download template</button>

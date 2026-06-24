@@ -194,7 +194,7 @@ export async function changeBrandPassword(current: string, next: string) {
 }
 
 /** Upload a brand logo/banner via the service-role route (brand-auth, not Supabase user). */
-export async function uploadBrandImage(kind: 'logo' | 'banner' | 'cigar', file: File): Promise<{ url: string | null; error: string | null }> {
+export async function uploadBrandImage(kind: 'logo' | 'banner' | 'cigar' | 'badge', file: File): Promise<{ url: string | null; error: string | null }> {
   try {
     const fd = new FormData(); fd.append('file', file); fd.append('kind', kind);
     const r = await fetch('/api/brand/upload', { method: 'POST', headers: { 'x-csrf-token': csrfToken() }, body: fd });
@@ -233,10 +233,27 @@ export async function removeBrandCigar(id: string): Promise<boolean> {
 }
 
 export interface BulkCigarRow { name: string; size?: string; country?: string; price?: string | number | null; status?: string; imageUrl?: string }
-export async function bulkAddCigars(rows: BulkCigarRow[]): Promise<{ ok: boolean; inserted?: number; skipped?: number; errors?: string[]; error?: string }> {
+export async function bulkAddCigars(rows: BulkCigarRow[]): Promise<{ ok: boolean; inserted?: number; updated?: number; errors?: string[]; error?: string }> {
   try {
     const r = await fetch('/api/brand/cigars/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken() }, body: JSON.stringify({ rows }) });
     const j = await r.json();
-    return r.ok && j.ok ? { ok: true, inserted: j.inserted, skipped: j.skipped, errors: j.errors } : { ok: false, error: j.error, errors: j.errors };
+    return r.ok && j.ok ? { ok: true, inserted: j.inserted, updated: j.updated, errors: j.errors } : { ok: false, error: j.error, errors: j.errors };
   } catch { return { ok: false, error: 'Network error.' }; }
+}
+
+// ── Brand badges ───────────────────────────────────────────────────────────
+export interface BrandBadge { id: string; title: string; trigger: string; imageUrl: string | null; status: string; holders: number; createdAt: string }
+export interface BrandBadgeState { badges: BrandBadge[]; premium: boolean; usedThisQuarter: number; limit: number | null }
+export async function getBrandBadges(): Promise<BrandBadgeState | null> {
+  try { const r = await fetch('/api/brand/badges'); const j = await r.json(); return r.ok && j.ok ? { badges: j.badges, premium: j.premium, usedThisQuarter: j.usedThisQuarter, limit: j.limit } : null; } catch { return null; }
+}
+export async function createBrandBadge(input: { title: string; trigger: string; imageUrl?: string | null }) {
+  return postJSON('/api/brand/badges', input);
+}
+export async function deleteBrandBadge(id: string): Promise<boolean> {
+  try { const r = await fetch(`/api/brand/badges?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: { 'x-csrf-token': csrfToken() } }); return r.ok; } catch { return false; }
+}
+export interface BadgeHolder { handle: string; displayName: string; earnedAt: string }
+export async function getBadgeHolders(badgeId: string): Promise<{ badge: string; holders: BadgeHolder[] } | null> {
+  try { const r = await fetch(`/api/brand/badges/holders?badgeId=${encodeURIComponent(badgeId)}`); const j = await r.json(); return r.ok && j.ok ? { badge: j.badge, holders: j.holders } : null; } catch { return null; }
 }

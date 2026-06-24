@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   let form: FormData;
   try { form = await req.formData(); } catch { return NextResponse.json({ ok: false, error: 'Bad upload.' }, { status: 400 }); }
   const file = form.get('file');
-  const k = String(form.get('kind') || 'logo'); const kind = k === 'banner' ? 'banner' : k === 'cigar' ? 'cigar' : 'logo';
+  const k = String(form.get('kind') || 'logo'); const kind = k === 'banner' ? 'banner' : k === 'logo' ? 'logo' : k;  // logo/banner persist to brand; others (cigar, badge) are upload-only
   if (!(file instanceof Blob)) return NextResponse.json({ ok: false, error: 'No file.' }, { status: 400 });
   if (file.size > MAX) return NextResponse.json({ ok: false, error: 'File too large (max 8MB).' }, { status: 400 });
   const type = file.type || 'image/jpeg';
