@@ -35,7 +35,7 @@ export default async function BrandPage({ params }: PageProps) {
       const sb = await supabaseServer();
       const { data } = await (sb as unknown as import('@supabase/supabase-js').SupabaseClient)
         .from('catalog_cigars')
-        .select('id, brand, name, country, price, size, slug, status')
+        .select('id, brand, name, country, price, size, slug, status, image_url')
         .or(`slug.eq.${slug},slug.ilike.${slug}-%`)
         .limit(500);
       for (const r of data ?? []) {
@@ -46,6 +46,7 @@ export default async function BrandPage({ params }: PageProps) {
           uuid: String(r.id), brand: r.brand as string, name: r.name as string,
           country: (r.country as string) ?? '', price: (r.price as number) ?? null,
           size: (r.size as string) ?? '', slug: r.slug as string,
+          image_url: ((r as { image_url?: string }).image_url) ?? undefined,
         });
       }
     } catch { /* ignore */ }

@@ -1,3 +1,20 @@
+## Brand cigar submission with photo (NO new migration)
+
+Signed-in brand users can now submit a cigar WITH a picture; it is auto-approved and
+written straight to `catalog_cigars` (no review queue) and appears immediately on the
+front end. Uses the existing `image_url` column + phase93.
+
+- `/api/brand/upload` now accepts `kind='cigar'` — uploads to the public `submissions`
+  bucket and returns the URL WITHOUT touching the brand row (logo/banner still persist to
+  the brand).
+- The "Add cigar" form has a photo picker (preview, ≤8MB, images only). On submit it
+  uploads the image, then POSTs the cigar with `imageUrl` → stored as `catalog_cigars.image_url`.
+- The image shows in the dashboard list, on `/brands/[slug]` (carried through the merge),
+  and on `/cigars/[slug]` (already selects image_url). Falls back to the image resolver if
+  no photo is provided.
+
+Auto-approval is intentional (brands are trusted) — this bypasses the normal
+cigar_submissions review flow. Single image per cigar. Compile-verified only.
 ## phase93 — Brand self-serve cigar catalog (RUN THIS MIGRATION)
 
 `phase93.sql` adds `catalog_cigars.brand_id` + `status` (available/coming_soon/discontinued)

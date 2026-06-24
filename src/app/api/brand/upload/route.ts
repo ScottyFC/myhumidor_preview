@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   let form: FormData;
   try { form = await req.formData(); } catch { return NextResponse.json({ ok: false, error: 'Bad upload.' }, { status: 400 }); }
   const file = form.get('file');
-  const kind = String(form.get('kind') || 'logo') === 'banner' ? 'banner' : 'logo';
+  const k = String(form.get('kind') || 'logo'); const kind = k === 'banner' ? 'banner' : k === 'cigar' ? 'cigar' : 'logo';
   if (!(file instanceof Blob)) return NextResponse.json({ ok: false, error: 'No file.' }, { status: 400 });
   if (file.size > MAX) return NextResponse.json({ ok: false, error: 'File too large (max 8MB).' }, { status: 400 });
   const type = file.type || 'image/jpeg';
@@ -30,7 +30,10 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   const url = sb.storage.from('submissions').getPublicUrl(path).data.publicUrl;
 
-  // Persist straight onto the brand so it publishes immediately.
-  await sb.from('brands').update({ [kind === 'logo' ? 'logo_url' : 'banner_url']: url } as never).eq('id', s.brandId);
+  // Logo/banner persist straight onto the brand; cigar images are returned for the
+  // add-cigar call to store on the catalog row.
+  if (kind === 'logo' || kind === 'banner') {
+    await sb.from('brands').update({ [kind === 'logo' ? 'logo_url' : 'banner_url']: url } as never).eq('id', s.brandId);
+  }
   return NextResponse.json({ ok: true, url });
 }

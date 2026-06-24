@@ -194,7 +194,7 @@ export async function changeBrandPassword(current: string, next: string) {
 }
 
 /** Upload a brand logo/banner via the service-role route (brand-auth, not Supabase user). */
-export async function uploadBrandImage(kind: 'logo' | 'banner', file: File): Promise<{ url: string | null; error: string | null }> {
+export async function uploadBrandImage(kind: 'logo' | 'banner' | 'cigar', file: File): Promise<{ url: string | null; error: string | null }> {
   try {
     const fd = new FormData(); fd.append('file', file); fd.append('kind', kind);
     const r = await fetch('/api/brand/upload', { method: 'POST', headers: { 'x-csrf-token': csrfToken() }, body: fd });
@@ -218,11 +218,11 @@ export async function removeTeamMember(id: string): Promise<boolean> {
 
 // ── Brand self-serve catalog ───────────────────────────────────────────────
 export type CigarStatus = 'available' | 'coming_soon' | 'discontinued';
-export interface BrandCigar { slug: string; name: string; size: string; country: string; price: number | null; status: CigarStatus; id: string | null; owned: boolean }
+export interface BrandCigar { slug: string; name: string; size: string; country: string; price: number | null; status: CigarStatus; id: string | null; owned: boolean; imageUrl: string | null }
 export async function getBrandCigars(): Promise<BrandCigar[]> {
   try { const r = await fetch('/api/brand/cigars'); const j = await r.json(); return j.cigars ?? []; } catch { return []; }
 }
-export async function addBrandCigar(input: { name: string; size?: string; country?: string; price?: string | number | null; status?: CigarStatus }) {
+export async function addBrandCigar(input: { name: string; size?: string; country?: string; price?: string | number | null; status?: CigarStatus; imageUrl?: string | null }) {
   return postJSON('/api/brand/cigars', input);
 }
 export async function updateBrandCigarStatus(id: string, status: CigarStatus): Promise<boolean> {

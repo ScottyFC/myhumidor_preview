@@ -13,18 +13,18 @@ export async function GET() {
   const s = await getBrandSession();
   if (!s) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   const slug = s.brand.slug;
-  const out = new Map<string, { slug: string; name: string; size: string; country: string; price: number | null; status: Status; id: string | null; owned: boolean }>();
+  const out = new Map<string, { slug: string; name: string; size: string; country: string; price: number | null; status: Status; id: string | null; owned: boolean; imageUrl: string | null }>();
   // Static catalog cigars (read-only — a brand can't delete catalog history).
-  for (const c of cigarsByBrand(slug).cigars) out.set(c.slug, { slug: c.slug, name: c.name, size: c.size ?? '', country: c.country ?? '', price: c.price ?? null, status: 'available', id: null, owned: false });
+  for (const c of cigarsByBrand(slug).cigars) out.set(c.slug, { slug: c.slug, name: c.name, size: c.size ?? '', country: c.country ?? '', price: c.price ?? null, status: 'available', id: null, owned: false, imageUrl: c.image_url ?? null });
 
   const sb = svc();
   if (sb) {
     try {
-      const { data } = await sb.from('catalog_cigars').select('id, brand, brand_id, name, country, price, size, slug, status').or(`brand_id.eq.${s.brandId},slug.eq.${slug},slug.ilike.${slug}-%`).limit(500);
+      const { data } = await sb.from('catalog_cigars').select('id, brand, brand_id, name, country, price, size, slug, status, image_url').or(`brand_id.eq.${s.brandId},slug.eq.${slug},slug.ilike.${slug}-%`).limit(500);
       for (const r of (data ?? []) as Record<string, unknown>[]) {
         const owned = r.brand_id === s.brandId;
         if (!owned && brandSlug(r.brand as string) !== slug) continue;
-        out.set(r.slug as string, { slug: r.slug as string, name: r.name as string, size: (r.size as string) ?? '', country: (r.country as string) ?? '', price: (r.price as number) ?? null, status: (r.status as Status) ?? 'available', id: r.id as string, owned });
+        out.set(r.slug as string, { slug: r.slug as string, name: r.name as string, size: (r.size as string) ?? '', country: (r.country as string) ?? '', price: (r.price as number) ?? null, status: (r.status as Status) ?? 'available', id: r.id as string, owned, imageUrl: (r.image_url as string) ?? null });
       }
     } catch { /* ignore */ }
   }
@@ -50,6 +50,7 @@ export async function POST(req: Request) {
   const { data: row, error } = await sb.from('catalog_cigars').insert({
     brand: s.brand.name, brand_id: s.brandId, name, country: b.country || null,
     price: Number.isFinite(price as number) ? price : null, size: b.size || null, slug, status,
+    image_url: b.imageUrl || null,
   } as never).select('id, name, size, country, price, slug, status').single();
   if (error || !row) return NextResponse.json({ ok: false, error: error?.message ?? 'Could not add cigar.' }, { status: 500 });
   return NextResponse.json({ ok: true, cigar: row });
