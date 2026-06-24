@@ -10,12 +10,11 @@ export async function POST(req: Request) {
   const sb = svc();
   if (!sb) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
   const b = await req.json().catch(() => ({}));
-  if (!b.cigarName) return NextResponse.json({ ok: false, error: 'Which cigar?' }, { status: 400 });
-  // Priority is a premium entitlement — decided server-side, not by the client.
-  const priority = s.brand.tier === 'premium';
-  const { error } = await sb.from('brand_review_requests').insert({
-    brand_id: s.brandId, cigar_name: b.cigarName, cigar_slug: b.cigarSlug ?? null, message: b.message ?? null, priority, email: s.email, status: 'awaiting',
+  if (!b.subject || !b.body) return NextResponse.json({ ok: false, error: 'Add a subject and a message.' }, { status: 400 });
+  const { error } = await sb.from('support_tickets').insert({
+    brand_id: s.brandId, email: s.email, subject: String(b.subject).slice(0, 200), body: String(b.body).slice(0, 4000),
+    priority: s.brand.tier === 'premium',
   } as never);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, priority });
+  return NextResponse.json({ ok: true });
 }

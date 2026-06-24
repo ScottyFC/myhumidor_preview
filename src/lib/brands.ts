@@ -14,7 +14,7 @@ export interface BrandSignupInput {
   contactName: string; company: string; businessAddress?: string; email: string;
   website?: string; phone?: string; taxId?: string; tier: BrandTier; notes?: string;
 }
-export interface MyBrand { id: string; slug: string; name: string; role: string; tier: BrandTier; mfaEnabled?: boolean; }
+export interface MyBrand { id: string; slug: string; name: string; role: string; tier: BrandTier; mfaEnabled?: boolean; email?: string; }
 export interface BrandSubscription { tier: BrandTier; status: string; seats: number; monthlyBoostQuota: number; boostsUsed: number; }
 export interface BrandPost { id: string; kind: 'release' | 'promo' | 'announcement'; title: string; body?: string; imageUrl?: string; linkUrl?: string; releaseDate?: string; boosted: boolean; createdAt: string; }
 export interface BrandSignupRow extends BrandSignupInput { id: string; status: string; createdAt: string; userId?: string; linkedBrandId?: string; }
@@ -46,7 +46,7 @@ export async function getMyBrands(): Promise<MyBrand[]> {
     const r = await fetch('/api/brand-auth/session');
     const j = await r.json();
     if (!j.brand) return [];
-    return [{ id: j.brand.id, slug: j.brand.slug, name: j.brand.name, tier: j.brand.tier, role: 'owner', mfaEnabled: !!j.mfaEnabled }];
+    return [{ id: j.brand.id, slug: j.brand.slug, name: j.brand.name, tier: j.brand.tier, role: 'owner', mfaEnabled: !!j.mfaEnabled, email: j.email }];
   } catch { return []; }
 }
 
@@ -121,3 +121,74 @@ export async function adminLinkBrandOwner(brandId: string, userId: string): Prom
 }
 
 export { slugify as brandSlugify };
+
+// ── Brand: support tickets ─────────────────────────────────────────────────
+export async function submitSupportTicket(subject: string, body: string) {
+  return postJSON('/api/brand/support', { subject, body });
+}
+
+// ── Super-admin: billing, reviews, tickets ─────────────────────────────────
+export interface ApprovedBrandRow { brandId: string; name: string; slug: string; tier: BrandTier; subStatus: string; paymentMethod: string | null; contractAmountCents: number | null; contactEmail: string | null; seats: number }
+export interface ReviewReqRow { id: string; brandName: string; tier: BrandTier; email: string | null; cigarName: string; message: string | null; priority: boolean; status: string; createdAt: string }
+export interface TicketRow { id: string; brandName: string; tier: BrandTier; email: string | null; subject: string; body: string; priority: boolean; status: string; createdAt: string }
+export interface InvoiceRow { id: string; brandName: string; amountCents: number; description: string | null; period: string | null; status: string; dueDate: string | null; createdAt: string }
+
+export async function listApprovedBrands(): Promise<ApprovedBrandRow[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data } = await sb().from('brand_subscriptions').select('brand_id, tier, status, seats, payment_method, contract_amount_cents, brands(name, slug, contact_email)').order('created_at', { ascending: false });
+  return (data ?? []).map((r: Record<string, unknown>) => {
+    const b = (r.brands ?? {}) as Record<string, unknown>;
+    return { brandId: r.brand_id as string, name: (b.name as string) ?? '—', slug: (b.slug as string) ?? '', tier: r.tier as BrandTier,
+      subStatus: r.status as string, paymentMethod: (r.payment_method as string) ?? null, contractAmountCents: (r.contract_amount_cents as number) ?? null,
+      contactEmail: (b.contact_email as string) ?? null, seats: (r.seats as number) ?? 0 };
+  });
+}
+export async function setSubscriptionStatus(brandId: string, status: string, amountCents?: number): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  const { error } = await sb().rpc('set_brand_subscription_status', { p_brand_id: brandId, p_status: status, p_amount_cents: amountCents ?? null });
+  return !error;
+}
+export async function setPaymentMethod(brandId: string, method: string): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  const { error } = await sb().rpc('set_brand_payment_method', { p_brand_id: brandId, p_method: method });
+  return !error;
+}
+export async function createInvoice(p: { brandId: string; amountCents: number; description?: string; period?: string; dueDate?: string; send: boolean }): Promise<{ ok: boolean; emailed?: boolean; error?: string }> {
+  try {
+    const r = await fetch('/api/admin/invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) });
+    const j = await r.json(); return r.ok && j.ok ? { ok: true, emailed: j.emailed } : { ok: false, error: j.error };
+  } catch { return { ok: false, error: 'Network error.' }; }
+}
+export async function listInvoices(): Promise<InvoiceRow[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data } = await sb().from('brand_invoices').select('id, amount_cents, description, period, status, due_date, created_at, brands(name)').order('created_at', { ascending: false });
+  return (data ?? []).map((r: Record<string, unknown>) => ({ id: r.id as string, brandName: (((r.brands ?? {}) as Record<string, unknown>).name as string) ?? '—',
+    amountCents: r.amount_cents as number, description: (r.description as string) ?? null, period: (r.period as string) ?? null,
+    status: r.status as string, dueDate: (r.due_date as string) ?? null, createdAt: r.created_at as string }));
+}
+export async function listReviewRequests(): Promise<ReviewReqRow[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data } = await sb().from('brand_review_requests').select('id, cigar_name, message, priority, status, email, created_at, brands(name, tier)').order('priority', { ascending: false }).order('created_at', { ascending: false });
+  return (data ?? []).map((r: Record<string, unknown>) => { const b = (r.brands ?? {}) as Record<string, unknown>;
+    return { id: r.id as string, brandName: (b.name as string) ?? '—', tier: (b.tier as BrandTier) ?? 'standard', email: (r.email as string) ?? null,
+      cigarName: r.cigar_name as string, message: (r.message as string) ?? null, priority: !!r.priority, status: r.status as string, createdAt: r.created_at as string }; });
+}
+export async function updateReviewStatus(id: string, status: string): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  const { error } = await sb().from('brand_review_requests').update({ status }).eq('id', id); return !error;
+}
+export async function listSupportTickets(): Promise<TicketRow[]> {
+  if (!isSupabaseConfigured) return [];
+  const { data } = await sb().from('support_tickets').select('id, subject, body, priority, status, email, created_at, brands(name, tier)').order('priority', { ascending: false }).order('created_at', { ascending: false });
+  return (data ?? []).map((r: Record<string, unknown>) => { const b = (r.brands ?? {}) as Record<string, unknown>;
+    return { id: r.id as string, brandName: (b.name as string) ?? '—', tier: (b.tier as BrandTier) ?? 'standard', email: (r.email as string) ?? null,
+      subject: r.subject as string, body: r.body as string, priority: !!r.priority, status: r.status as string, createdAt: r.created_at as string }; });
+}
+export async function updateTicketStatus(id: string, status: string): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
+  const { error } = await sb().from('support_tickets').update({ status, updated_at: new Date().toISOString() }).eq('id', id); return !error;
+}
+
+export async function changeBrandPassword(current: string, next: string) {
+  return postJSON('/api/brand/password', { current, next });
+}

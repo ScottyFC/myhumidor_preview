@@ -12,7 +12,7 @@ import { LoungeCertControl } from '@/components/LoungeCertControl';
 import { LoungeOwnerControls } from '@/components/LoungeOwnerControls';
 import { InviteManager } from '@/components/InviteManager';
 import { ClaimRequestsQueue } from '@/components/ClaimRequestsQueue';
-import { BrandSignupQueue } from '@/components/BrandSignupQueue';
+import { BrandAdmin } from '@/components/BrandAdmin';
 import { AdminOverview } from '@/components/AdminOverview';
 import { BadgeArtworkQueue } from '@/components/BadgeArtworkQueue';
 import { AnalyticsPanel } from '@/components/AnalyticsPanel';
@@ -147,7 +147,7 @@ export default function AdminPage() {
       {tab === 'invites' && <InviteManager />}
       {tab === 'claimreqs' && <ClaimRequestsQueue />}
       {tab === 'badgeart' && <BadgeArtworkQueue />}
-      {tab === 'brands' && <BrandSignupQueue />}
+      {tab === 'brands' && <BrandAdmin />}
       {tab === 'lounges' && <LoungeQueue />}
       {tab === 'claims' && <ClaimsQueue />}
       {tab === 'certify' && (

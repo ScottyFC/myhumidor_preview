@@ -1,3 +1,33 @@
+## phase92 — Brand billing/invoices, support tickets, review workflow, premium activation (RUN MIGRATION)
+
+Email default sender corrected to verify@myhumidor.shop (the verified domain).
+
+phase92.sql adds `support_tickets`, `brand_invoices`, review-request status workflow
+(awaiting/in_progress/done) + email column, `brand_subscriptions.payment_method` +
+`contract_amount_cents`, admin RLS on all of these + subscriptions, and admin RPCs
+`set_brand_subscription_status` / `set_brand_payment_method`.
+
+Admin → Brand applications tab is now sub-tabbed:
+- Applications: the existing pending signup queue.
+- Brands & billing: every approved brand with subscription status, a per-brand **Activate**
+  control (flips premium pending→active, records the contract amount), a payment-method
+  record field, and invoice creation (Standard defaults to $300; premium = agreed amount).
+  "Create & send" writes a billing record AND emails the brand's contact_email via Resend.
+- CigarTV reviews: all review requests — premium pinned to the top with a diamond (gem)
+  marker, standard below; shows the user email; status = Awaiting Response / In Progress / Done.
+- Support tickets: same premium-diamond-priority + email + status workflow.
+
+Brand side:
+- Nav: when a brand is signed in (cookie session), the top bar switches to a dedicated
+  **Brand Portal** nav (Dashboard, Settings, Sign out) so it feels like a real portal.
+- New `/brand/settings`: change password (verifies current), MFA panel, submit a support
+  ticket. Linked from the dashboard header.
+- Brands submit support tickets (`/api/brand/support`) and review requests; both capture
+  the account email and set premium priority server-side.
+
+Caveats: invoices are a billing RECORD + emailed notice — NOT Stripe/real payment
+collection (no card is charged). Admin reads depend on the new _is_admin RLS — run phase92.
+Premium stays "pending" until you click Activate. Compile-verified only.
 ## Cigar Scanner "Scanning isn’t available right now" — set ANTHROPIC_API_KEY
 
 This message is NOT a camera failure. The camera captured and uploaded the photo fine; the

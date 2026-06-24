@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
 import { subscribeAuth, signOut, type Session } from '@/lib/auth';
 import { getMyLounges } from '@/lib/lounges-owner';
+import { getMyBrands, brandLogout } from '@/lib/brands';
 import { isAdmin, onAdminsChange } from '@/lib/admin';
 
 const CONSUMER_TABS = [
@@ -57,6 +58,42 @@ export function Nav() {
   }, [isLounge, session?.uuid]);
 
   const TABS = isLounge ? LOUNGE_TABS : CONSUMER_TABS;
+
+  // Brand-auth (separate cookie session) → render a dedicated portal nav so signed-in
+  // brand users feel like they're inside their own login portal.
+  const [brandPortal, setBrandPortal] = useState<{ name: string } | null>(null);
+  useEffect(() => {
+    let off = false;
+    getMyBrands().then((bs) => { if (!off) setBrandPortal(bs[0] ? { name: bs[0].name } : null); }).catch(() => {});
+    return () => { off = true; };
+  }, [pathname]);
+
+  if (brandPortal) {
+    const link = (href: string, label: string, Icon: typeof LayoutDashboard) => {
+      const active = pathname === href || pathname.startsWith(href + '/');
+      return (
+        <Link href={href} className={cn('flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition', active ? 'bg-ember-400/10 text-ember-100' : 'text-smoke-300 hover:text-paper')}>
+          <Icon size={16} strokeWidth={1.5} /> {label}
+        </Link>
+      );
+    };
+    return (
+      <header className="sticky top-0 z-40 border-b border-ember-400/10 bg-ink/80 backdrop-blur">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-6">
+          <Link href="/brand" className="flex items-center gap-2">
+            <img src="/logo.svg" alt="MyHumidor" className="h-7 w-auto" />
+            <span className="hidden text-[10px] uppercase tracking-widest text-ember-400/80 sm:inline">Brand Portal</span>
+          </Link>
+          <div className="flex items-center gap-1">
+            {link('/brand', 'Dashboard', LayoutDashboard)}
+            {link('/brand/settings', 'Settings', Settings)}
+            <button onClick={toggleTheme} className="ml-1 rounded-md p-2 text-smoke-400 hover:text-paper" aria-label="Toggle theme">{dark ? <Sun size={16} /> : <Moon size={16} />}</button>
+            <button onClick={async () => { await brandLogout(); location.href = '/brand/login'; }} className="ml-1 inline-flex items-center gap-1.5 rounded-md border-[0.5px] border-ember-400/20 px-3 py-1.5 text-xs text-smoke-300 hover:text-paper"><LogOut size={14} /> Sign out</button>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   // Humidor requires an account — send signed-out users to register.
   const tabHref = (href: string) =>

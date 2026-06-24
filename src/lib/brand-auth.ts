@@ -20,7 +20,7 @@ const RESET_TTL_MIN = 60;
 function hashToken(t: string): string { return createHash('sha256').update(t).digest('hex'); }
 
 export interface BrandSession {
-  accountId: string;
+  accountId: string; email: string;
   brandId: string;
   brand: { id: string; slug: string; name: string; tier: 'standard' | 'premium' };
 }
@@ -75,15 +75,15 @@ export async function getBrandSession(): Promise<BrandSession | null> {
   }
   const accountId = (sess as { account_id: string }).account_id;
 
-  const { data: acct } = await sb.from('brand_auth_accounts').select('id, brand_id, status').eq('id', accountId).maybeSingle();
-  const a = acct as { id: string; brand_id: string | null; status: string } | null;
+  const { data: acct } = await sb.from('brand_auth_accounts').select('id, brand_id, status, email').eq('id', accountId).maybeSingle();
+  const a = acct as { id: string; brand_id: string | null; status: string; email: string } | null;
   if (!a || a.status !== 'active' || !a.brand_id) return null;
 
   const { data: brand } = await sb.from('brands').select('id, slug, name, tier').eq('id', a.brand_id).maybeSingle();
   const b = brand as { id: string; slug: string; name: string; tier: 'standard' | 'premium' } | null;
   if (!b) return null;
 
-  return { accountId: a.id, brandId: b.id, brand: { id: b.id, slug: b.slug, name: b.name, tier: b.tier } };
+  return { accountId: a.id, brandId: b.id, email: a.email, brand: { id: b.id, slug: b.slug, name: b.name, tier: b.tier } };
 }
 
 export async function destroyBrandSession(): Promise<void> {
@@ -143,7 +143,7 @@ export async function getAccountByEmail(email: string): Promise<{ id: string; st
 /** Send an email via Resend if RESEND_API_KEY is configured; returns whether it sent. */
 export async function sendBrandEmail(to: string, subject: string, html: string): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
-  const from = process.env.BRAND_EMAIL_FROM || 'MyHumidor <verify@myhumidor.com>';
+  const from = process.env.BRAND_EMAIL_FROM || 'MyHumidor <verify@myhumidor.shop>';
   if (!key) { console.warn('[brand-email] RESEND_API_KEY not set — email not sent to', to); return false; }
   try {
     const r = await fetch('https://api.resend.com/emails', {

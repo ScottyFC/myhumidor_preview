@@ -1,16 +1,16 @@
 # Email setup — Resend + DNS (brand verification & password-reset emails)
 
-Sending address: **verify@myhumidor.com**
+Sending address: **verify@myhumidor.shop**
 Env vars (set in Vercel → Project → Settings → Environment Variables, then redeploy):
 
 ```
 RESEND_API_KEY = re_xxxxxxxxxxxxxxxxxxxxxxxx          # from Resend → API Keys
-BRAND_EMAIL_FROM = MyHumidor <verify@myhumidor.com>   # optional; this is also the code default
+BRAND_EMAIL_FROM = MyHumidor <verify@myhumidor.shop>   # optional; this is also the code default
 ```
 
-> Heads-up: the site is `myhumidor.shop`, but the sending address is on `myhumidor.com`.
+> Heads-up: the site is `myhumidor.shop`, but the sending address is on `myhumidor.shop`.
 > That's fine — email deliverability depends on the **sending domain**, so the DNS records
-> below go on **myhumidor.com** (wherever its DNS is hosted), not on myhumidor.shop.
+> below go on **myhumidor.shop** (wherever its DNS is hosted), not on myhumidor.shop.
 
 ---
 
@@ -19,7 +19,7 @@ BRAND_EMAIL_FROM = MyHumidor <verify@myhumidor.com>   # optional; this is also t
 2. API Keys → Create API Key (Full access or Sending). Copy it into `RESEND_API_KEY`.
 
 ## 2. Add and verify the domain
-1. Resend → Domains → Add Domain → enter **myhumidor.com**.
+1. Resend → Domains → Add Domain → enter **myhumidor.shop**.
    - Pick the region closest to your users (e.g. `us-east-1`). The exact DNS values Resend
      shows are **region-specific** — always copy them from the Resend dashboard, don't
      hand-type from memory.
@@ -29,7 +29,7 @@ BRAND_EMAIL_FROM = MyHumidor <verify@myhumidor.com>   # optional; this is also t
    | Purpose            | Type  | Host / Name (example)        | Value (from Resend)                          |
    |--------------------|-------|------------------------------|----------------------------------------------|
    | DKIM (signing)     | TXT   | `resend._domainkey`          | `p=MIGfMA0...` (long key Resend gives you)    |
-   | SPF (sender auth)  | TXT   | `send` (i.e. send.myhumidor.com) | `v=spf1 include:amazonses.com ~all`       |
+   | SPF (sender auth)  | TXT   | `send` (i.e. send.myhumidor.shop) | `v=spf1 include:amazonses.com ~all`       |
    | Return-path / bounces | MX | `send`                       | `feedback-smtp.<region>.amazonses.com` (prio 10) |
    | DMARC (recommended)| TXT   | `_dmarc`                     | `v=DMARC1; p=none;`                           |
 
@@ -40,7 +40,7 @@ BRAND_EMAIL_FROM = MyHumidor <verify@myhumidor.com>   # optional; this is also t
    - If you already have an SPF TXT on the relevant host, **merge** includes into the one
      record (you can't have two SPF records on the same host).
    - Use the exact Host/Name format your DNS provider expects (some want
-     `send.myhumidor.com`, some want just `send`).
+     `send.myhumidor.shop`, some want just `send`).
 
 3. Save the records at your DNS host, then click **Verify** in Resend. Propagation is
    usually minutes but can take up to a few hours.
@@ -73,14 +73,14 @@ Resend, so they use Supabase's own email config. By default Supabase uses its bu
 sender with low rate limits; for reliable delivery, set up **custom SMTP** in
 Supabase → Authentication → Emails → SMTP. You can point that at Resend's SMTP
 (host `smtp.resend.com`, port 465, user `resend`, password = your `RESEND_API_KEY`) using
-the same verified `myhumidor.com` domain, so both systems send from the same place.
+the same verified `myhumidor.shop` domain, so both systems send from the same place.
 
 ## Common failure reasons (from the `[brand-email]` log)
 - **"The domain is not verified"** — DNS records not added/propagated, or you verified a
-  different domain. Re-check the records on myhumidor.com.
+  different domain. Re-check the records on myhumidor.shop.
 - **"Invalid `from` field"** — `BRAND_EMAIL_FROM` must be `Name <email@domain>` and the
-  email's domain must be the verified one (verify@myhumidor.com).
+  email's domain must be the verified one (verify@myhumidor.shop).
 - **Nothing logged, no email** — `RESEND_API_KEY` isn't set in that environment, so signup
   auto-verifies and sends nothing. Set the key and redeploy.
 - **Only your own address receives mail** — you're still on the `onboarding@resend.dev`
-  test sender. Switch to `verify@myhumidor.com` after the domain verifies.
+  test sender. Switch to `verify@myhumidor.shop` after the domain verifies.

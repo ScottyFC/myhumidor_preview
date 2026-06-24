@@ -57,7 +57,10 @@ export function BrandDashboard() {
           <div className="eyebrow mb-1">Brand dashboard</div>
           <h1 className="font-display text-4xl tracking-tightest">{active.name}</h1>
         </div>
-        <button onClick={async () => { await brandLogout(); location.href = '/brand/login'; }} className="rounded-lg border-[0.5px] border-ember-400/20 px-3 py-2 text-xs text-smoke-300 hover:text-paper">Sign out</button>
+        <div className="flex items-center gap-2">
+          <a href="/brand/settings" className="rounded-lg border-[0.5px] border-ember-400/20 px-3 py-2 text-xs text-smoke-300 hover:text-paper">Settings</a>
+          <button onClick={async () => { await brandLogout(); location.href = '/brand/login'; }} className="rounded-lg border-[0.5px] border-ember-400/20 px-3 py-2 text-xs text-smoke-300 hover:text-paper">Sign out</button>
+        </div>
         {brands.length > 1 && (
           <select value={active.id} onChange={(e) => setActive(brands.find((b) => b.id === e.target.value) ?? active)}
             className="rounded-lg border-[0.5px] border-ember-400/20 bg-char/50 px-3 py-2 text-sm">
@@ -225,7 +228,7 @@ function SeatsPanel({ seats, premium }: { seats: number; premium: boolean }) {
 }
 
 
-function SecurityPanel({ mfaEnabled, onChange }: { mfaEnabled: boolean; onChange: () => void }) {
+export function SecurityPanel({ mfaEnabled, onChange }: { mfaEnabled: boolean; onChange: () => void }) {
   const [setup, setSetup] = useState<MfaSetup | null>(null);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
