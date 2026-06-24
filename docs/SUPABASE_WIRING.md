@@ -1,3 +1,12 @@
+## Cigar Scanner "Scanning isn’t available right now" — set ANTHROPIC_API_KEY
+
+This message is NOT a camera failure. The camera captured and uploaded the photo fine; the
+scan backend `/api/cigar-scan` returns `not_configured` because `ANTHROPIC_API_KEY` isn’t
+set in the deployment. The route reads the band with the Claude vision model
+(`claude-haiku-4-5-20251001`). Fix: set `ANTHROPIC_API_KEY` (server env, NOT NEXT_PUBLIC)
+in Vercel → redeploy. A `[cigar-scan]` warning now logs when the key is missing.
+(Reminder: the live camera itself still needs a REAL device — the iOS Simulator has no
+camera — but that surfaces a different error, not this message.)
 ## Email setup — Resend + DNS (see docs/EMAIL_SETUP.md)
 
 Sending address chosen: verify@myhumidor.com. Default sender in code is now

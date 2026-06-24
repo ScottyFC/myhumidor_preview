@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   }
 
   const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return NextResponse.json({ error: 'not_configured' }, { status: 200 });
+  if (!key) { console.warn('[cigar-scan] ANTHROPIC_API_KEY not set — scanning disabled'); return NextResponse.json({ error: 'not_configured' }, { status: 200 }); }
 
   const { image } = await req.json().catch(() => ({ image: '' }));
   const m = typeof image === 'string' ? image.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/) : null;
