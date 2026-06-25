@@ -54,7 +54,9 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>MyHumidor can save the story image you create to your photos.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>MyHumidor requires access to your phone’s camera.</string>
+	<string>MyHumidor uses the camera to scan or add cigar photos.</string>
+	<key>NSCameraReactionEffectGesturesEnabledDefault</key>
+	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>MyHumidor uses your location to find cigar lounges near you.</string>
 </dict>
