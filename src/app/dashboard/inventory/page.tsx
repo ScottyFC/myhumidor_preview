@@ -275,6 +275,28 @@ export default function InventoryPage() {
                     >
                       <Trash2 size={15} strokeWidth={1.5} />
                     </button>
+                    <div className="col-span-2 mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 border-t-[0.5px] border-ember-400/10 pt-2 text-xs text-smoke-300 sm:col-span-5">
+                      <label className="flex cursor-pointer items-center gap-1.5">
+                        <input type="checkbox" checked={!!it.comingSoon} onChange={(e) => update(it.cigarId, { comingSoon: e.target.checked })} className="accent-ember-400" />
+                        Coming soon
+                      </label>
+                      {it.comingSoon && (
+                        <>
+                          <label className="flex items-center gap-1.5">Release
+                            <input type="date" value={it.releaseDate ?? ''} onChange={(e) => update(it.cigarId, { releaseDate: e.target.value })} className="rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-2 py-1 text-paper focus:border-ember-400 focus:outline-none" />
+                          </label>
+                          <label className="flex cursor-pointer items-center gap-1.5">
+                            <input type="checkbox" checked={!!it.preorderEnabled} onChange={(e) => update(it.cigarId, { preorderEnabled: e.target.checked })} className="accent-ember-400" />
+                            Open pre-orders (Aficionado)
+                          </label>
+                          {it.preorderEnabled && (
+                            <label className="flex items-center gap-1.5">Limit
+                              <input type="number" min={0} value={it.preorderLimit ?? 0} onChange={(e) => update(it.cigarId, { preorderLimit: parseInt(e.target.value, 10) || 0 })} className="w-16 rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-2 py-1 text-right tabular text-paper focus:border-ember-400 focus:outline-none" />
+                            </label>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

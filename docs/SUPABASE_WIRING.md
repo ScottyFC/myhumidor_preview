@@ -1,3 +1,29 @@
+## phase99 — Quick fixes, brand lockdowns, lounge pre-order/reservation system (RUN MIGRATION)
+
+`phase99.sql` adds inventory_items.coming_soon/release_date/preorder_enabled/preorder_limit +
+the `preorders` table (user-own RLS read; all writes via authorizing service routes).
+
+Quick fixes: login submits on Enter + consumers land on `/` after sign-in; search no longer
+auto-focuses on mobile (fine-pointer only); "Featured on" carousel hidden on mobile; badge
+celebration now renders via a React portal to document.body (fixes mobile — a transformed
+ancestor was trapping position:fixed).
+
+Brand lockdowns: add-to-humidor/wishlist + rating form hidden for brand accounts (they keep
+community reviews + nationwide stocking + full catalog search).
+
+Lounge pre-orders: lounges mark inventory coming-soon (+ release date) and open pre-orders
+(Aficionado-only) with a limit, all on the inventory page. The lounge page shows remaining
+counts and a Reserve button (sign-up/upgrade CTAs for free users). `/preorders` (new dropdown
+item) shows the user's reservations; approved ones render a QR (qrcode lib) + confirmation
+number, mobile-first. Lounge dashboard PreorderManager: approve/decline + confirm pickup by
+QR scan (BarcodeDetector where supported) or confirmation code. New routes: /api/preorders
+(place+list own), /api/lounge/preorders (+/confirm), /api/preorders/remaining (public counts).
+Notifications fire both ways (type 'preorder'). Sign-up page lists pre-orders as a benefit.
+
+Caveats: QR scanning uses BarcodeDetector (Android/Chrome; iOS WKWebView needs a native
+Capacitor barcode plugin) — confirmation-code entry is the universal fallback. Pre-order
+limits checked at placement, counted through approval (race window, same as wholesale).
+Run phase99 after phases 97-98. Compile-verified only.
 ## Security overhaul + boxes-available enforcement + near-real-time messaging (NO new migration)
 
 **Security**

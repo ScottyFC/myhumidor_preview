@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { BadgeMedal } from '@/components/BadgeMedal';
 import type { BadgeDef } from '@/lib/badges';
 
@@ -38,7 +39,7 @@ function Confetti() {
     raf = requestAnimationFrame(tick);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); };
   }, []);
-  return <canvas ref={ref} className="pointer-events-none fixed inset-0 z-[60]" />;
+  return <canvas ref={ref} className="pointer-events-none fixed inset-0 z-[1102]" />;
 }
 
 export function BadgeCelebration({ badges, onClose }: { badges: BadgeDef[]; onClose: () => void }) {
@@ -48,13 +49,13 @@ export function BadgeCelebration({ badges, onClose }: { badges: BadgeDef[]; onCl
     window.addEventListener('keydown', onKey);
     return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', onKey); };
   }, [onClose]);
-  if (badges.length === 0) return null;
+  if (badges.length === 0 || typeof document === 'undefined') return null;
   const many = badges.length > 1;
 
-  return (
-    <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }} onClick={onClose} role="dialog" aria-modal="true">
+  return createPortal((
+    <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/75 px-6 backdrop-blur-sm" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }} onClick={onClose} role="dialog" aria-modal="true">
       <Confetti />
-      <div className="relative z-[58] w-full max-w-sm rounded-2xl border-[0.5px] border-ember-400/30 bg-gradient-to-b from-[#1a150e] to-[#0b0805] p-6 text-center shadow-[0_20px_80px_rgba(0,0,0,0.7)]" onClick={(e) => e.stopPropagation()}>
+      <div className="relative z-[1101] w-full max-w-sm rounded-2xl border-[0.5px] border-ember-400/30 bg-gradient-to-b from-[#1a150e] to-[#0b0805] p-6 text-center shadow-[0_20px_80px_rgba(0,0,0,0.7)]" onClick={(e) => e.stopPropagation()}>
         <div className="eyebrow mb-1 text-ember-300">{many ? `${badges.length} badges earned` : 'Badge earned'}</div>
         <h2 className="font-display text-3xl tracking-tightest text-paper">Nice work!</h2>
         <div className={`mt-5 flex flex-wrap items-start justify-center ${many ? 'gap-4' : ''}`}>
@@ -68,5 +69,5 @@ export function BadgeCelebration({ badges, onClose }: { badges: BadgeDef[]; onCl
         <button onClick={onClose} className="mt-6 w-full rounded-xl bg-ember-400 py-3 text-sm font-medium text-paper transition hover:brightness-110">Collect</button>
       </div>
     </div>
-  );
+  ), document.body);
 }

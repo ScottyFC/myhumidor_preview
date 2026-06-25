@@ -9,7 +9,7 @@ export function FeaturedEpisodes({ items }: { items: FeaturedEpisode[] }) {
   const by = (dx: number) => scroller.current?.scrollBy({ left: dx, behavior: 'smooth' });
 
   return (
-    <section className="mt-12">
+    <section className="mt-12 hidden md:block">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Tv size={18} strokeWidth={1.5} className="text-ember-400" /> Featured on</h2>
         {items.length > 2 && (

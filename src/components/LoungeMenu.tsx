@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatUSD } from '@/lib/utils';
 import { getPublishedMenu, type InventoryItem } from '@/lib/inventory';
+import { LoungeComingSoon } from '@/components/LoungeComingSoon';
 
 export function LoungeMenu({ slug, storeId, fallbackCount }: { slug: string; storeId?: string; fallbackCount?: number }) {
   const [items, setItems] = useState<InventoryItem[] | null>(null);
@@ -19,6 +20,9 @@ export function LoungeMenu({ slug, storeId, fallbackCount }: { slug: string; sto
 
   if (items === null) return null; // hydrating
 
+  const comingSoon = items.filter((i) => i.comingSoon);
+  const inStock = items.filter((i) => !i.comingSoon);
+
   if (items.length === 0) {
     return (
       <p className="text-smoke-400">
@@ -30,8 +34,10 @@ export function LoungeMenu({ slug, storeId, fallbackCount }: { slug: string; sto
   }
 
   return (
+    <>
+    {inStock.length > 0 && (
     <div className="overflow-hidden rounded-xl border-[0.5px] border-ember-400/15">
-      {items.map((it) => {
+      {inStock.map((it) => {
         const Row = (
           <div className="flex items-center justify-between gap-3 border-b-[0.5px] border-ember-400/10 bg-char/40 px-4 py-3 last:border-b-0">
             <div className="flex min-w-0 items-center gap-3">
@@ -57,5 +63,8 @@ export function LoungeMenu({ slug, storeId, fallbackCount }: { slug: string; sto
         );
       })}
     </div>
+    )}
+    {comingSoon.length > 0 && <LoungeComingSoon slug={slug} items={comingSoon} />}
+    </>
   );
 }

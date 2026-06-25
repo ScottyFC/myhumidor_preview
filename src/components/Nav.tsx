@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings, Bell, Package, Newspaper, CreditCard, Sun, Moon } from 'lucide-react';
+import { Box, Search, MapPin, User, Flame, Store, LayoutDashboard, LogOut, ShieldCheck, ChevronDown, Cigarette, Settings, Bell, Package, Newspaper, CreditCard, Sun, Moon, Ticket } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
 import { cn } from '@/lib/utils';
 import { SearchAutocomplete } from '@/components/SearchAutocomplete';
@@ -210,6 +210,9 @@ export function Nav() {
                           </MenuItem>
                           <MenuItem href="/submit" icon={<Cigarette size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
                             Submit a Cigar
+                          </MenuItem>
+                          <MenuItem href="/preorders" icon={<Ticket size={14} strokeWidth={1.5} />} onClick={() => setMenuOpen(false)}>
+                            Pre-Orders
                           </MenuItem>
                         </>
                       )}

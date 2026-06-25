@@ -10,6 +10,7 @@ import { isSupabaseConfigured, supabaseBrowser } from './supabase';
 import { logEvent } from './audit';
 
 export interface InventoryItem {
+  id?: string;
   cigarId: string;
   slug?: string;
   brand: string;
@@ -17,6 +18,10 @@ export interface InventoryItem {
   size: string;
   price: number;
   quantity: number;
+  comingSoon?: boolean;
+  releaseDate?: string | null;
+  preorderEnabled?: boolean;
+  preorderLimit?: number;
 }
 
 const invKey = (id: string) => `myhumidor:inventory:${id}`;
@@ -32,14 +37,16 @@ async function loungeIdForSlug(slug: string): Promise<string | null> {
 }
 
 type Row = {
-  cigar_id: string; slug: string | null; brand: string | null; name: string | null;
+  id?: string; cigar_id: string; slug: string | null; brand: string | null; name: string | null;
   size: string | null; price: number | null; quantity: number | null;
+  coming_soon?: boolean | null; release_date?: string | null; preorder_enabled?: boolean | null; preorder_limit?: number | null;
 };
-const SELECT = 'cigar_id, slug, brand, name, size, price, quantity';
+const SELECT = 'id, cigar_id, slug, brand, name, size, price, quantity, coming_soon, release_date, preorder_enabled, preorder_limit';
 function rowTo(r: Row): InventoryItem {
   return {
-    cigarId: r.cigar_id, slug: r.slug ?? '', brand: r.brand ?? '', name: r.name ?? '',
+    id: r.id, cigarId: r.cigar_id, slug: r.slug ?? '', brand: r.brand ?? '', name: r.name ?? '',
     size: r.size ?? '', price: Number(r.price ?? 0), quantity: r.quantity ?? 1,
+    comingSoon: !!r.coming_soon, releaseDate: r.release_date ?? null, preorderEnabled: !!r.preorder_enabled, preorderLimit: r.preorder_limit ?? 0,
   };
 }
 function localRead(key: string): InventoryItem[] {
@@ -59,7 +66,7 @@ export async function getInventory(slug: string, localId?: string): Promise<Inve
       console.error('[inventory] load failed:', error.message);
       return [];
     }
-    return ((data ?? []) as Row[]).map((r) => rowTo(r));
+    return ((data ?? []) as unknown as Row[]).map((r) => rowTo(r));
   }
   return localRead(invKey(localId ?? slug));
 }
@@ -77,7 +84,7 @@ export async function getPublishedMenu(slug: string, localId?: string): Promise<
       console.error('[inventory] published load failed:', error.message);
       return [];
     }
-    return ((data ?? []) as Row[]).map((r) => rowTo(r));
+    return ((data ?? []) as unknown as Row[]).map((r) => rowTo(r));
   }
   return localRead(pubKey(localId ?? slug));
 }
@@ -91,8 +98,10 @@ export async function saveInventory(slug: string, items: InventoryItem[], localI
       const rows = items.map((i) => ({
         lounge_id: lid, cigar_id: i.cigarId, slug: i.slug ?? null, brand: i.brand, name: i.name,
         size: i.size, price: i.price, quantity: i.quantity,
+        coming_soon: !!i.comingSoon, release_date: i.releaseDate || null,
+        preorder_enabled: !!i.preorderEnabled, preorder_limit: i.preorderLimit ?? 0,
       }));
-      const { error } = await sb.from('inventory_items').upsert(rows, { onConflict: 'lounge_id,cigar_id' });
+      const { error } = await (sb as unknown as import('@supabase/supabase-js').SupabaseClient).from('inventory_items').upsert(rows as never, { onConflict: 'lounge_id,cigar_id' });
       if (error) {
         console.error('[inventory] save failed:', error.message);
         return false;

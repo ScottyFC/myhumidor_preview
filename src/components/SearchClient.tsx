@@ -15,6 +15,8 @@ import { searchCatalogCigarsRemote } from '@/lib/db';
 type Tab = 'cigars' | 'lounges' | 'people';
 
 export function SearchClient() {
+  const searchRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => { if (typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches) searchRef.current?.focus(); }, []);
   const params = useSearchParams();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('cigars');
@@ -97,7 +99,7 @@ export function SearchClient() {
           <Loader2 size={18} className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-ember-400" />
         )}
         <input
-          autoFocus
+          ref={searchRef}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search Thousands of Cigars, Lounges, Shops and Fellow Smokers"

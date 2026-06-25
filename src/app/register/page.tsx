@@ -72,7 +72,7 @@ export default function RegisterPage() {
     // Retailer signup flows straight into plans/certification (one process);
     // returning retailers go to their dashboard.
     if (type === 'retailer') { router.push(signup ? '/verify' : '/dashboard'); return; }
-    router.push('/humidor');
+    router.push('/');
   }
 
   async function manual() {
@@ -171,7 +171,7 @@ export default function RegisterPage() {
         )}
         <p className="mt-2 text-sm text-smoke-300">
           {mode === 'signup'
-            ? 'Track cigars, build your humidor, and discover what’s next.'
+            ? 'Track cigars, build your humidor, reserve upcoming releases, and discover what’s next.'
             : 'Sign in to your humidor or lounge dashboard.'}
         </p>
       </div>
@@ -204,9 +204,16 @@ export default function RegisterPage() {
       )}
 
       {/* Manual */}
-      <div className="space-y-3">
+      <div className="space-y-3" onKeyDown={(e) => { if (e.key === 'Enter' && !busy) { e.preventDefault(); manual(); } }}>
         {mode === 'signup' && type === 'consumer' && (
           <Input label="Display name" value={displayName} onChange={setDisplayName} placeholder="Your name" />
+        )}
+        {mode === 'signup' && type === 'consumer' && (
+          <ul className="space-y-1 rounded-md border-[0.5px] border-ember-400/20 bg-ember-400/5 px-3 py-2.5 text-xs text-smoke-200">
+            <li>• Rate cigars, build your humidor, and earn badges</li>
+            <li>• Reserve &amp; pre-order upcoming releases at lounges <span className="text-ember-300">(Aficionado)</span></li>
+            <li>• See who’s stocking the cigars you love</li>
+          </ul>
         )}
         {mode === 'signup' && type === 'retailer' && (
           <>

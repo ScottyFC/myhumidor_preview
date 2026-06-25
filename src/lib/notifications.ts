@@ -16,7 +16,7 @@ function bind() {
   });
 }
 
-export type NotificationType = 'follow' | 'like' | 'comment' | 'lounge_post' | 'check_in' | 'system' | 'submission' | 'lounge_new' | 'inventory' | 'top_daily' | 'brand_post' | 'brand_inventory' | 'broker_order' | 'broker_message';
+export type NotificationType = 'follow' | 'like' | 'comment' | 'lounge_post' | 'check_in' | 'system' | 'submission' | 'lounge_new' | 'inventory' | 'top_daily' | 'brand_post' | 'brand_inventory' | 'broker_order' | 'broker_message' | 'preorder';
 
 export interface AppNotification {
   id: string;
@@ -118,6 +118,8 @@ export function notificationHref(n: AppNotification): string | null {
     case 'broker_order':
     case 'broker_message':
       return '/wholesale';
+    case 'preorder':
+      return id && id.startsWith('/') ? id : '/preorders';
     case 'top_daily':
       return id ? `/cigars/${id}` : '/top';
     case 'system':
@@ -140,6 +142,7 @@ export function describeNotification(n: AppNotification): string {
     case 'submission': return `${who} submitted${what || ' something'} for review`;
     case 'lounge_new': return `New lounge near you:${what}`;
     case 'inventory': return `${who} added${what || ' a new cigar'} to their inventory`;
+    case 'preorder': return `${what}`;
     case 'broker_order': return `${what}`;
     case 'broker_message': return `${who}: ${what}`;
     case 'brand_post': return `${who} posted:${what}`;

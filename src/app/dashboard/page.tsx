@@ -6,6 +6,7 @@ import { DeviceManager } from '@/components/DeviceManager';
 import { LoungeDetailsEditor } from '@/components/LoungeDetailsEditor';
 import { ChainAndStaff } from '@/components/ChainAndStaff';
 import { LoungeBadges } from '@/components/LoungeBadges';
+import { PreorderManager } from '@/components/PreorderManager';
 import { CertificationTiers } from '@/components/CertificationTiers';
 
 export const metadata = {
@@ -30,6 +31,11 @@ export default function DashboardPage() {
           <Package size={15} strokeWidth={1.5} /> Manage inventory
         </Link>
       </div>
+
+      {/* Pre-order reservations */}
+      <section className="mt-8 border-t border-ember-400/10 pt-8">
+        <PreorderManager />
+      </section>
 
       {/* Certification plans (Untappd-for-Business style) */}
       <CertificationTiers />

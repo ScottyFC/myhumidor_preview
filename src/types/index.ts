@@ -32,6 +32,7 @@ export interface CatalogStore {
 
 // ─── INVENTORY (lounge dashboard) ─────────────────────────────────────────────
 export interface InventoryItem {
+  id?: string;          // inventory_items.id (needed for pre-orders)
   cigarId: string;
   slug?: string;
   brand: string;
@@ -39,6 +40,10 @@ export interface InventoryItem {
   size: string;
   price: number; // lounge's set price
   quantity: number;
+  comingSoon?: boolean;
+  releaseDate?: string | null;   // ISO date
+  preorderEnabled?: boolean;
+  preorderLimit?: number;
 }
 
 // ─── EPISODE (parsed from CigarTV MRSS feed) ─────────────────────────────────
