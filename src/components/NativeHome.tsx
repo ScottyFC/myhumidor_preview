@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { CigarName } from '@/components/CigarName';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Search, Flame, Heart, Store, MapPin, Plus, Sparkles, Box, X, ArrowRight } from 'lucide-react';
+import { Search, Flame, Heart, Store, MapPin, Plus, Sparkles, Box, X, ArrowRight, LayoutGrid, Package, Ticket, Boxes, Settings as SettingsIcon } from 'lucide-react';
+import { useEffect } from 'react';
+import { subscribeAuth, type Session } from '@/lib/auth';
 import { CigarThumb } from '@/components/CigarThumb';
 import { HomeWelcome } from '@/components/HomeWelcome';
 
@@ -17,6 +19,15 @@ const TILES: { label: string; href: string; icon: typeof Flame; tint: string }[]
   { label: 'Add Cigar', href: '/submit', icon: Plus, tint: 'text-ember-400' },
   { label: 'Concierge', href: '/top', icon: Sparkles, tint: 'text-ember-400' },
   { label: 'My Humidor', href: '/humidor', icon: Box, tint: 'text-ember-400' },
+];
+
+const LOUNGE_TILES: { label: string; href: string; icon: typeof Flame }[] = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+  { label: 'Inventory', href: '/dashboard?tab=inventory', icon: Package },
+  { label: 'Pre-orders', href: '/dashboard?tab=preorders', icon: Ticket },
+  { label: 'Wholesale', href: '/dashboard?tab=wholesale', icon: Boxes },
+  { label: 'My Lounge', href: '/dashboard?tab=settings', icon: SettingsIcon },
+  { label: 'Browse', href: '/lounges', icon: Store },
 ];
 
 const CHIPS: { label: string; href: string }[] = [
@@ -36,6 +47,36 @@ const CHIPS: { label: string; href: string }[] = [
 export function NativeHome({ featured }: { featured: Feat[] }) {
   const router = useRouter();
   const [promo, setPromo] = useState(true);
+  const [session, setSession] = useState<Session | null>(null);
+  useEffect(() => subscribeAuth(setSession), []);
+
+  // Lounge operators get an operations-first home, distinct from the consumer feed.
+  if (session?.type === 'retailer') {
+    return (
+      <div className="native-only-block px-4 pt-2">
+        <HomeWelcome />
+        <div className="mt-1 flex items-center gap-2 rounded-2xl border-[0.5px] border-ember-400/25 bg-gradient-to-r from-ember-400/10 to-transparent px-4 py-3">
+          <Store size={18} className="text-ember-400" />
+          <div className="text-sm text-ember-50">Manage your lounge — inventory, pre-orders, and wholesale.</div>
+        </div>
+        <button onClick={() => router.push('/search')} className="mt-3 flex w-full items-center gap-2.5 rounded-2xl border-[0.5px] border-ember-400/20 bg-char/70 px-4 py-3 text-left text-sm text-smoke-400 active:bg-char">
+          <Search size={17} strokeWidth={1.5} className="text-ember-400" /> Search cigars, brands, lounges…
+        </button>
+        <div className="mt-4 grid grid-cols-3 gap-2.5">
+          {LOUNGE_TILES.map((t) => { const Icon = t.icon; return (
+            <Link key={t.label} href={t.href} className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border-[0.5px] border-ember-400/12 bg-gradient-to-b from-char/80 to-char/40 py-3.5 active:from-ember-400/10">
+              <Icon size={22} strokeWidth={1.75} className="text-ember-400" />
+              <span className="text-center text-[10.5px] font-medium leading-tight text-smoke-200">{t.label}</span>
+            </Link>
+          ); })}
+        </div>
+        <Link href="/dashboard" className="mt-4 flex items-center justify-between rounded-2xl border-[0.5px] border-ember-400/25 bg-char/50 px-4 py-3.5 active:bg-ember-400/10">
+          <span className="text-sm font-medium text-paper">Open your dashboard</span>
+          <ArrowRight size={16} className="text-ember-400" />
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="native-only-block px-4 pt-2">

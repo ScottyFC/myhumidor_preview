@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { LayoutGrid, Package, Ticket, Boxes, Settings as SettingsIcon, Tv, ArrowRight } from 'lucide-react';
 import { LoungeDashboard } from '@/components/LoungeDashboard';
 import { LiveStream } from '@/components/LiveStream';
@@ -15,8 +16,22 @@ import { listLoungePreorders } from '@/lib/preorders';
 
 type Tab = 'overview' | 'inventory' | 'preorders' | 'wholesale' | 'settings';
 
+const TABS: Tab[] = ['overview', 'inventory', 'preorders', 'wholesale', 'settings'];
+
 export function LoungeHub() {
-  const [tab, setTab] = useState<Tab>('overview');
+  const router = useRouter();
+  const params = useSearchParams();
+  const initial = (params?.get('tab') as Tab) || 'overview';
+  const [tab, setTabState] = useState<Tab>(TABS.includes(initial) ? initial : 'overview');
+  const setTab = useCallback((t: Tab) => {
+    setTabState(t);
+    router.replace(t === 'overview' ? '/dashboard' : `/dashboard?tab=${t}`, { scroll: false });
+  }, [router]);
+  // Keep in sync when the URL changes from the bottom tab bar.
+  useEffect(() => {
+    const t = (params?.get('tab') as Tab) || 'overview';
+    if (TABS.includes(t)) setTabState(t);
+  }, [params]);
   const [pendingPre, setPendingPre] = useState<number | null>(null);
 
   const loadCounts = useCallback(async () => {

@@ -3,6 +3,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader2, Ticket, ScanLine, Check, History } from 'lucide-react';
 import { listLoungePreorders, decidePreorder, confirmPreorder, type LoungePreorder } from '@/lib/preorders';
 
+// Native (Capacitor) QR scan via MLKit; returns the decoded value or null.
+async function nativeScan(): Promise<{ native: boolean; value: string | null }> {
+  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+  if (!cap?.isNativePlatform?.()) return { native: false, value: null };
+  try {
+    const mod = await import('@capacitor-mlkit/barcode-scanning');
+    const { BarcodeScanner } = mod;
+    const sup = await BarcodeScanner.isSupported();
+    if (!sup.supported) return { native: true, value: null };
+    const perm = await BarcodeScanner.requestPermissions();
+    if (perm.camera !== 'granted' && perm.camera !== 'limited') return { native: true, value: null };
+    const { barcodes } = await BarcodeScanner.scan();
+    return { native: true, value: barcodes?.[0]?.rawValue ?? null };
+  } catch { return { native: true, value: null }; }
+}
+
 const HIST = ['fulfilled', 'cancelled', 'declined', 'expired'];
 const HIST_LABEL: Record<string, string> = { fulfilled: 'Picked up', cancelled: 'Cancelled', declined: 'Declined', expired: 'Expired' };
 
@@ -32,6 +48,10 @@ export function PreorderManager() {
 
   async function scan() {
     setErr(null);
+    // Native app: use the MLKit scanner (works on iOS + Android).
+    const n = await nativeScan();
+    if (n.native) { if (n.value) confirm({ token: n.value }); return; }
+    // Web: BarcodeDetector where available (Chrome/Android), else manual entry.
     const BD = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => { detect: (s: CanvasImageSource) => Promise<{ rawValue: string }[]> } }).BarcodeDetector;
     if (!BD) { setErr('Live scanning isn’t supported on this device — enter the confirmation code instead.'); return; }
     try {

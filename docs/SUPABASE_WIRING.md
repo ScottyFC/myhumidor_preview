@@ -1,3 +1,23 @@
+## Native QR scan + lounge-distinct mobile app + brand dashboard tabs + inventory styling (NO new migration)
+
+- **Native QR scanning** (lounge profiles): added @capacitor-mlkit/barcode-scanning (v8.1.0, matches
+  Capacitor 8). PreorderManager.scan() now tries the native MLKit scanner first on the app (iOS+Android),
+  falls back to web BarcodeDetector, then manual confirmation-code entry. ACTION: run `npm install` then
+  `npx cap sync`; add iOS NSCameraUsageDescription (Info.plist) and Android CAMERA permission; the Android
+  Google code-scanner module downloads on first use.
+- **Lounge-distinct mobile app**: MobileTabBar's lounge tab set now mirrors the dashboard — Dashboard /
+  Inventory / Pre-orders / Wholesale / Lounge — deep-linked via /dashboard?tab=. NativeHome renders an
+  operations-first home for retailers (lounge tiles + "Open your dashboard") instead of the consumer feed.
+  LoungeHub reads/writes ?tab= so the bottom bar and dashboard stay in sync.
+- **Brand dashboard tabs**: BrandDashboard reorganized into tabs like LoungeHub/Admin — Overview (plan/
+  boost/seat summary + onboarding), Products, Releases (+ review requests), Wholesale (listings/orders/
+  messages), Engagement (badges/audience/analytics), Settings (details/security/seats).
+- **Inventory styling**: the coming-soon / pre-order controls are now a distinct tinted panel that turns
+  ember when active, with labelled fields (Release date, Open pre-orders, Total limit, Max/user, Hold hrs)
+  instead of one blended row.
+
+Caveat: native scanning is wired + the plugin is installed, but the native build (cap sync + permissions)
+is on Scotty's side and unverified here. Everything compile-verified only.
 ## phase100 — Pre-order controls: per-user limit, hold/expiry, cancellations, abuse block (RUN MIGRATION)
 
 `phase100.sql` adds inventory_items.preorder_per_user_limit + preorder_hold_hours; preorders.

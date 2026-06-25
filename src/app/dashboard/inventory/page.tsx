@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, Search, Plus, Trash2, Store, Check, Lock, Package, Loader2,
-  UploadCloud, Download, Rocket,
+  UploadCloud, Download, Rocket, CalendarClock,
 } from 'lucide-react';
 import type { CatalogCigar, CatalogStore, InventoryItem } from '@/types';
 import { cn, formatUSD } from '@/lib/utils';
@@ -275,36 +275,37 @@ export default function InventoryPage() {
                     >
                       <Trash2 size={15} strokeWidth={1.5} />
                     </button>
-                    <div className="col-span-2 mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 border-t-[0.5px] border-ember-400/10 pt-2 text-xs text-smoke-300 sm:col-span-5">
-                      <label className="flex cursor-pointer items-center gap-1.5">
-                        <input type="checkbox" checked={!!it.comingSoon} onChange={(e) => update(it.cigarId, { comingSoon: e.target.checked })} className="accent-ember-400" />
-                        Coming soon
+                    <div className={`col-span-2 mt-2 rounded-lg border p-3 transition sm:col-span-5 ${it.comingSoon ? 'border-ember-400/35 bg-ember-400/[0.06]' : 'border-ember-400/12 bg-char/20'}`}>
+                      <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-paper">
+                        <input type="checkbox" checked={!!it.comingSoon} onChange={(e) => update(it.cigarId, { comingSoon: e.target.checked })} className="h-4 w-4 accent-ember-400" />
+                        <CalendarClock size={14} className="text-ember-400" /> Coming soon release
+                        {it.comingSoon && it.preorderEnabled && <span className="ml-1 rounded-full bg-ember-400/20 px-2 py-0.5 text-[10px] uppercase tracking-wide text-ember-200">Pre-orders open</span>}
                       </label>
                       {it.comingSoon && (
-                        <>
-                          <label className="flex items-center gap-1.5">Release
-                            <input type="date" value={it.releaseDate ?? ''} onChange={(e) => update(it.cigarId, { releaseDate: e.target.value })} className="rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-2 py-1 text-paper focus:border-ember-400 focus:outline-none" />
+                        <div className="mt-3 flex flex-wrap items-end gap-x-5 gap-y-3 border-t-[0.5px] border-ember-400/15 pt-3">
+                          <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-smoke-400">Release date
+                            <input type="date" value={it.releaseDate ?? ''} onChange={(e) => update(it.cigarId, { releaseDate: e.target.value })} className="rounded-md border-[0.5px] border-ember-400/25 bg-char/80 px-2 py-1.5 text-sm normal-case tracking-normal text-paper focus:border-ember-400 focus:outline-none" />
                           </label>
-                          <label className="flex cursor-pointer items-center gap-1.5">
-                            <input type="checkbox" checked={!!it.preorderEnabled} onChange={(e) => update(it.cigarId, { preorderEnabled: e.target.checked })} className="accent-ember-400" />
-                            Open pre-orders (Aficionado)
+                          <label className="flex cursor-pointer items-center gap-2 self-center rounded-md border-[0.5px] border-ember-400/25 bg-char/40 px-3 py-2 text-sm text-paper">
+                            <input type="checkbox" checked={!!it.preorderEnabled} onChange={(e) => update(it.cigarId, { preorderEnabled: e.target.checked })} className="h-4 w-4 accent-ember-400" />
+                            Open pre-orders <span className="text-xs text-ember-300">(Aficionado)</span>
                           </label>
                           {it.preorderEnabled && (
-                            <label className="flex items-center gap-1.5">Total limit
-                              <input type="number" min={0} value={it.preorderLimit ?? 0} onChange={(e) => update(it.cigarId, { preorderLimit: parseInt(e.target.value, 10) || 0 })} className="w-16 rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-2 py-1 text-right tabular text-paper focus:border-ember-400 focus:outline-none" />
+                            <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-smoke-400">Total limit
+                              <input type="number" min={0} value={it.preorderLimit ?? 0} onChange={(e) => update(it.cigarId, { preorderLimit: parseInt(e.target.value, 10) || 0 })} className="w-20 rounded-md border-[0.5px] border-ember-400/25 bg-char/80 px-2 py-1.5 text-right text-sm tabular text-paper focus:border-ember-400 focus:outline-none" />
                             </label>
                           )}
                           {it.preorderEnabled && (
-                            <label className="flex items-center gap-1.5">Max per user
-                              <input type="number" min={1} value={it.preorderPerUserLimit ?? 1} onChange={(e) => update(it.cigarId, { preorderPerUserLimit: Math.max(1, parseInt(e.target.value, 10) || 1) })} className="w-14 rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-2 py-1 text-right tabular text-paper focus:border-ember-400 focus:outline-none" />
+                            <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-smoke-400">Max / user
+                              <input type="number" min={1} value={it.preorderPerUserLimit ?? 1} onChange={(e) => update(it.cigarId, { preorderPerUserLimit: Math.max(1, parseInt(e.target.value, 10) || 1) })} className="w-20 rounded-md border-[0.5px] border-ember-400/25 bg-char/80 px-2 py-1.5 text-right text-sm tabular text-paper focus:border-ember-400 focus:outline-none" />
                             </label>
                           )}
                           {it.preorderEnabled && (
-                            <label className="flex items-center gap-1.5" title="Hours to hold an approved reservation before releasing it back to inventory. 0 = no expiry.">Hold (hrs)
-                              <input type="number" min={0} value={it.preorderHoldHours ?? 0} onChange={(e) => update(it.cigarId, { preorderHoldHours: Math.max(0, parseInt(e.target.value, 10) || 0) })} className="w-16 rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-2 py-1 text-right tabular text-paper focus:border-ember-400 focus:outline-none" />
+                            <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-smoke-400" title="Hours to hold an approved reservation before releasing it back to inventory. 0 = no expiry.">Hold (hrs)
+                              <input type="number" min={0} value={it.preorderHoldHours ?? 0} onChange={(e) => update(it.cigarId, { preorderHoldHours: Math.max(0, parseInt(e.target.value, 10) || 0) })} className="w-20 rounded-md border-[0.5px] border-ember-400/25 bg-char/80 px-2 py-1.5 text-right text-sm tabular text-paper focus:border-ember-400 focus:outline-none" />
                             </label>
                           )}
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>

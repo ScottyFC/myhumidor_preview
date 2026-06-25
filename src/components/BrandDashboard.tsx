@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Loader2, Rocket, Trash2, BarChart3, Megaphone, Users, Store, Plus, Sparkles, ShieldCheck, ShieldOff } from 'lucide-react';
+import { Loader2, Rocket, Trash2, BarChart3, Megaphone, Users, Store, Plus, Sparkles, ShieldCheck, ShieldOff, LayoutGrid, Package, Boxes, Award, Settings as SettingsIcon } from 'lucide-react';
 import {
   getMyBrands, brandState, brandLogout, createBrandPost, deleteBrandPost,
   useBoost, submitReviewRequest, mfaSetup, mfaEnable, mfaDisable, type MfaSetup,
@@ -18,6 +18,8 @@ import { BrandOrders } from '@/components/BrandOrders';
 import { BrandMessages } from '@/components/BrandMessages';
 import { BrandNotificationsBell } from '@/components/BrandNotificationsBell';
 
+type BrandTab = 'overview' | 'products' | 'releases' | 'wholesale' | 'engagement' | 'settings';
+
 export function BrandDashboard() {
   const [loading, setLoading] = useState(true);
   const [brands, setBrands] = useState<MyBrand[]>([]);
@@ -26,6 +28,7 @@ export function BrandDashboard() {
   const [posts, setPosts] = useState<BrandPost[]>([]);
   const [detail, setDetail] = useState<BrandDetail | null>(null);
   const [productCount, setProductCount] = useState(0);
+  const [tab, setTab] = useState<BrandTab>('overview');
 
   useEffect(() => { (async () => {
     const mine = await getMyBrands();
@@ -77,56 +80,82 @@ export function BrandDashboard() {
         )}
       </div>
 
-      {/* Subscription summary */}
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">
-          <div className="text-xs text-smoke-400">Plan</div>
-          <div className="mt-1 flex items-center gap-1.5 font-display text-xl capitalize">{isPremium && <Sparkles size={15} className="text-ember-400" />}{active.tier}</div>
-          <div className="mt-0.5 text-xs text-smoke-400">{sub?.status ?? '—'}</div>
-        </div>
-        <div className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">
-          <div className="text-xs text-smoke-400">Boosts this month</div>
-          <div className="mt-1 font-display text-xl">{isPremium ? 'Unlimited' : `${boostsLeft} / ${sub?.monthlyBoostQuota ?? 3}`}</div>
-          <div className="mt-0.5 text-xs text-smoke-400">{isPremium ? 'Included' : 'Extra boosts billed as used'}</div>
-        </div>
-        <div className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">
-          <div className="text-xs text-smoke-400">Seats</div>
-          <div className="mt-1 font-display text-xl">{sub?.seats ?? (isPremium ? 'Custom' : 2)}</div>
-          <Link href={`/brands/${active.slug}`} className="mt-0.5 inline-block text-xs text-ember-400 hover:underline">View public page →</Link>
-        </div>
+      <div className="mt-6 flex flex-wrap gap-1.5 border-b-[0.5px] border-ember-400/15 pb-3">
+        {([
+          { id: 'overview', label: 'Overview', icon: LayoutGrid },
+          { id: 'products', label: 'Products', icon: Package },
+          { id: 'releases', label: 'Releases', icon: Megaphone },
+          { id: 'wholesale', label: 'Wholesale', icon: Boxes },
+          { id: 'engagement', label: 'Engagement', icon: Award },
+          { id: 'settings', label: 'Settings', icon: SettingsIcon },
+        ] as { id: BrandTab; label: string; icon: typeof LayoutGrid }[]).map((t) => {
+          const Icon = t.icon; const on = tab === t.id;
+          return (
+            <button key={t.id} onClick={() => setTab(t.id)}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm transition ${on ? 'bg-ember-400/15 text-ember-100' : 'text-smoke-300 hover:bg-ember-400/5 hover:text-paper'}`}>
+              <Icon size={15} strokeWidth={1.5} /> {t.label}
+            </button>
+          );
+        })}
       </div>
 
-      <nav className="mt-6 flex flex-wrap gap-1 border-b border-ember-400/10 pb-2 text-sm">
-        <a href="#listed-cigars" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Listed Cigars</a>
-        <a href="#audience" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Audience</a>
-        <a href="#badges" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Badges</a>
-        <a href="#wholesale" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Wholesale</a>
-        <a href="#orders" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Orders</a>
-        <a href="#messages" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Messages</a>
-        <a href="#releases" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Releases</a>
-        <a href="#brand-details" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Brand page</a>
-        <a href="#reviews" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Reviews</a>
-        <Link href="/brand/settings" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Settings</Link>
-      </nav>
-
-      <ListedCigars slug={active.slug} />
-      <AudiencePanel premium={isPremium} />
-      <BrandBadges brandName={active.name} />
-      <BrandWholesale />
-      <BrandOrders />
-      <BrandMessages />
-
-      {detail && (
-        <BrandOnboarding brandId={active.id} slug={active.slug} detail={detail} productCount={productCount} postCount={posts.length} onChange={() => reload(active)} />
+      {tab === 'overview' && (
+        <div className="space-y-6">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">
+              <div className="text-xs text-smoke-400">Plan</div>
+              <div className="mt-1 flex items-center gap-1.5 font-display text-xl capitalize">{isPremium && <Sparkles size={15} className="text-ember-400" />}{active.tier}</div>
+              <div className="mt-0.5 text-xs text-smoke-400">{sub?.status ?? '—'}</div>
+            </div>
+            <div className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">
+              <div className="text-xs text-smoke-400">Boosts this month</div>
+              <div className="mt-1 font-display text-xl">{isPremium ? 'Unlimited' : `${boostsLeft} / ${sub?.monthlyBoostQuota ?? 3}`}</div>
+              <div className="mt-0.5 text-xs text-smoke-400">{isPremium ? 'Included' : 'Extra boosts billed as used'}</div>
+            </div>
+            <div className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4">
+              <div className="text-xs text-smoke-400">Seats</div>
+              <div className="mt-1 font-display text-xl">{sub?.seats ?? (isPremium ? 'Custom' : 2)}</div>
+              <Link href={`/brands/${active.slug}`} className="mt-0.5 inline-block text-xs text-ember-400 hover:underline">View public page →</Link>
+            </div>
+          </div>
+          {detail && (
+            <BrandOnboarding brandId={active.id} slug={active.slug} detail={detail} productCount={productCount} postCount={posts.length} onChange={() => reload(active)} />
+          )}
+        </div>
       )}
 
-      <ReleasePromoPanel brandId={active.id} posts={posts} boostsLeft={isPremium ? Infinity : boostsLeft} onChange={() => reload(active)} />
+      {tab === 'products' && <ListedCigars slug={active.slug} />}
 
-      {detail && <BrandDetailsEditor brandId={active.id} detail={detail} onSaved={() => reload(active)} />}
-      <AnalyticsPanel premium={isPremium} />
-      <SecurityPanel mfaEnabled={!!active.mfaEnabled} onChange={() => reload(active)} />
-      <ReviewRequestPanel brandId={active.id} premium={isPremium} />
-      <SeatsPanel seats={sub?.seats ?? 2} premium={isPremium} />
+      {tab === 'releases' && (
+        <div className="space-y-10">
+          <ReleasePromoPanel brandId={active.id} posts={posts} boostsLeft={isPremium ? Infinity : boostsLeft} onChange={() => reload(active)} />
+          <div className="border-t border-ember-400/10 pt-8"><ReviewRequestPanel brandId={active.id} premium={isPremium} /></div>
+        </div>
+      )}
+
+      {tab === 'wholesale' && (
+        <div className="space-y-10">
+          <BrandWholesale />
+          <div className="border-t border-ember-400/10 pt-8"><BrandOrders /></div>
+          <div className="border-t border-ember-400/10 pt-8"><BrandMessages /></div>
+        </div>
+      )}
+
+      {tab === 'engagement' && (
+        <div className="space-y-10">
+          <BrandBadges brandName={active.name} />
+          <div className="border-t border-ember-400/10 pt-8"><AudiencePanel premium={isPremium} /></div>
+          <div className="border-t border-ember-400/10 pt-8"><AnalyticsPanel premium={isPremium} /></div>
+        </div>
+      )}
+
+      {tab === 'settings' && (
+        <div className="space-y-10">
+          {detail && <BrandDetailsEditor brandId={active.id} detail={detail} onSaved={() => reload(active)} />}
+          <div className="border-t border-ember-400/10 pt-8"><SecurityPanel mfaEnabled={!!active.mfaEnabled} onChange={() => reload(active)} /></div>
+          <div className="border-t border-ember-400/10 pt-8"><SeatsPanel seats={sub?.seats ?? 2} premium={isPremium} /></div>
+        </div>
+      )}
     </div>
   );
 }

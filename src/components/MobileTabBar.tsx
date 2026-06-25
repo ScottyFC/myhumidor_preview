@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import { Home, Search, Box, Store, Cigarette, Package, Newspaper } from 'lucide-react';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { Home, Search, Box, Store, Cigarette, Package, Newspaper, LayoutGrid, Ticket, Boxes, Settings as SettingsIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { subscribeAuth, type Session } from '@/lib/auth';
 
-type Tab = { href: string; label: string; icon: typeof Home; match: (p: string) => boolean };
+type Tab = { href: string; label: string; icon: typeof Home; match: (p: string) => boolean; tab?: string };
 
 const CONSUMER: Tab[] = [
   { href: '/', label: 'Home', icon: Home, match: (p) => p === '/' },
@@ -18,13 +18,13 @@ const CONSUMER: Tab[] = [
   { href: '/feed', label: 'Feed', icon: Newspaper, match: (p) => p.startsWith('/feed') },
 ];
 
+// Mirrors the lounge dashboard tabs (LoungeHub). Deep-links via ?tab=.
 const LOUNGE: Tab[] = [
-  { href: '/', label: 'Home', icon: Home, match: (p) => p === '/' },
-  { href: '/top', label: 'Cigars', icon: Cigarette, match: (p) => p.startsWith('/top') || p.startsWith('/cigars') || p.startsWith('/brands') },
-  { href: '/search', label: 'Search', icon: Search, match: (p) => p.startsWith('/search') },
-  { href: '/dashboard', label: 'Inventory', icon: Package, match: (p) => p.startsWith('/dashboard') },
-  { href: '/lounges', label: 'Lounges', icon: Store, match: (p) => p.startsWith('/lounges') },
-  { href: '/feed', label: 'Feed', icon: Newspaper, match: (p) => p.startsWith('/feed') },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutGrid, tab: 'overview', match: (p) => p.startsWith('/dashboard') },
+  { href: '/dashboard?tab=inventory', label: 'Inventory', icon: Package, tab: 'inventory', match: (p) => p.startsWith('/dashboard') },
+  { href: '/dashboard?tab=preorders', label: 'Pre-orders', icon: Ticket, tab: 'preorders', match: (p) => p.startsWith('/dashboard') },
+  { href: '/dashboard?tab=wholesale', label: 'Wholesale', icon: Boxes, tab: 'wholesale', match: (p) => p.startsWith('/dashboard') },
+  { href: '/dashboard?tab=settings', label: 'Lounge', icon: SettingsIcon, tab: 'settings', match: (p) => p.startsWith('/dashboard') },
 ];
 
 /**
@@ -34,6 +34,8 @@ const LOUNGE: Tab[] = [
  */
 export function MobileTabBar() {
   const pathname = usePathname() || '/';
+  const searchParams = useSearchParams();
+  const currentTab = (searchParams?.get('tab')) || 'overview';
   const [session, setSession] = useState<Session | null>(null);
   useEffect(() => subscribeAuth(setSession), []);
 
@@ -47,9 +49,9 @@ export function MobileTabBar() {
       {/* Fade content out just above the bar so nothing leaks behind it. */}
       <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-ink to-transparent" />
       <div className="relative w-full border-t border-ember-400/20 bg-gradient-to-b from-char/30 to-ink">
-      <div className="grid w-full grid-cols-6 pt-1">
+      <div className={cn('grid w-full pt-1', tabs.length === 5 ? 'grid-cols-5' : 'grid-cols-6')}>
         {tabs.map((t) => {
-          const active = t.match(pathname);
+          const active = t.tab ? (pathname.startsWith('/dashboard') && currentTab === t.tab) : t.match(pathname);
           const Icon = t.icon;
           return (
             <Link
