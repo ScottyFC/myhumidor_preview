@@ -8,7 +8,7 @@ function csrf(): string {
 const H = () => ({ 'Content-Type': 'application/json', 'x-csrf-token': csrf() });
 async function j<T>(u: string, init?: RequestInit): Promise<T> { const r = await fetch(u, init); return r.json().catch(() => ({})) as Promise<T>; }
 
-export interface MyPreorder { id: string; cigar_name: string; quantity: number; status: string; confirmation_number: string; qr_token: string; created_at: string; lounges?: { name: string; slug: string } }
+export interface MyPreorder { id: string; slug?: string | null; cigar_name: string; quantity: number; status: string; confirmation_number: string; qr_token: string; created_at: string; lounges?: { name: string; slug: string } }
 export interface LoungePreorder { id: string; cigar_name: string; quantity: number; status: string; confirmation_number: string; created_at: string; profiles?: { handle: string; display_name: string } }
 
 export const listMyPreorders = () => j<{ ok: boolean; preorders: MyPreorder[] }>('/api/preorders');

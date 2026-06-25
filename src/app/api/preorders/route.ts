@@ -13,7 +13,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   const svc = supabaseService() as unknown as SupabaseClient | null;
   if (!svc) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
-  const { data } = await svc.from('preorders').select('id, cigar_name, quantity, status, confirmation_number, qr_token, created_at, lounges(name, slug)').eq('user_id', user.id).order('created_at', { ascending: false });
+  const { data } = await svc.from('preorders').select('id, slug, cigar_name, quantity, status, confirmation_number, qr_token, created_at, lounges(name, slug)').eq('user_id', user.id).order('created_at', { ascending: false });
   return NextResponse.json({ ok: true, preorders: data ?? [] });
 }
 

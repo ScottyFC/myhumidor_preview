@@ -10,6 +10,7 @@ import { RatingBar } from '@/components/RatingStars';
 import { RatingForm } from '@/components/RatingForm';
 import { getBrandSession } from '@/lib/brand-auth';
 import { CigarStatusBadge } from '@/components/CigarStatusBadge';
+import { PreorderStatusTag } from '@/components/PreorderStatusTag';
 import { MyCigarRatings } from '@/components/MyCigarRatings';
 import { CigarCommunity } from '@/components/CigarCommunity';
 import { CigarInsight } from '@/components/CigarInsight';
@@ -144,6 +145,7 @@ export default async function CigarPage({ params }: PageProps) {
             <CigarName slug={slug} name={view.headline} mode="name" />
           </h1>
           {cigarStatus !== 'available' && <div className="mt-2"><CigarStatusBadge status={cigarStatus} /></div>}
+          <PreorderStatusTag slug={slug} />
         </div>
 
         {/* ─── Visual ─────────────────────────────────────────────────── */}

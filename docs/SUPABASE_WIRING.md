@@ -1,3 +1,23 @@
+## Coming-soon images, pre-order cigar-page tag, approval email/notification (NO new migration)
+
+- **Mobile app**: last turn's changes ride on shared pages, so they apply in the Capacitor app
+  too — the tabbed dashboard, the removed home episode carousel (NativeHome), and the Humidor
+  "My Pre-Orders" link (reachable via the app's Humidor tab). The badge celebration now renders
+  through a portal to document.body at z-index 1100+ (above the native tab bar), which is the
+  structural fix for it not showing in the webview.
+- **Coming-soon product image**: LoungeComingSoon now shows the cigar's CigarThumb image, same
+  as in-stock rows.
+- **Pre-order tag on cigar pages**: PreorderStatusTag fetches the viewer's pre-orders and, if
+  one matches the cigar slug, shows a status pill under the title (awaiting approval / confirmed
+  · ready for pickup / picked up) linking to /preorders. (preorders GET now returns slug.)
+- **Approval notification + email**: when a lounge approves a pre-order, the user gets the
+  in-app/app-bell notification (existing) AND an email (Resend) with a button linking to their
+  QR code at /preorders. Email address fetched via service-role auth.admin.getUserById.
+
+Caveat: "push" here means the in-app notification bell (web + app) + email — true NATIVE push
+(APNs/FCM device tokens) is separate infrastructure not yet wired. Email needs RESEND_API_KEY.
+Badge celebration in the native app is portal-fixed but unverified on a real device.
+Compile-verified only.
 ## Pre-order bug fix + tabbed lounge dashboard + mobile fixes (NO new migration)
 
 - **Bug fix (pending pre-orders not showing)**: the lounge pre-order queries embedded

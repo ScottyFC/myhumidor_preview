@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CalendarClock, Ticket, Loader2, Check } from 'lucide-react';
+import { CigarThumb } from '@/components/CigarThumb';
 import type { InventoryItem } from '@/lib/inventory';
 import { placePreorder } from '@/lib/preorders';
 import { subscribeAuth } from '@/lib/auth';
@@ -40,9 +41,12 @@ export function LoungeComingSoon({ slug, items }: { slug: string; items: Invento
           return (
             <div key={it.cigarId} className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-3">
               <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium text-paper">{it.name}</div>
-                  <div className="text-xs text-smoke-400">{[it.brand, it.releaseDate ? `Releases ${new Date(it.releaseDate + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : null].filter(Boolean).join(' · ')}</div>
+                <div className="flex min-w-0 items-center gap-3">
+                  <CigarThumb slug={it.slug} brand={it.brand} fit="contain" rounded="rounded" className="h-12 w-10 shrink-0 text-[10px]" />
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-paper">{it.name}</div>
+                    <div className="text-xs text-smoke-400">{[it.brand, it.releaseDate ? `Releases ${new Date(it.releaseDate + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}` : null].filter(Boolean).join(' · ')}</div>
+                  </div>
                 </div>
                 {it.preorderEnabled && <span className="shrink-0 text-xs text-smoke-300">{rem} of {it.preorderLimit} left</span>}
               </div>
