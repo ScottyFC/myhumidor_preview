@@ -57,5 +57,9 @@
 	<string>MyHumidor can save the story image you create to your photos.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>MyHumidor uses your location to find cigar lounges near you.</string>
+    <key>NSCameraUsageDescription</key>
+        <string>We need access to your camera to scan barcodes for your humidor.</string>
+        <key>NSFaceIDUsageDescription</key>
+        <string>We use Face ID to securely authenticate your access to MyHumidor.</string>
 </dict>
 </plist>

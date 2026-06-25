@@ -1,3 +1,19 @@
+## Pre-order bug fix + tabbed lounge dashboard + mobile fixes (NO new migration)
+
+- **Bug fix (pending pre-orders not showing)**: the lounge pre-order queries embedded
+  `profiles(...)`, but preorders.user_id references auth.users with no FK to profiles, so
+  PostgREST errored and returned nothing. Both `/api/lounge/preorders` and `/confirm` now
+  select without the embed and look profiles up separately by user_id. Pending pre-orders now
+  appear in the manager.
+- **Tabbed lounge dashboard**: `/dashboard` now uses `LoungeHub`, mirroring the admin panel —
+  an Overview tab (default) with pending-task cards (pre-orders awaiting approval, etc.), plus
+  Inventory, Pre-orders, Wholesale, and Lounge (live/details/staff/badges/certification) tabs.
+  Decluttered from the old single scroll.
+- **Mobile**: removed the Burn Rate episode carousel from the mobile home (NativeHome). Added
+  a prominent "My Pre-Orders" link on the Humidor page (reachable via the mobile Humidor tab)
+  so users can pull up their QR code for pickup. (The account dropdown also still links to
+  /preorders.)
+Compile-verified only.
 ## phase99 — Quick fixes, brand lockdowns, lounge pre-order/reservation system (RUN MIGRATION)
 
 `phase99.sql` adds inventory_items.coming_soon/release_date/preorder_enabled/preorder_limit +

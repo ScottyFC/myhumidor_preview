@@ -15,15 +15,17 @@ export async function POST(req: Request) {
   const token = String(b.token ?? '').trim();        // qr token (uuid)
   if (!code && !token) return NextResponse.json({ ok: false, error: 'Scan or enter a confirmation code.' }, { status: 400 });
 
-  let q = svc.from('preorders').select('id, cigar_name, status, confirmation_number, profiles(handle, display_name)').eq('lounge_id', lounge.loungeId);
+  let q = svc.from('preorders').select('id, cigar_name, status, confirmation_number, user_id').eq('lounge_id', lounge.loungeId);
   q = token ? q.eq('qr_token', token) : q.eq('confirmation_number', code.toUpperCase());
   const { data: po } = await q.maybeSingle();
-  const r = po as { id: string; cigar_name: string; status: string; confirmation_number: string; profiles?: { handle: string; display_name: string } } | null;
+  const r = po as { id: string; cigar_name: string; status: string; confirmation_number: string; user_id: string } | null;
   if (!r) return NextResponse.json({ ok: false, error: 'No matching pre-order at your lounge.' }, { status: 404 });
   if (r.status === 'fulfilled') return NextResponse.json({ ok: false, error: 'Already picked up.' }, { status: 409 });
   if (r.status !== 'approved') return NextResponse.json({ ok: false, error: `This pre-order is ${r.status}, not approved for pickup.` }, { status: 409 });
 
   const { error } = await svc.from('preorders').update({ status: 'fulfilled', fulfilled_at: new Date().toISOString() } as never).eq('id', r.id).eq('lounge_id', lounge.loungeId);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true, cigarName: r.cigar_name, code: r.confirmation_number, customer: r.profiles?.display_name || r.profiles?.handle || 'Customer' });
+  const { data: prof } = await svc.from('profiles').select('handle, display_name').eq('id', r.user_id).maybeSingle();
+  const pr = prof as { handle: string; display_name: string } | null;
+  return NextResponse.json({ ok: true, cigarName: r.cigar_name, code: r.confirmation_number, customer: pr?.display_name || pr?.handle || 'Customer' });
 }

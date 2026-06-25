@@ -119,7 +119,13 @@ export default function HumidorPage() {
     <div className="mx-auto max-w-5xl px-6 pt-10">
       <header className="mb-8">
         <div className="eyebrow mb-2">{displayName}&apos;s collection</div>
-        <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">My Humidor</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">My Humidor</h1>
+          <a href="/preorders" className="inline-flex items-center gap-1.5 rounded-lg border-[0.5px] border-ember-400/30 bg-ember-400/10 px-3 py-2 text-sm font-medium text-ember-100 transition hover:bg-ember-400/20">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg>
+            My Pre-Orders
+          </a>
+        </div>
         <div className="mt-3 flex gap-6 text-sm text-smoke-200 tabular">
           <span>
             <span className="font-display text-lg text-paper">{humidorRows.length}</span> in humidor

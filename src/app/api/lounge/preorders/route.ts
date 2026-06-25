@@ -9,8 +9,17 @@ export async function GET() {
   if (!lounge) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   const svc = supabaseService() as unknown as SupabaseClient | null;
   if (!svc) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
-  const { data } = await svc.from('preorders').select('id, cigar_name, quantity, status, confirmation_number, created_at, user_id, profiles(handle, display_name)').eq('lounge_id', lounge.loungeId).order('created_at', { ascending: false }).limit(500);
-  return NextResponse.json({ ok: true, preorders: data ?? [] });
+  const { data } = await svc.from('preorders').select('id, cigar_name, quantity, status, confirmation_number, created_at, user_id').eq('lounge_id', lounge.loungeId).order('created_at', { ascending: false }).limit(500);
+  const rows = (data ?? []) as { user_id: string }[];
+  // preorders.user_id -> auth.users (no direct FK to profiles), so look profiles up separately.
+  const ids = Array.from(new Set(rows.map((r) => r.user_id)));
+  const byId = new Map<string, { handle: string; display_name: string }>();
+  if (ids.length) {
+    const { data: profs } = await svc.from('profiles').select('id, handle, display_name').in('id', ids);
+    for (const p of ((profs ?? []) as Record<string, unknown>[])) byId.set(p.id as string, { handle: (p.handle as string) ?? '', display_name: (p.display_name as string) ?? '' });
+  }
+  const preorders = rows.map((r) => ({ ...r, profiles: byId.get(r.user_id) ?? null }));
+  return NextResponse.json({ ok: true, preorders });
 }
 
 export async function PATCH(req: Request) {
