@@ -55,7 +55,7 @@ export function supabaseBrowser() {
 
 export async function supabaseServer() {
   const { cookies } = await import('next/headers');
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   return createServerClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
     cookies: {
       getAll() {

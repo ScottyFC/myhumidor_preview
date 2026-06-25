@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
 import { GeistSans } from 'geist/font/sans';
-import '@fontsource-variable/fraunces';
 import './globals.css';
 import Link from 'next/link';
 import { Nav } from '@/components/Nav';
