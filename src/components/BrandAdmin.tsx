@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { listPendingVerifications, decideVerification, type PendingVerification } from '@/lib/broker';
-import { Loader2, Gem, Send, Inbox, Boxes, MessageSquare, LifeBuoy, ShieldCheck, CreditCard, LayoutGrid } from 'lucide-react';
+import { Loader2, Gem, Send, Inbox, Boxes, MessageSquare, LifeBuoy, ShieldCheck, CreditCard, LayoutGrid, Ticket, Check } from 'lucide-react';
 import { BrandSignupQueue } from '@/components/BrandSignupQueue';
 import {
   listApprovedBrands, setSubscriptionStatus, setPaymentMethod, createInvoice,
@@ -11,7 +11,7 @@ import {
   type ApprovedBrandRow, type ReviewReqRow, type TicketRow,
 } from '@/lib/brands';
 
-type Sub = 'overview' | 'apps' | 'brands' | 'reviews' | 'tickets' | 'verify';
+type Sub = 'overview' | 'apps' | 'brands' | 'reviews' | 'tickets' | 'verify' | 'preorders';
 const STATUSES = [['awaiting', 'Awaiting Response'], ['in_progress', 'In Progress'], ['done', 'Done']] as const;
 const money = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'usd' });
 
@@ -33,6 +33,7 @@ export function BrandAdmin() {
     { id: 'reviews', label: 'CigarTV reviews', icon: MessageSquare },
     { id: 'tickets', label: 'Support tickets', icon: LifeBuoy },
     { id: 'verify', label: 'Verifications', icon: ShieldCheck },
+    { id: 'preorders', label: 'Pre-order blocks', icon: Ticket },
   ];
   return (
     <div>
@@ -50,6 +51,7 @@ export function BrandAdmin() {
       {sub === 'reviews' && <ReviewQueue />}
       {sub === 'tickets' && <TicketQueue />}
       {sub === 'verify' && <VerificationQueue />}
+      {sub === 'preorders' && <PreorderBlocksQueue />}
     </div>
   );
 }
@@ -241,6 +243,42 @@ function VerificationQueue() {
             <button onClick={() => decide(r.brand_id, 'verified')} className="rounded-lg bg-ember-400 px-3 py-1.5 text-xs font-medium text-paper">Verify</button>
             <button onClick={() => decide(r.brand_id, 'rejected')} className="rounded-lg border-[0.5px] border-ember-400/20 px-3 py-1.5 text-xs text-smoke-300 hover:text-red-300">Reject</button>
           </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+function PreorderBlocksQueue() {
+  const [rows, setRows] = useState<{ id: string; handle: string; display_name: string; preorder_cancel_count: number; total: number; cancelled: number }[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const load = useCallback(async () => {
+    const r = await fetch('/api/admin/preorder-blocks').then((x) => x.json()).catch(() => ({ users: [] }));
+    setRows(r.users ?? []);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  async function reinstate(userId: string) {
+    setBusy(userId);
+    await fetch('/api/admin/preorder-blocks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) });
+    setBusy(null); load();
+  }
+
+  if (rows === null) return <Loader2 className="animate-spin text-ember-400" />;
+  if (rows.length === 0) return <p className="text-sm text-smoke-400">No members are currently blocked from pre-ordering.</p>;
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-smoke-400">Members temporarily blocked from pre-ordering after repeated self-cancellations. Review their habits and reinstate access.</p>
+      {rows.map((u) => (
+        <div key={u.id} className="flex items-center justify-between gap-3 rounded-lg border-[0.5px] border-ember-400/15 bg-char/30 p-3">
+          <div className="min-w-0">
+            <div className="truncate font-medium text-paper">{u.display_name || u.handle || u.id.slice(0, 8)}</div>
+            <div className="text-xs text-smoke-400">{u.cancelled} cancelled of {u.total} pre-orders · {u.preorder_cancel_count} self-cancels</div>
+          </div>
+          <button onClick={() => reinstate(u.id)} disabled={busy === u.id} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-ember-400 px-3 py-1.5 text-sm font-medium text-paper disabled:opacity-50">
+            {busy === u.id ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Reinstate
+          </button>
         </div>
       ))}
     </div>

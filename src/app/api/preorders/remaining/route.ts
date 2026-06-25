@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseService } from '@/lib/supabase';
+import { expireStalePreorders } from '@/lib/preorder-expiry';
 import type { SupabaseClient } from '@supabase/supabase-js';
 export const runtime = 'nodejs';
 
@@ -14,6 +15,7 @@ export async function GET(req: Request) {
     const { data: lounge } = await svc.from('lounges').select('id').eq('slug', slug).maybeSingle();
     const loungeId = (lounge as { id: string } | null)?.id;
     if (!loungeId) return NextResponse.json({ remaining: {} });
+    await expireStalePreorders(svc, { loungeId });
     const { data: items } = await svc.from('inventory_items').select('id, preorder_limit').eq('lounge_id', loungeId).eq('coming_soon', true).eq('preorder_enabled', true);
     const out: Record<string, number> = {};
     for (const it of ((items ?? []) as { id: string; preorder_limit: number }[])) {

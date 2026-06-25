@@ -10,6 +10,7 @@ import { LoungeBadges } from '@/components/LoungeBadges';
 import { CertificationTiers } from '@/components/CertificationTiers';
 import { PreorderManager } from '@/components/PreorderManager';
 import { WholesaleBrowser } from '@/components/WholesaleBrowser';
+import InventoryPage from '@/app/dashboard/inventory/page';
 import { listLoungePreorders } from '@/lib/preorders';
 
 type Tab = 'overview' | 'inventory' | 'preorders' | 'wholesale' | 'settings';
@@ -48,13 +49,7 @@ export function LoungeHub() {
       </div>
 
       {tab === 'overview' && <Overview pendingPre={pendingPre} onJump={setTab} />}
-      {tab === 'inventory' && (
-        <section>
-          <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Package size={18} className="text-ember-400" /> Inventory</h2>
-          <p className="mt-2 text-sm text-smoke-400">Manage what you carry, set prices and quantities, mark releases as coming soon, and open pre-orders.</p>
-          <Link href="/dashboard/inventory" className="btn-primary mt-4 inline-flex"><Package size={15} strokeWidth={1.5} /> Open inventory manager</Link>
-        </section>
-      )}
+      {tab === 'inventory' && <div className="-mx-6 -mt-8"><InventoryPage /></div>}
       {tab === 'preorders' && <div onClick={loadCounts}><PreorderManager /></div>}
       {tab === 'wholesale' && (
         <section>

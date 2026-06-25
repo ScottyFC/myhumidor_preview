@@ -290,8 +290,18 @@ export default function InventoryPage() {
                             Open pre-orders (Aficionado)
                           </label>
                           {it.preorderEnabled && (
-                            <label className="flex items-center gap-1.5">Limit
+                            <label className="flex items-center gap-1.5">Total limit
                               <input type="number" min={0} value={it.preorderLimit ?? 0} onChange={(e) => update(it.cigarId, { preorderLimit: parseInt(e.target.value, 10) || 0 })} className="w-16 rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-2 py-1 text-right tabular text-paper focus:border-ember-400 focus:outline-none" />
+                            </label>
+                          )}
+                          {it.preorderEnabled && (
+                            <label className="flex items-center gap-1.5">Max per user
+                              <input type="number" min={1} value={it.preorderPerUserLimit ?? 1} onChange={(e) => update(it.cigarId, { preorderPerUserLimit: Math.max(1, parseInt(e.target.value, 10) || 1) })} className="w-14 rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-2 py-1 text-right tabular text-paper focus:border-ember-400 focus:outline-none" />
+                            </label>
+                          )}
+                          {it.preorderEnabled && (
+                            <label className="flex items-center gap-1.5" title="Hours to hold an approved reservation before releasing it back to inventory. 0 = no expiry.">Hold (hrs)
+                              <input type="number" min={0} value={it.preorderHoldHours ?? 0} onChange={(e) => update(it.cigarId, { preorderHoldHours: Math.max(0, parseInt(e.target.value, 10) || 0) })} className="w-16 rounded-md border-[0.5px] border-ember-400/20 bg-char/80 px-2 py-1 text-right tabular text-paper focus:border-ember-400 focus:outline-none" />
                             </label>
                           )}
                         </>

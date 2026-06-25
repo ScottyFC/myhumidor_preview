@@ -1,3 +1,30 @@
+## phase100 — Pre-order controls: per-user limit, hold/expiry, cancellations, abuse block (RUN MIGRATION)
+
+`phase100.sql` adds inventory_items.preorder_per_user_limit + preorder_hold_hours; preorders.
+lounge_message + expires_at (+ 'expired' status); profiles.preorder_blocked + preorder_cancel_count.
+
+- **Per-user limit**: lounges set "Max per user" per item; /api/preorders POST rejects qty over it.
+- **Hold / auto-release**: lounges set "Hold (hrs)". expires_at is set at creation (now+hold) and
+  reset at approval (now+hold). A lazy helper (expireStalePreorders) flips elapsed pending/approved
+  rows to 'expired', freeing the slot — run before every count/list (place, remaining, lounge list,
+  user list). 0 hrs = no expiry.
+- **Lounge cancel + message**: PATCH /api/lounge/preorders accepts an optional message (stored in
+  lounge_message), shown to the user and emailed on decline/cancel. Manager has Decline…/Cancel…
+  (prompt for message).
+- **User cancel + abuse block**: PATCH /api/preorders {action:'cancel'} cancels own pending/approved
+  order; each self-cancel bumps profiles.preorder_cancel_count, and at 3 it sets preorder_blocked
+  (POST place returns 403). Super admin reviews + reinstates in the admin panel → "Pre-order blocks"
+  tab (/api/admin/preorder-blocks GET+POST, _is_admin-gated; reinstate clears flag + counter).
+- **Inline inventory**: dashboard Inventory tab now renders the full Inventory Manager inline (no
+  more "Open inventory manager" hop).
+- **Collapsible pre-orders + previous orders**: /preorders cards collapse (approved auto-expanded for
+  the QR); fulfilled/cancelled/declined/expired move to a "Previous orders" disclosure. Cancel button
+  on active orders.
+- **Lounge pickup history**: PreorderManager has an "Order history" disclosure (picked up / cancelled
+  / declined / expired) — a record for the lounge.
+
+Caveats: expiry is lazy (no cron) — slots free on the next read, not the instant the timer passes.
+Abuse threshold is 3 self-cancellations (hard-coded). Compile-verified only; run phase100 after 99.
 ## Coming-soon images, pre-order cigar-page tag, approval email/notification (NO new migration)
 
 - **Mobile app**: last turn's changes ride on shared pages, so they apply in the Capacitor app

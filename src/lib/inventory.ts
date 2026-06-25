@@ -22,6 +22,8 @@ export interface InventoryItem {
   releaseDate?: string | null;
   preorderEnabled?: boolean;
   preorderLimit?: number;
+  preorderPerUserLimit?: number;
+  preorderHoldHours?: number;
 }
 
 const invKey = (id: string) => `myhumidor:inventory:${id}`;
@@ -40,13 +42,15 @@ type Row = {
   id?: string; cigar_id: string; slug: string | null; brand: string | null; name: string | null;
   size: string | null; price: number | null; quantity: number | null;
   coming_soon?: boolean | null; release_date?: string | null; preorder_enabled?: boolean | null; preorder_limit?: number | null;
+  preorder_per_user_limit?: number | null; preorder_hold_hours?: number | null;
 };
-const SELECT = 'id, cigar_id, slug, brand, name, size, price, quantity, coming_soon, release_date, preorder_enabled, preorder_limit';
+const SELECT = 'id, cigar_id, slug, brand, name, size, price, quantity, coming_soon, release_date, preorder_enabled, preorder_limit, preorder_per_user_limit, preorder_hold_hours';
 function rowTo(r: Row): InventoryItem {
   return {
     id: r.id, cigarId: r.cigar_id, slug: r.slug ?? '', brand: r.brand ?? '', name: r.name ?? '',
     size: r.size ?? '', price: Number(r.price ?? 0), quantity: r.quantity ?? 1,
     comingSoon: !!r.coming_soon, releaseDate: r.release_date ?? null, preorderEnabled: !!r.preorder_enabled, preorderLimit: r.preorder_limit ?? 0,
+    preorderPerUserLimit: r.preorder_per_user_limit ?? 1, preorderHoldHours: r.preorder_hold_hours ?? 0,
   };
 }
 function localRead(key: string): InventoryItem[] {
@@ -100,6 +104,7 @@ export async function saveInventory(slug: string, items: InventoryItem[], localI
         size: i.size, price: i.price, quantity: i.quantity,
         coming_soon: !!i.comingSoon, release_date: i.releaseDate || null,
         preorder_enabled: !!i.preorderEnabled, preorder_limit: i.preorderLimit ?? 0,
+        preorder_per_user_limit: i.preorderPerUserLimit ?? 1, preorder_hold_hours: i.preorderHoldHours ?? 0,
       }));
       const { error } = await (sb as unknown as import('@supabase/supabase-js').SupabaseClient).from('inventory_items').upsert(rows as never, { onConflict: 'lounge_id,cigar_id' });
       if (error) {

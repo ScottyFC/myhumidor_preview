@@ -8,11 +8,12 @@ function csrf(): string {
 const H = () => ({ 'Content-Type': 'application/json', 'x-csrf-token': csrf() });
 async function j<T>(u: string, init?: RequestInit): Promise<T> { const r = await fetch(u, init); return r.json().catch(() => ({})) as Promise<T>; }
 
-export interface MyPreorder { id: string; slug?: string | null; cigar_name: string; quantity: number; status: string; confirmation_number: string; qr_token: string; created_at: string; lounges?: { name: string; slug: string } }
-export interface LoungePreorder { id: string; cigar_name: string; quantity: number; status: string; confirmation_number: string; created_at: string; profiles?: { handle: string; display_name: string } }
+export interface MyPreorder { id: string; slug?: string | null; cigar_name: string; quantity: number; status: string; confirmation_number: string; qr_token: string; created_at: string; lounge_message?: string | null; lounges?: { name: string; slug: string } }
+export interface LoungePreorder { id: string; cigar_name: string; quantity: number; status: string; confirmation_number: string; created_at: string; fulfilled_at?: string | null; profiles?: { handle: string; display_name: string } }
 
 export const listMyPreorders = () => j<{ ok: boolean; preorders: MyPreorder[] }>('/api/preorders');
+export const cancelMyPreorder = (id: string) => j<{ ok: boolean; error?: string; blocked?: boolean }>('/api/preorders', { method: 'PATCH', headers: H(), body: JSON.stringify({ id, action: 'cancel' }) });
 export const placePreorder = (input: { inventoryItemId: string; cigarName: string; quantity?: number }) => j<{ ok: boolean; error?: string }>('/api/preorders', { method: 'POST', headers: H(), body: JSON.stringify(input) });
 export const listLoungePreorders = () => j<{ ok: boolean; preorders: LoungePreorder[] }>('/api/lounge/preorders');
-export const decidePreorder = (id: string, decision: 'approved' | 'declined' | 'cancelled') => j<{ ok: boolean; error?: string }>('/api/lounge/preorders', { method: 'PATCH', headers: H(), body: JSON.stringify({ id, decision }) });
+export const decidePreorder = (id: string, decision: 'approved' | 'declined' | 'cancelled', message?: string) => j<{ ok: boolean; error?: string }>('/api/lounge/preorders', { method: 'PATCH', headers: H(), body: JSON.stringify({ id, decision, message }) });
 export const confirmPreorder = (input: { code?: string; token?: string }) => j<{ ok: boolean; error?: string; cigarName?: string; code?: string; customer?: string }>('/api/lounge/preorders/confirm', { method: 'POST', headers: H(), body: JSON.stringify(input) });

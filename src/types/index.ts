@@ -44,6 +44,8 @@ export interface InventoryItem {
   releaseDate?: string | null;   // ISO date
   preorderEnabled?: boolean;
   preorderLimit?: number;
+  preorderPerUserLimit?: number;
+  preorderHoldHours?: number;
 }
 
 // ─── EPISODE (parsed from CigarTV MRSS feed) ─────────────────────────────────
