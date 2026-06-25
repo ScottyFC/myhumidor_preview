@@ -1,3 +1,35 @@
+## Security overhaul + boxes-available enforcement + near-real-time messaging (NO new migration)
+
+**Security**
+- Closed the lounge CSRF gap: lounge order + messaging POSTs now require a double-submit
+  token (client sets `mh_csrf`, echoes it in `x-csrf-token`; server `validateLoungeCsrf`
+  matches them). A cross-site attacker can neither read the cookie nor set a custom header.
+- Baseline security headers on every response (next.config): HSTS (2y, preload),
+  X-Frame-Options SAMEORIGIN, X-Content-Type-Options nosniff, Referrer-Policy
+  strict-origin-when-cross-origin, Permissions-Policy (camera/geolocation self, mic off,
+  FLoC off). A strict CSP is intentionally deferred (needs per-source allow-listing for
+  Mapbox/Supabase/HLS/inline to avoid breakage).
+- Audited every mutation route: the only ones without a session check are intentionally
+  pre-auth (login/signup/reset/verify — rate-limited + reCAPTCHA), signature-verified
+  (Stripe webhook), token-authed (invite accept), or public utilities (enrich/recommendations/
+  agent/images). No sensitive route is unprotected. (Not an external pen-test.)
+
+**Boxes available**
+- Brands edit listings inline (name, vitola, cigars/box, price/box, boxes available, MOQ) on
+  the broker page. Orders now enforce: listing active, in stock, requested <= available, and
+  MOQ. Inventory is drawn down (boxes_available decremented) when the brand ACCEPTS an order.
+  The lounge catalog shows availability, caps the qty input, and disables out-of-stock items.
+
+**Near-real-time messaging**
+- MessageThread now polls every 3s while the tab is visible (pauses when hidden), so both
+  sides see new messages without refresh. Short polling rather than a websocket because brands
+  use custom auth (not Supabase users), so one RLS-authenticated Realtime channel can't serve
+  both sides.
+
+Caveats: availability is checked at placement against current stock and decremented on accept,
+so two concurrent orders could both pass placement then over-draw (floored at 0) — true
+reservation needs transactional holds. Messaging is 3s polling, not push. CSP still pending.
+Compile-verified only.
 ## phase98 — Broker: verification, notifications, wholesale link, security lockdown (RUN MIGRATION)
 
 `phase98.sql` adds brands.verified + verification_status, brand_tax_submissions (sensitive,

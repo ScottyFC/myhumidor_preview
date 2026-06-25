@@ -24,6 +24,16 @@ export async function PATCH(req: Request) {
   const { data: ord } = await sb.from('broker_orders').select('lounge_id').eq('id', b.id).eq('brand_id', s.brandId).maybeSingle();
   const { error } = await sb.from('broker_orders').update({ status: b.status, updated_at: new Date().toISOString() } as never).eq('id', b.id).eq('brand_id', s.brandId);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  // On acceptance, draw down inventory for each line item.
+  if (b.status === 'accepted') {
+    const { data: items } = await sb.from('broker_order_items').select('listing_id, boxes').eq('order_id', b.id);
+    for (const it of ((items ?? []) as { listing_id: string | null; boxes: number }[])) {
+      if (!it.listing_id) continue;
+      const { data: lst } = await sb.from('brand_wholesale_listings').select('boxes_available').eq('id', it.listing_id).maybeSingle();
+      const cur = (lst as { boxes_available: number } | null)?.boxes_available ?? 0;
+      await sb.from('brand_wholesale_listings').update({ boxes_available: Math.max(0, cur - it.boxes) } as never).eq('id', it.listing_id).eq('brand_id', s.brandId);
+    }
+  }
   const loungeId = (ord as { lounge_id: string } | null)?.lounge_id;
   if (loungeId) await notifyLoungeOwner(loungeId, s.brand.name, 'broker_order', `Your wholesale order was ${b.status} by ${s.brand.name}.`);
   return NextResponse.json({ ok: true });

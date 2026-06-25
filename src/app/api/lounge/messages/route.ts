@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getOwnedLounge } from '@/lib/lounge-broker';
+import { getOwnedLounge, validateLoungeCsrf } from '@/lib/lounge-broker';
 import { addBrandNotification, emailBrand } from '@/lib/brand-auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { supabaseService } from '@/lib/supabase';
@@ -23,6 +23,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const lounge = await getOwnedLounge();
   if (!lounge) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  if (!validateLoungeCsrf(req)) return NextResponse.json({ ok: false, error: 'Invalid request token.' }, { status: 403 });
   const svc = supabaseService() as unknown as SupabaseClient | null;
   if (!svc) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
   const b = await req.json().catch(() => ({}));

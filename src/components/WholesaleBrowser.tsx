@@ -52,10 +52,10 @@ export function WholesaleBrowser() {
                 {b.listings.map((l) => (
                   <div key={l.id} className="flex items-center justify-between gap-3 py-2">
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-paper">{l.cigarName}</div>
-                      <div className="text-xs text-smoke-400">{[l.vitola, `${l.cigarsPerBox}/box`, `${fmtUsd(l.pricePerBox * 100)}/box`, `MOQ ${l.moqBoxes}`].filter(Boolean).join(' · ')}</div>
+                      <div className="text-sm font-medium text-paper">{l.cigarName} {l.boxesAvailable <= 0 && <span className="ml-1 text-[11px] uppercase tracking-wide text-red-300">out of stock</span>}</div>
+                      <div className="text-xs text-smoke-400">{[l.vitola, `${l.cigarsPerBox}/box`, `${fmtUsd(l.pricePerBox * 100)}/box`, `MOQ ${l.moqBoxes}`, `${l.boxesAvailable} available`].filter(Boolean).join(' · ')}</div>
                     </div>
-                    <input type="number" min={0} placeholder="boxes" value={qty[l.id] ?? ''} onChange={(e) => setQty({ ...qty, [l.id]: parseInt(e.target.value, 10) || 0 })} className={input + ' w-24 shrink-0'} />
+                    <input type="number" min={0} max={l.boxesAvailable} disabled={l.boxesAvailable <= 0} placeholder="boxes" value={qty[l.id] ?? ''} onChange={(e) => setQty({ ...qty, [l.id]: Math.min(l.boxesAvailable, parseInt(e.target.value, 10) || 0) })} className={input + ' w-24 shrink-0 disabled:opacity-40'} />
                   </div>
                 ))}
               </div>

@@ -7,6 +7,17 @@ function csrf(): string {
   const m = document.cookie.match(/(?:^|;\s*)mh_brand_csrf=([^;]+)/);
   return m ? decodeURIComponent(m[1]) : '';
 }
+function loungeCsrf(): string {
+  if (typeof document === 'undefined') return '';
+  let m = document.cookie.match(/(?:^|;\s*)mh_csrf=([^;]+)/);
+  if (!m) {
+    const t = (crypto?.randomUUID?.() ?? String(Math.random()).slice(2)) + Date.now().toString(36);
+    document.cookie = `mh_csrf=${t}; path=/; SameSite=Lax`;
+    m = [`mh_csrf=${t}`, t] as RegExpMatchArray;
+  }
+  return decodeURIComponent(m[1]);
+}
+const loungeHeaders = () => ({ 'Content-Type': 'application/json', 'x-csrf-token': loungeCsrf() });
 async function j<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init); return r.json().catch(() => ({})) as Promise<T>;
 }
@@ -30,11 +41,11 @@ export const sendBrandMessage = (threadId: string, body: string) => j<{ ok: bool
 // ── Lounge side ─────────────────────────────────────────────────────────────
 export interface WholesaleBrand { brandId: string; name: string; slug: string; listings: { id: string; cigarName: string; vitola: string | null; cigarsPerBox: number; pricePerBox: number; boxesAvailable: number; moqBoxes: number; imageUrl: string | null }[] }
 export const browseWholesale = () => j<{ ok: boolean; brands: WholesaleBrand[] }>('/api/wholesale');
-export const placeOrder = (brandId: string, items: { listingId: string; boxes: number }[], note?: string) => j<{ ok: boolean; id?: string; total?: number; error?: string }>('/api/lounge/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brandId, items, note }) });
+export const placeOrder = (brandId: string, items: { listingId: string; boxes: number }[], note?: string) => j<{ ok: boolean; id?: string; total?: number; error?: string }>('/api/lounge/order', { method: 'POST', headers: loungeHeaders(), body: JSON.stringify({ brandId, items, note }) });
 export const getLoungeOrders = () => j<{ ok: boolean; orders: BrokerOrder[] }>('/api/lounge/orders');
 export const getLoungeThreads = () => j<{ ok: boolean; threads: { id: string; last_message_at: string; brands?: { name: string; slug: string } }[] }>('/api/lounge/threads');
 export const getLoungeMessages = (threadId: string) => j<{ ok: boolean; messages: BrokerMessage[] }>(`/api/lounge/messages?threadId=${threadId}`);
-export const sendLoungeMessage = (input: { threadId?: string; brandId?: string; body: string }) => j<{ ok: boolean; threadId?: string }>('/api/lounge/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
+export const sendLoungeMessage = (input: { threadId?: string; brandId?: string; body: string }) => j<{ ok: boolean; threadId?: string }>('/api/lounge/messages', { method: 'POST', headers: loungeHeaders(), body: JSON.stringify(input) });
 
 export const fmtUsd = (cents: number) => `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 

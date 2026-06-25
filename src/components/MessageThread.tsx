@@ -15,7 +15,19 @@ export function MessageThread({ threadId, viewer, load, send }: {
   const endRef = useRef<HTMLDivElement | null>(null);
 
   async function refresh() { const r = await load(threadId); if (r.ok) setMsgs(r.messages); }
-  useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [threadId]);
+  // Near-real-time: poll every 3s while the tab is visible (brands aren't Supabase
+  // users, so a single websocket channel can't serve both sides — short polling
+  // covers both auth models). Pauses when the tab is hidden.
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const tick = () => { if (!document.hidden) refresh(); };
+    refresh();
+    timer = setInterval(tick, 3000);
+    const onVis = () => { if (!document.hidden) refresh(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { if (timer) clearInterval(timer); document.removeEventListener('visibilitychange', onVis); };
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [threadId]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs.length]);
 
   async function submit() {
