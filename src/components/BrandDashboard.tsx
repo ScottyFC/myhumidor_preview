@@ -13,6 +13,9 @@ import { BrandDetailsEditor } from '@/components/BrandDetailsEditor';
 import { ListedCigars } from '@/components/ListedCigars';
 import { AudiencePanel } from '@/components/AudiencePanel';
 import { BrandBadges } from '@/components/BrandBadges';
+import { BrandWholesale } from '@/components/BrandWholesale';
+import { BrandOrders } from '@/components/BrandOrders';
+import { BrandMessages } from '@/components/BrandMessages';
 
 export function BrandDashboard() {
   const [loading, setLoading] = useState(true);
@@ -95,6 +98,9 @@ export function BrandDashboard() {
         <a href="#listed-cigars" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Listed Cigars</a>
         <a href="#audience" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Audience</a>
         <a href="#badges" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Badges</a>
+        <a href="#wholesale" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Wholesale</a>
+        <a href="#orders" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Orders</a>
+        <a href="#messages" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Messages</a>
         <a href="#releases" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Releases</a>
         <a href="#brand-details" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Brand page</a>
         <a href="#reviews" className="rounded-md px-3 py-1.5 text-smoke-300 hover:bg-ember-400/10 hover:text-ember-100">Reviews</a>
@@ -104,6 +110,9 @@ export function BrandDashboard() {
       <ListedCigars slug={active.slug} />
       <AudiencePanel premium={isPremium} />
       <BrandBadges brandName={active.name} />
+      <BrandWholesale />
+      <BrandOrders />
+      <BrandMessages />
 
       {detail && (
         <BrandOnboarding brandId={active.id} slug={active.slug} detail={detail} productCount={productCount} postCount={posts.length} onChange={() => reload(active)} />

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, Upload, Check, ImageIcon, Store } from 'lucide-react';
+import { Loader2, Upload, Check, ImageIcon, Store, Trash2 } from 'lucide-react';
 import { updateBrandDetails, uploadBrandImage, type BrandDetail } from '@/lib/brands';
 
 export function BrandDetailsEditor({ brandId, detail, onSaved }: { brandId: string; detail: BrandDetail; onSaved: () => void }) {
@@ -27,6 +27,14 @@ export function BrandDetailsEditor({ brandId, detail, onSaved }: { brandId: stri
     if (kind === 'logo') setLogoUrl(url); else setBannerUrl(url);
     // persist immediately so onboarding reflects it
     await updateBrandDetails(brandId, kind === 'logo' ? { logoUrl: url } : { bannerUrl: url });
+    onSaved();
+  }
+
+  async function remove(kind: 'logo' | 'banner') {
+    setErr(null);
+    if (kind === 'logo') setLogoUrl(''); else setBannerUrl('');
+    const res = await updateBrandDetails(brandId, kind === 'logo' ? { logoUrl: null } : { bannerUrl: null });
+    if (!res.ok) { setErr(res.error ?? 'Could not remove.'); return; }
     onSaved();
   }
 
@@ -56,6 +64,7 @@ export function BrandDetailsEditor({ brandId, detail, onSaved }: { brandId: stri
                 {up === 'logo' ? <><Loader2 size={13} className="animate-spin" /> Uploading…</> : <><Upload size={13} /> {logoUrl ? 'Replace' : 'Upload'}</>}
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => upload('logo', e.target.files?.[0])} />
               </label>
+              {logoUrl && <button onClick={() => remove('logo')} className="inline-flex items-center gap-1 text-xs text-smoke-400 hover:text-red-300"><Trash2 size={13} /> Remove</button>}
             </div>
           </div>
           <div>
@@ -68,6 +77,7 @@ export function BrandDetailsEditor({ brandId, detail, onSaved }: { brandId: stri
                 {up === 'banner' ? <><Loader2 size={13} className="animate-spin" /> Uploading…</> : <><Upload size={13} /> {bannerUrl ? 'Replace' : 'Upload'}</>}
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => upload('banner', e.target.files?.[0])} />
               </label>
+              {bannerUrl && <button onClick={() => remove('banner')} className="inline-flex items-center gap-1 text-xs text-smoke-400 hover:text-red-300"><Trash2 size={13} /> Remove</button>}
             </div>
           </div>
         </div>

@@ -1,0 +1,13 @@
+import { NextResponse } from 'next/server';
+import { getOwnedLounge } from '@/lib/lounge-broker';
+import { supabaseService } from '@/lib/supabase';
+import type { SupabaseClient } from '@supabase/supabase-js';
+export const runtime = 'nodejs';
+export async function GET() {
+  const lounge = await getOwnedLounge();
+  if (!lounge) return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  const svc = supabaseService() as unknown as SupabaseClient | null;
+  if (!svc) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
+  const { data } = await svc.from('broker_threads').select('id, last_message_at, brands(name, slug)').eq('lounge_id', lounge.loungeId).order('last_message_at', { ascending: false });
+  return NextResponse.json({ ok: true, threads: data ?? [] });
+}

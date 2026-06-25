@@ -1,3 +1,33 @@
+## phase97 — Logo/banner removal, nationwide stocking, cigar broker scaffolding (RUN MIGRATION)
+
+`phase97.sql` adds broker tables: brand_wholesale_listings, broker_orders,
+broker_order_items, broker_threads, broker_messages.
+
+1. **Logo/banner removal**: BrandDetailsEditor now has a Remove button on each (sets the
+   column null via updateBrandDetails). Storage object is left as a harmless orphan.
+2. **Stocking on the cigar page**: brand and lounge-owner viewers now see "Lounges stocking
+   this cigar" / "Who is stocking this cigar" — a NATIONWIDE rundown (every lounge listing it
+   in stock, grouped by count + states) instead of the consumer's location-based
+   "Where to buy near you". Detected via getBrandSession (brand) and lounges.owner_id (lounge
+   owner). New `/api/cigars/[slug]/stocking`.
+3. **Cigar broker (SCAFFOLDING)**:
+   - Brands sell by the box: dashboard → Wholesale section (BrandWholesale) manages
+     brand_wholesale_listings (cigar, vitola, cigars/box, price/box, boxes available, MOQ,
+     active/paused). Routes `/api/brand/wholesale`.
+   - Lounges order: `/wholesale` page (WholesaleBrowser) browses PREMIUM ("Premier") brands'
+     active listings, sets box quantities, places an order (priced server-side, MOQ enforced)
+     via `/api/lounge/order`, and sees their orders `/api/lounge/orders`.
+   - Brand reviews orders: dashboard → Orders (BrandOrders) accept/decline/ship via
+     `/api/brand/orders`.
+   - Messaging: one thread per (brand, lounge); shared MessageThread component. Brand uses
+     `/api/brand/threads|messages`; lounge uses `/api/lounge/threads|messages` (lounge can
+     start a thread by messaging a brand). Both in the dashboard / wholesale page.
+
+RLS: broker_orders/items/threads/messages are RLS-ON with NO client policies — all access via
+authorizing server routes (brand custom-auth + service role; lounge = Supabase user owning a
+lounge via lounges.owner_id + service role). brand_wholesale_listings has public read of
+active rows. SCAFFOLDING ONLY: no payments, no fulfillment/shipping, no invoicing, no realtime
+(messages poll on open), no new-order/message notifications yet. Compile-verified only.
 ## Review removal in community list + "Featured on" carousel (NO new migration)
 
 - **Remove reviews**: the detail page already let users remove their own ratings

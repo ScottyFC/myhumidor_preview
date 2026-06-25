@@ -26,6 +26,7 @@ import { CigarReviews } from '@/components/CigarReviews';
 import { FeaturedEpisodes } from '@/components/FeaturedEpisodes';
 import { featuredEpisodesForCigar } from '@/lib/featured-episodes';
 import { WhereToBuyNearby } from '@/components/WhereToBuyNearby';
+import { StockingNationwide } from '@/components/StockingNationwide';
 import { CigarEditForm } from '@/components/CigarEditForm';
 import { applyOverride } from '@/lib/overrides';
 import { CigarImageUpload } from '@/components/CigarImageUpload';
@@ -92,6 +93,14 @@ export default async function CigarPage({ params }: PageProps) {
   // Community averages come from the live `ratings` table once users start
   // rating. Until then every cigar shows the "not yet rated" state.
   const isBrandUser = !!(await getBrandSession());
+  let isLoungeOwner = false;
+  if (!isBrandUser && isSupabaseConfigured) {
+    try {
+      const sbu = await supabaseServer();
+      const { data: { user } } = await sbu.auth.getUser();
+      if (user) { const { data: owned } = await sbu.from('lounges').select('id').eq('owner_id', user.id).limit(1); isLoungeOwner = !!(owned && owned.length); }
+    } catch { /* ignore */ }
+  }
 
   const view: CigarView = {
     id: cat.uuid,
@@ -243,9 +252,11 @@ export default async function CigarPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* ─── Where to buy near you (certified lounges ≤25mi) ──────────── */}
+      {/* ─── Stocking: nationwide rundown for operators, nearby for consumers ─ */}
       <div className="mt-8">
-        <WhereToBuyNearby slug={slug} />
+        {isBrandUser || isLoungeOwner
+          ? <StockingNationwide slug={slug} viewer={isBrandUser ? 'brand' : 'lounge'} />
+          : <WhereToBuyNearby slug={slug} />}
       </div>
 
       {/* ─── Community: likes + comments ──────────────────────────────── */}
