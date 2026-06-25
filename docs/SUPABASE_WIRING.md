@@ -1,3 +1,16 @@
+## Review removal in community list + "Featured on" carousel (NO new migration)
+
+- **Remove reviews**: the detail page already let users remove their own ratings
+  (MyCigarRatings). Now the public Community reviews list (CigarReviews) also shows a remove
+  (trash) button on the viewer's OWN review — `fetchCigarReviews` now selects `user_id`, the
+  component compares it to the session, and removal calls `removeRating` (RLS-scoped delete)
+  and drops it from the list. Ratings remain append-only (re-rating adds a new row).
+- **"Featured on" carousel** (`/cigars/[slug]`): a horizontal, snap-scrolling carousel of
+  episodes featuring the cigar. Sources: an exact Burn Rate match by slug (static
+  `burnrate.json`, aired only, with score badge) + MRSS feed episodes whose title/description
+  mentions the brand or cigar name. `featuredEpisodesForCigar` (server) degrades to just Burn
+  Rate if the feed is unreachable. Cards link out to cigartv.com to watch. Compile-verified
+  only (MRSS fetch + thumbnails need network/live, not reproducible here).
 ## Edit badges + artwork on profile + award celebration (NO new migration)
 
 1. **Edit badges**: each badge in the dashboard has an Edit (pencil) button → change title,

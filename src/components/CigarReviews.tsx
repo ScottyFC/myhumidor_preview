@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Circle, Star, MessageSquareText, Crown } from 'lucide-react';
-import { fetchCigarReviews, type CommunityReview } from '@/lib/ratings';
+import { Circle, Star, MessageSquareText, Crown, Trash2 } from 'lucide-react';
+import { fetchCigarReviews, removeRating, type CommunityReview } from '@/lib/ratings';
+import { subscribeAuth } from '@/lib/auth';
 
 /**
  * Community reviews of this cigar — every member's rating with their score,
@@ -12,6 +13,14 @@ import { fetchCigarReviews, type CommunityReview } from '@/lib/ratings';
 export function CigarReviews({ slug }: { slug: string }) {
   const [reviews, setReviews] = useState<CommunityReview[] | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [uid, setUid] = useState<string | null>(null);
+
+  useEffect(() => subscribeAuth((sess) => setUid(sess?.uuid ?? null)), []);
+
+  function removeMine(id: string) {
+    removeRating(id);
+    setReviews((rs) => (rs ? rs.filter((x) => x.id !== id) : rs));
+  }
 
   useEffect(() => {
     let off = false;
@@ -49,9 +58,16 @@ export function CigarReviews({ slug }: { slug: string }) {
                 )}
                 {r.aficionado && <Crown size={12} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
               </div>
-              <div className="inline-flex shrink-0 items-center gap-1 font-display text-base tabular text-ember-100">
-                <Circle size={13} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
-                {r.overall.toFixed(1)}
+              <div className="flex shrink-0 items-center gap-2">
+                <div className="inline-flex items-center gap-1 font-display text-base tabular text-ember-100">
+                  <Circle size={13} strokeWidth={1.5} className="fill-ember-400 text-ember-400" />
+                  {r.overall.toFixed(1)}
+                </div>
+                {uid && r.userId === uid && (
+                  <button onClick={() => removeMine(r.id)} title="Remove your review" aria-label="Remove your review" className="flex h-7 w-7 items-center justify-center rounded-md border-[0.5px] border-ember-400/20 text-smoke-400 transition hover:border-red-400/50 hover:text-red-400">
+                    <Trash2 size={13} strokeWidth={1.5} />
+                  </button>
+                )}
               </div>
             </div>
             <div className="mt-1 text-[10px] uppercase tracking-wider text-smoke-400">

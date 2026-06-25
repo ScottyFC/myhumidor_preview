@@ -23,6 +23,8 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { StockNearYou } from '@/components/StockNearYou';
 import { CigarPhotos } from '@/components/CigarPhotos';
 import { CigarReviews } from '@/components/CigarReviews';
+import { FeaturedEpisodes } from '@/components/FeaturedEpisodes';
+import { featuredEpisodesForCigar } from '@/lib/featured-episodes';
 import { WhereToBuyNearby } from '@/components/WhereToBuyNearby';
 import { CigarEditForm } from '@/components/CigarEditForm';
 import { applyOverride } from '@/lib/overrides';
@@ -108,6 +110,7 @@ export default async function CigarPage({ params }: PageProps) {
   };
 
   const nearby = featuredLounges(3);
+  const featuredEpisodes = await featuredEpisodesForCigar({ slug, brand: view.brand, name: view.headline });
   const social = getCigarSocial(view.id);
   const brandMore = moreFromBrand(slug, 12);
   const similar = similarCigars(slug, 12);
@@ -256,6 +259,8 @@ export default async function CigarPage({ params }: PageProps) {
       </div>
 
       <CigarPhotos slug={slug} />
+
+      <FeaturedEpisodes items={featuredEpisodes} />
 
       <CigarReviews slug={slug} />
 
