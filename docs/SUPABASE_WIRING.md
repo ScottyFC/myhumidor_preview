@@ -1,3 +1,39 @@
+## phase98 — Broker: verification, notifications, wholesale link, security lockdown (RUN MIGRATION)
+
+`phase98.sql` adds brands.verified + verification_status, brand_tax_submissions (sensitive,
+RLS-locked), brand_notifications (RLS-locked); auto-verifies existing premium brands.
+
+- **Wholesale link on brand pages**: `/brands/[slug]` shows an "Order wholesale" button ONLY
+  to lounge owners (admins) AND only when the brand is enrolled = verified + has active box
+  listings. Detected server-side (lounges.owner_id + verified + listing count).
+- **Notifications, both sides**:
+  - Lounge owners (Supabase users) get in-app notifications (existing bell) on order
+    status changes and brand messages → deep-link /wholesale (new types broker_order/
+    broker_message).
+  - Brands get in-app notifications via a new dashboard bell (brand_notifications) on new
+    orders and lounge messages, plus a best-effort email (sendBrandEmail → brand account).
+- **Verification**: Premier (premium) brands are auto-verified (by tier). Standard brands must
+  submit business tax info (legal name, EIN [validated, not SSN], type, address) via the
+  Wholesale section → status pending → an admin verifies in Brand Tools → Verifications. Only
+  verified brands can create wholesale listings (server-enforced 403) and only verified
+  brands appear in the lounge catalog.
+
+### Security lockdown
+- broker_orders / order_items / threads / messages: RLS ON, NO client policies — all access
+  through authorizing server routes (brand custom-auth + CSRF + service role; lounge =
+  Supabase user owning a lounge via getOwnedLounge + service role). wholesale_listings:
+  public read of active only. brand_tax_submissions + brand_notifications: service-role only.
+- Orders priced server-side from listing data; MOQ enforced; each item validated to belong to
+  the ordered brand; status transitions limited to the owning brand.
+- Rate limits: orders 20/hr (lounge+IP), lounge messaging 60/hr; message body capped 2000
+  chars (both sides).
+- Tax data is minimal + RLS-locked + admin-only; EIN format validated.
+
+Caveats: lounge POST routes authorize via the Supabase cookie session (no separate CSRF token
+yet — same-site cookies); brand emails need Resend; no payments/fulfillment; messaging polls
+(bell every 60s), not realtime; boxes_available isn't hard-enforced on orders (MOQ is); tax
+info is stored in plaintext under RLS (consider a KYC/encryption provider for compliance).
+Run phase97 (if not yet) + phase98. Compile-verified only.
 ## phase97 — Logo/banner removal, nationwide stocking, cigar broker scaffolding (RUN MIGRATION)
 
 `phase97.sql` adds broker tables: brand_wholesale_listings, broker_orders,

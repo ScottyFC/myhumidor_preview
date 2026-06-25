@@ -59,12 +59,12 @@ export default async function BrandPage({ params }: PageProps) {
 
   // Approved brands exist in the DB even with zero catalog cigars — load the row so the
   // page renders (with logo/bio/announcements) the moment a brand is approved.
-  type DbBrand = { id: string; name: string; logo_url: string | null; banner_url: string | null; description: string | null; tier: string | null };
+  type DbBrand = { id: string; name: string; logo_url: string | null; banner_url: string | null; description: string | null; tier: string | null; verified?: boolean | null };
   let dbBrand: DbBrand | null = null;
   if (isSupabaseConfigured) {
     try {
       const sb = await supabaseServer();
-      const { data } = await (sb as unknown as import('@supabase/supabase-js').SupabaseClient).from('brands').select('id, name, logo_url, banner_url, description, tier').eq('slug', slug).maybeSingle();
+      const { data } = await (sb as unknown as import('@supabase/supabase-js').SupabaseClient).from('brands').select('id, name, logo_url, banner_url, description, tier, verified').eq('slug', slug).maybeSingle();
       dbBrand = (data as unknown as DbBrand | null) ?? null;
     } catch { /* ignore */ }
   }
@@ -81,6 +81,26 @@ export default async function BrandPage({ params }: PageProps) {
     if (!base) continue;
     const m = await applyOverride(base);
     if (m && brandSlug(m.brand) === slug) { pooled.push(m); have.add(s); }
+  }
+
+  // Wholesale link: only for lounge owners (admins), only when this brand is enrolled
+  // (verified + has active box listings).
+  let showWholesaleLink = false;
+  if (isSupabaseConfigured && dbBrand?.id) {
+    try {
+      const sb = await supabaseServer();
+      const { data: { user } } = await sb.auth.getUser();
+      if (user) {
+        const sbc = sb as unknown as import('@supabase/supabase-js').SupabaseClient;
+        const { data: owned } = await sbc.from('lounges').select('id').eq('owner_id', user.id).limit(1);
+        const isLoungeOwner = !!(owned && owned.length);
+        const verified = dbBrand.tier === 'premium' || dbBrand.verified === true;
+        if (isLoungeOwner && verified) {
+          const { count } = await sbc.from('brand_wholesale_listings').select('*', { count: 'exact', head: true }).eq('brand_id', dbBrand.id).eq('status', 'active');
+          showWholesaleLink = (count ?? 0) > 0;
+        }
+      }
+    } catch { /* ignore */ }
   }
 
   const finalLabel = pooled[0]?.brand ?? label ?? dbBrand?.name ?? null;
@@ -114,7 +134,7 @@ export default async function BrandPage({ params }: PageProps) {
         </div>
       </div>
       {dbBrand?.description && <p className="mt-4 max-w-2xl text-sm leading-relaxed text-smoke-200">{dbBrand.description}</p>}
-      {dbBrand?.id && <div className="mt-4"><FollowBrandButton brandId={dbBrand.id} /></div>}
+      {dbBrand?.id && <div className="mt-4 flex flex-wrap items-center gap-3"><FollowBrandButton brandId={dbBrand.id} />{showWholesaleLink && <a href="/wholesale" className="inline-flex items-center gap-1.5 rounded-lg border-[0.5px] border-ember-400/40 bg-ember-400/10 px-4 py-2 text-sm font-medium text-ember-100 transition hover:bg-ember-400/20">Order wholesale</a>}</div>}
       {dbBrand?.id && <BrandBadgeShowcase brandId={dbBrand.id} />}
 
       <BrandCsvDownload brand={finalLabel} rows={deduped.map((c) => ({

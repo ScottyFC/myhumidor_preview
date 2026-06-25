@@ -248,3 +248,36 @@ export async function notifyBrandFollowers(brandId: string, brandName: string, s
     for (let i = 0; i < rows.length; i += 500) await sb.from('notifications').insert(rows.slice(i, i + 500) as never);
   } catch { /* best effort */ }
 }
+
+// ── Broker notifications ─────────────────────────────────────────────────────
+/** Notify a lounge's owner (a Supabase user) via the consumer notifications table. */
+export async function notifyLoungeOwner(loungeId: string, brandName: string, type: 'broker_order' | 'broker_message', summary: string): Promise<void> {
+  const sb = svc(); if (!sb) return;
+  try {
+    const { data } = await sb.from('lounges').select('owner_id').eq('id', loungeId).maybeSingle();
+    const uid = (data as { owner_id: string | null } | null)?.owner_id;
+    if (!uid) return;
+    await sb.from('notifications').insert({ user_id: uid, type, actor_name: brandName, entity_type: 'broker', entity_id: 'wholesale', entity_name: summary, read: false } as never);
+  } catch { /* best effort */ }
+}
+
+/** In-app notification for a brand (backs the dashboard bell). */
+export async function addBrandNotification(brandId: string, kind: string, title: string, body: string, href: string): Promise<void> {
+  const sb = svc(); if (!sb) return;
+  try { await sb.from('brand_notifications').insert({ brand_id: brandId, kind, title, body, href, read: false } as never); } catch { /* best effort */ }
+}
+
+/** Best-effort email to a brand's account address. */
+export async function emailBrand(brandId: string, subject: string, html: string): Promise<void> {
+  const sb = svc(); if (!sb) return;
+  try {
+    const { data } = await sb.from('brand_auth_accounts').select('email').eq('brand_id', brandId).limit(1).maybeSingle();
+    const to = (data as { email: string } | null)?.email;
+    if (to) await sendBrandEmail(to, subject, html);
+  } catch { /* best effort */ }
+}
+
+/** Verification gate: Premier (premium) brands are auto-verified; Standard must verify. */
+export function isBrandVerified(brand: { tier: string; verified?: boolean }): boolean {
+  return brand.tier === 'premium' || brand.verified === true;
+}

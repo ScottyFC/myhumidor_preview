@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getOwnedLounge } from '@/lib/lounge-broker';
+import { addBrandNotification, emailBrand } from '@/lib/brand-auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { supabaseService } from '@/lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 export const runtime = 'nodejs';
@@ -26,6 +28,9 @@ export async function POST(req: Request) {
   const b = await req.json().catch(() => ({}));
   const body = String(b.body ?? '').trim();
   if (!body) return NextResponse.json({ ok: false, error: 'Empty message.' }, { status: 400 });
+  if (body.length > 2000) return NextResponse.json({ ok: false, error: 'Message too long (2000 char max).' }, { status: 400 });
+  const rl = await checkRateLimit(`bmsg:${lounge.loungeId}`, { max: 60, windowSec: 3600 });
+  if (!rl.allowed) return NextResponse.json({ ok: false, error: 'Slow down a moment.' }, { status: 429 });
   let threadId = b.threadId as string | undefined;
   if (!threadId) {
     if (!b.brandId) return NextResponse.json({ ok: false, error: 'Missing brand.' }, { status: 400 });
@@ -38,5 +43,8 @@ export async function POST(req: Request) {
   const { error } = await svc.from('broker_messages').insert({ thread_id: threadId, sender_type: 'lounge', sender_id: lounge.userId, body } as never);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   await svc.from('broker_threads').update({ last_message_at: new Date().toISOString() } as never).eq('id', threadId);
+  const { data: th2 } = await svc.from('broker_threads').select('brand_id').eq('id', threadId).maybeSingle();
+  const brandId = (th2 as { brand_id: string } | null)?.brand_id;
+  if (brandId) { await addBrandNotification(brandId, 'message', `Message from ${lounge.loungeName}`, body.slice(0, 120), '/brand#messages'); await emailBrand(brandId, `New message from ${lounge.loungeName}`, `<p>${lounge.loungeName} sent you a message on MyHumidor. Open your dashboard to reply.</p>`); }
   return NextResponse.json({ ok: true, threadId });
 }

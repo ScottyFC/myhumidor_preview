@@ -1,7 +1,8 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, Boxes, Plus, Trash2, Pause, Play } from 'lucide-react';
-import { getBrandListings, createBrandListing, updateBrandListing, deleteBrandListing, fmtUsd, type WholesaleListing } from '@/lib/broker';
+import { getBrandListings, createBrandListing, updateBrandListing, deleteBrandListing, getVerification, fmtUsd, type WholesaleListing } from '@/lib/broker';
+import { TaxVerification } from '@/components/TaxVerification';
 
 export function BrandWholesale() {
   const [rows, setRows] = useState<WholesaleListing[] | null>(null);
@@ -9,9 +10,10 @@ export function BrandWholesale() {
   const [f, setF] = useState({ cigarName: '', vitola: '', cigarsPerBox: '20', pricePerBox: '', boxesAvailable: '0', moqBoxes: '1' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [verified, setVerified] = useState<boolean | null>(null);
 
   const load = useCallback(async () => setRows((await getBrandListings()).listings ?? []), []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load(); getVerification().then((r) => setVerified(r.ok ? r.verified : false)); }, [load]);
 
   async function create() {
     setErr(null);
@@ -30,10 +32,11 @@ export function BrandWholesale() {
     <section id="wholesale" className="mt-8 scroll-mt-24">
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Boxes size={18} className="text-ember-400" /> Wholesale (by the box)</h2>
-        {!adding && <button onClick={() => setAdding(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-3 py-1.5 text-xs font-medium text-paper"><Plus size={13} /> Add listing</button>}
+        {verified && !adding && <button onClick={() => setAdding(true)} className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-3 py-1.5 text-xs font-medium text-paper"><Plus size={13} /> Add listing</button>}
       </div>
       <div className="mt-3 rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
         <p className="text-xs text-smoke-400">List cigars for lounges to order by the box. Lounges browse these in the wholesale catalog and place orders you approve here.</p>
+        {verified === false && <div className="mt-3"><TaxVerification onVerified={() => getVerification().then((r) => setVerified(r.ok ? r.verified : false))} /></div>}
         {adding && (
           <div className="mt-3 grid gap-2 rounded-lg border-[0.5px] border-ember-400/20 bg-char/40 p-3 sm:grid-cols-2">
             <input className={input} placeholder="Cigar name" value={f.cigarName} onChange={(e) => setF({ ...f, cigarName: e.target.value })} />

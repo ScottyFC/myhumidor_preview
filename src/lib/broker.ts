@@ -37,3 +37,16 @@ export const getLoungeMessages = (threadId: string) => j<{ ok: boolean; messages
 export const sendLoungeMessage = (input: { threadId?: string; brandId?: string; body: string }) => j<{ ok: boolean; threadId?: string }>('/api/lounge/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
 
 export const fmtUsd = (cents: number) => `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// ── Verification + brand notifications ───────────────────────────────────────
+export interface Verification { tier: string; premium: boolean; verified: boolean; status: string }
+export const getVerification = () => j<{ ok: boolean } & Verification>('/api/brand/verification');
+export const submitTaxInfo = (input: { legalName: string; ein: string; businessType?: string; address?: string; contactEmail?: string }) => j<{ ok: boolean; error?: string }>('/api/brand/verify', { method: 'POST', headers: brandHeaders(), body: JSON.stringify(input) });
+export interface BrandNotif { id: string; kind: string; title: string; body: string | null; href: string | null; read: boolean; created_at: string }
+export const getBrandNotifications = () => j<{ ok: boolean; items: BrandNotif[]; unread: number }>('/api/brand/notifications');
+export const markBrandNotificationsRead = () => j<{ ok: boolean }>('/api/brand/notifications', { method: 'POST', headers: brandHeaders() });
+
+// ── Admin verification ───────────────────────────────────────────────────────
+export interface PendingVerification { brand_id: string; legal_name: string; ein: string; business_type: string | null; address: string | null; contact_email: string | null; created_at: string; brands?: { name: string; slug: string } }
+export const listPendingVerifications = () => j<{ ok: boolean; submissions: PendingVerification[] }>('/api/admin/verify-brand');
+export const decideVerification = (brandId: string, decision: 'verified' | 'rejected') => j<{ ok: boolean }>('/api/admin/verify-brand', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brandId, decision }) });

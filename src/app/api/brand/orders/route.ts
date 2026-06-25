@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getBrandSession, svc, validateCsrf } from '@/lib/brand-auth';
+import { getBrandSession, svc, validateCsrf, notifyLoungeOwner } from '@/lib/brand-auth';
 import type { SupabaseClient } from '@supabase/supabase-js';
 export const runtime = 'nodejs';
 const STATUSES = ['placed', 'accepted', 'declined', 'shipped', 'cancelled'];
@@ -21,7 +21,10 @@ export async function PATCH(req: Request) {
   if (!sb) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
   const b = await req.json().catch(() => ({}));
   if (!b.id || !STATUSES.includes(b.status)) return NextResponse.json({ ok: false, error: 'Bad request.' }, { status: 400 });
+  const { data: ord } = await sb.from('broker_orders').select('lounge_id').eq('id', b.id).eq('brand_id', s.brandId).maybeSingle();
   const { error } = await sb.from('broker_orders').update({ status: b.status, updated_at: new Date().toISOString() } as never).eq('id', b.id).eq('brand_id', s.brandId);
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  const loungeId = (ord as { lounge_id: string } | null)?.lounge_id;
+  if (loungeId) await notifyLoungeOwner(loungeId, s.brand.name, 'broker_order', `Your wholesale order was ${b.status} by ${s.brand.name}.`);
   return NextResponse.json({ ok: true });
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getBrandSession, svc, validateCsrf } from '@/lib/brand-auth';
+import { getBrandSession, svc, validateCsrf, isBrandVerified } from '@/lib/brand-auth';
 import type { SupabaseClient } from '@supabase/supabase-js';
 export const runtime = 'nodejs';
 
@@ -18,6 +18,10 @@ export async function POST(req: Request) {
   if (!(await validateCsrf(req))) return NextResponse.json({ ok: false, error: 'Invalid request token.' }, { status: 403 });
   const sb = svc() as unknown as SupabaseClient | null;
   if (!sb) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
+  const { data: brow } = await sb.from('brands').select('verified, tier').eq('id', s.brandId).maybeSingle();
+  if (!isBrandVerified({ tier: (brow as { tier: string } | null)?.tier ?? s.brand.tier, verified: (brow as { verified: boolean } | null)?.verified })) {
+    return NextResponse.json({ ok: false, error: 'Your brand must be verified before selling wholesale. Submit your tax information to get verified.' }, { status: 403 });
+  }
   const b = await req.json().catch(() => ({}));
   if (!String(b.cigarName ?? '').trim()) return NextResponse.json({ ok: false, error: 'Cigar name required.' }, { status: 400 });
   const price = Math.round(Number(b.pricePerBox) * 100);

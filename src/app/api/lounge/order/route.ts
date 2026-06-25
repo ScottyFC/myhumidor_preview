@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getOwnedLounge } from '@/lib/lounge-broker';
+import { addBrandNotification, emailBrand } from '@/lib/brand-auth';
+import { checkRateLimit, clientIp } from '@/lib/rate-limit';
 import { supabaseService } from '@/lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
 export const runtime = 'nodejs';
@@ -7,6 +9,8 @@ export const runtime = 'nodejs';
 export async function POST(req: Request) {
   const lounge = await getOwnedLounge();
   if (!lounge) return NextResponse.json({ ok: false, error: 'You must be signed in as a lounge owner to order.' }, { status: 401 });
+  const rl = await checkRateLimit(`order:${lounge.loungeId}:${clientIp(req)}`, { max: 20, windowSec: 3600 });
+  if (!rl.allowed) return NextResponse.json({ ok: false, error: 'Too many orders just now — try again shortly.' }, { status: 429 });
   const svc = supabaseService() as unknown as SupabaseClient | null;
   if (!svc) return NextResponse.json({ ok: false, error: 'unavailable' }, { status: 503 });
   const b = await req.json().catch(() => ({}));
@@ -35,5 +39,8 @@ export async function POST(req: Request) {
   await svc.from('broker_order_items').insert(lineItems.map((li) => ({ ...li, order_id: orderId })) as never);
   // Ensure a message thread exists between this lounge and brand.
   await svc.from('broker_threads').upsert({ brand_id: brandId, lounge_id: lounge.loungeId, last_message_at: new Date().toISOString() } as never, { onConflict: 'brand_id,lounge_id' });
+  const dollars = (total / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  await addBrandNotification(brandId, 'order', 'New wholesale order', `${lounge.loungeName} placed an order — $${dollars}.`, '/brand#orders');
+  await emailBrand(brandId, 'New wholesale order on MyHumidor', `<p><strong>${lounge.loungeName}</strong> placed a wholesale order totaling $${dollars}. Review it in your brand dashboard.</p>`);
   return NextResponse.json({ ok: true, id: orderId, total: total / 100 });
 }

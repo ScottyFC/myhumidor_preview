@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Loader2, Gem, Send, Inbox, Boxes, MessageSquare, LifeBuoy, CreditCard, LayoutGrid } from 'lucide-react';
+import { listPendingVerifications, decideVerification, type PendingVerification } from '@/lib/broker';
+import { Loader2, Gem, Send, Inbox, Boxes, MessageSquare, LifeBuoy, ShieldCheck, CreditCard, LayoutGrid } from 'lucide-react';
 import { BrandSignupQueue } from '@/components/BrandSignupQueue';
 import {
   listApprovedBrands, setSubscriptionStatus, setPaymentMethod, createInvoice,
@@ -10,7 +11,7 @@ import {
   type ApprovedBrandRow, type ReviewReqRow, type TicketRow,
 } from '@/lib/brands';
 
-type Sub = 'overview' | 'apps' | 'brands' | 'reviews' | 'tickets';
+type Sub = 'overview' | 'apps' | 'brands' | 'reviews' | 'tickets' | 'verify';
 const STATUSES = [['awaiting', 'Awaiting Response'], ['in_progress', 'In Progress'], ['done', 'Done']] as const;
 const money = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'usd' });
 
@@ -31,6 +32,7 @@ export function BrandAdmin() {
     { id: 'brands', label: 'Brands & billing', icon: CreditCard },
     { id: 'reviews', label: 'CigarTV reviews', icon: MessageSquare },
     { id: 'tickets', label: 'Support tickets', icon: LifeBuoy },
+    { id: 'verify', label: 'Verifications', icon: ShieldCheck },
   ];
   return (
     <div>
@@ -47,6 +49,7 @@ export function BrandAdmin() {
       {sub === 'brands' && <BrandsBilling />}
       {sub === 'reviews' && <ReviewQueue />}
       {sub === 'tickets' && <TicketQueue />}
+      {sub === 'verify' && <VerificationQueue />}
     </div>
   );
 }
@@ -209,6 +212,37 @@ function BrandToolsOverview({ onJump }: { onJump: (s: Sub) => void }) {
         <Stat label="Total tickets" value={c.tickets} />
       </div>
       {c.apps > 0 && <p className="mt-4 text-sm text-ember-200">You have {c.apps} brand application{c.apps === 1 ? '' : 's'} awaiting review.</p>}
+    </div>
+  );
+}
+
+
+function VerificationQueue() {
+  const [rows, setRows] = useState<PendingVerification[] | null>(null);
+  const load = useCallback(async () => setRows((await listPendingVerifications()).submissions ?? []), []);
+  useEffect(() => { load(); }, [load]);
+  async function decide(brandId: string, decision: 'verified' | 'rejected') { await decideVerification(brandId, decision); load(); }
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-smoke-400">Standard brands awaiting wholesale verification. Confirm the business tax details, then verify or reject.</p>
+      {rows === null && <p className="text-sm text-smoke-500">Loading…</p>}
+      {rows && rows.length === 0 && <p className="text-sm text-smoke-400">No pending verifications.</p>}
+      {rows?.map((r) => (
+        <div key={r.brand_id} className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
+          <div className="font-medium text-paper">{r.brands?.name ?? r.legal_name}</div>
+          <div className="mt-1 grid gap-1 text-xs text-smoke-400 sm:grid-cols-2">
+            <span>Legal name: <span className="text-smoke-200">{r.legal_name}</span></span>
+            <span>EIN: <span className="text-smoke-200">{r.ein}</span></span>
+            <span>Type: <span className="text-smoke-200">{r.business_type || '—'}</span></span>
+            <span>Contact: <span className="text-smoke-200">{r.contact_email || '—'}</span></span>
+            <span className="sm:col-span-2">Address: <span className="text-smoke-200">{r.address || '—'}</span></span>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button onClick={() => decide(r.brand_id, 'verified')} className="rounded-lg bg-ember-400 px-3 py-1.5 text-xs font-medium text-paper">Verify</button>
+            <button onClick={() => decide(r.brand_id, 'rejected')} className="rounded-lg border-[0.5px] border-ember-400/20 px-3 py-1.5 text-xs text-smoke-300 hover:text-red-300">Reject</button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { BrandBadges } from '@/components/BrandBadges';
 import { BrandWholesale } from '@/components/BrandWholesale';
 import { BrandOrders } from '@/components/BrandOrders';
 import { BrandMessages } from '@/components/BrandMessages';
+import { BrandNotificationsBell } from '@/components/BrandNotificationsBell';
 
 export function BrandDashboard() {
   const [loading, setLoading] = useState(true);
@@ -64,6 +65,7 @@ export function BrandDashboard() {
           <h1 className="font-display text-4xl tracking-tightest">{active.name}</h1>
         </div>
         <div className="flex items-center gap-2">
+          <BrandNotificationsBell />
           <a href="/brand/settings" className="rounded-lg border-[0.5px] border-ember-400/20 px-3 py-2 text-xs text-smoke-300 hover:text-paper">Settings</a>
           <button onClick={async () => { await brandLogout(); location.href = '/brand/login'; }} className="rounded-lg border-[0.5px] border-ember-400/20 px-3 py-2 text-xs text-smoke-300 hover:text-paper">Sign out</button>
         </div>
