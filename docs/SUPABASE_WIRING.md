@@ -1,3 +1,10 @@
+## BUILD FIX — useSearchParams Suspense boundary (Vercel build was failing)
+
+Adding useSearchParams() to MobileTabBar (rendered in the global layout) and LoungeHub made
+every page bail out of static prerendering ("useSearchParams() should be wrapped in a suspense
+boundary"), so `next build` exited 1 on Vercel. Fix: wrapped <MobileTabBar/> (layout) and
+<LoungeHub/> (dashboard) in <Suspense fallback={null}>. Build now exits 0 (verified by exit code,
+not just log lines). No functional change to the lounge nav / dashboard tabs.
 ## Native QR scan + lounge-distinct mobile app + brand dashboard tabs + inventory styling (NO new migration)
 
 - **Native QR scanning** (lounge profiles): added @capacitor-mlkit/barcode-scanning (v8.1.0, matches

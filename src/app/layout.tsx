@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Suspense } from 'react';
 import { GeistSans } from 'geist/font/sans';
 import '@fontsource-variable/fraunces';
 import './globals.css';
@@ -67,7 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <NativeShell />
         <SplashVideo />
         <main className="pb-32">{children}</main>
-        <MobileTabBar />
+        <Suspense fallback={null}><MobileTabBar /></Suspense>
         <NativeAuthGate />
         <PageAccent />
         <NotificationBanner />

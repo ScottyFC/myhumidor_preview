@@ -47,19 +47,15 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string> YES</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string> YES</string>
+	<string>We use Face ID to securely authenticate your access to MyHumidor.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>MyHumidor lets you pick a cigar photo from your library to scan or share.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>MyHumidor can save the story image you create to your photos.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>CAMERA</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>MyHumidor uses your location to find cigar lounges near you.</string>
-    <key>NSCameraUsageDescription</key>
-        <string>We need access to your camera to scan barcodes for your humidor.</string>
-        <key>NSFaceIDUsageDescription</key>
-        <string>We use Face ID to securely authenticate your access to MyHumidor.</string>
 </dict>
 </plist>

@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Lock } from 'lucide-react';
 import { LoungeHub } from '@/components/LoungeHub';
 
@@ -10,7 +11,7 @@ export default function DashboardPage() {
         <Lock size={12} strokeWidth={1.5} className="text-ember-400" />
         Private to your lounge. Viewership and earnings are visible only to verified owners of this location.
       </div>
-      <LoungeHub />
+      <Suspense fallback={null}><LoungeHub /></Suspense>
     </div>
   );
 }
