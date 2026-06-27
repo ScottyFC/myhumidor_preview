@@ -66,13 +66,7 @@ export function LoungeHub() {
       {tab === 'overview' && <Overview pendingPre={pendingPre} onJump={setTab} />}
       {tab === 'inventory' && <div className="-mx-6 -mt-8"><InventoryPage /></div>}
       {tab === 'preorders' && <div onClick={loadCounts}><PreorderManager /></div>}
-      {tab === 'wholesale' && (
-        <section>
-          <h2 className="flex items-center gap-2 font-display text-2xl tracking-tightest"><Boxes size={18} className="text-ember-400" /> Wholesale</h2>
-          <p className="mt-2 mb-4 text-sm text-smoke-400">Order cigars by the box from Premier brands and message them directly.</p>
-          <WholesaleBrowser />
-        </section>
-      )}
+      {tab === 'wholesale' && <WholesaleBrowser />}
       {tab === 'settings' && (
         <div className="space-y-10">
           <section><div className="eyebrow mb-4 flex items-center gap-2"><Tv size={13} strokeWidth={1.5} className="text-ember-400" /> On your screen now</div><LiveStream /></section>

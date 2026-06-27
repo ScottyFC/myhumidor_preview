@@ -1,3 +1,12 @@
+## Wholesale ordering simplified — tabbed, search-driven (no migration)
+
+WholesaleBrowser rebuilt into three clear tabs so it's obvious how to place a new order:
+- "New order": search for a brand → tap it → set box quantities for its cigars → Submit order
+  (a clean step flow; the brand list filters as you type). A question box lets you message the
+  brand. After submitting, it jumps to "Your orders".
+- "Your orders": separate view listing existing orders (empty-state CTA to place the first).
+- "Messages": separate view with the brand conversation threads.
+Removed the duplicate "Wholesale" heading the LoungeHub wrapper was adding. Build green (101/101).
 ## Wholesale "New order" CTA + ABC retailers added (RUN MIGRATION phase102)
 
 - Wholesale page (lounge): each brand card now has an explicit "+ New order" button that opens
