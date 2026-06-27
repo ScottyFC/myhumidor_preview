@@ -23,7 +23,7 @@ async function j<T>(url: string, init?: RequestInit): Promise<T> {
 }
 const brandHeaders = () => ({ 'Content-Type': 'application/json', 'x-csrf-token': csrf() });
 
-export interface WholesaleListing { id: string; cigar_name: string; vitola: string | null; cigars_per_box: number; price_per_box_cents: number; boxes_available: number; moq_boxes: number; status: string; image_url: string | null }
+export interface WholesaleListing { id: string; cigar_name: string; vitola: string | null; cigars_per_box: number; price_per_box_cents: number; boxes_available: number | null; moq_boxes: number; status: string; image_url: string | null }
 export interface BrokerOrder { id: string; status: string; total_cents: number; note: string | null; created_at: string; lounges?: { name: string; slug: string; city: string | null; state: string | null }; brands?: { name: string; slug: string }; broker_order_items: { cigar_name: string; boxes: number; price_per_box_cents: number }[] }
 export interface BrokerMessage { id: string; sender_type: 'brand' | 'lounge'; body: string; created_at: string }
 
@@ -39,7 +39,7 @@ export const getBrandMessages = (threadId: string) => j<{ ok: boolean; messages:
 export const sendBrandMessage = (threadId: string, body: string) => j<{ ok: boolean }>('/api/brand/messages', { method: 'POST', headers: brandHeaders(), body: JSON.stringify({ threadId, body }) });
 
 // ── Lounge side ─────────────────────────────────────────────────────────────
-export interface WholesaleBrand { brandId: string; name: string; slug: string; listings: { id: string; cigarName: string; vitola: string | null; cigarsPerBox: number; pricePerBox: number; boxesAvailable: number; moqBoxes: number; imageUrl: string | null }[] }
+export interface WholesaleBrand { brandId: string; name: string; slug: string; listings: { id: string; cigarName: string; vitola: string | null; cigarsPerBox: number; pricePerBox: number; boxesAvailable: number | null; moqBoxes: number; imageUrl: string | null }[] }
 export const browseWholesale = () => j<{ ok: boolean; brands: WholesaleBrand[] }>('/api/wholesale');
 export const placeOrder = (brandId: string, items: { listingId: string; boxes: number }[], note?: string) => j<{ ok: boolean; id?: string; total?: number; error?: string }>('/api/lounge/order', { method: 'POST', headers: loungeHeaders(), body: JSON.stringify({ brandId, items, note }) });
 export const getLoungeOrders = () => j<{ ok: boolean; orders: BrokerOrder[] }>('/api/lounge/orders');

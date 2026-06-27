@@ -7,7 +7,7 @@ import { TaxVerification } from '@/components/TaxVerification';
 export function BrandWholesale() {
   const [rows, setRows] = useState<WholesaleListing[] | null>(null);
   const [adding, setAdding] = useState(false);
-  const [f, setF] = useState({ cigarName: '', vitola: '', cigarsPerBox: '20', pricePerBox: '', boxesAvailable: '0', moqBoxes: '1' });
+  const [f, setF] = useState({ cigarName: '', vitola: '', cigarsPerBox: '20', pricePerBox: '', boxesAvailable: '', moqBoxes: '1' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [verified, setVerified] = useState<boolean | null>(null);
@@ -22,7 +22,7 @@ export function BrandWholesale() {
     setBusy(true);
     const r = await createBrandListing(f); setBusy(false);
     if (!r.ok) return setErr(r.error ?? 'Could not create.');
-    setF({ cigarName: '', vitola: '', cigarsPerBox: '20', pricePerBox: '', boxesAvailable: '0', moqBoxes: '1' }); setAdding(false); load();
+    setF({ cigarName: '', vitola: '', cigarsPerBox: '20', pricePerBox: '', boxesAvailable: '', moqBoxes: '1' }); setAdding(false); load();
   }
   async function toggle(l: WholesaleListing) { await updateBrandListing(l.id, { status: l.status === 'active' ? 'paused' : 'active' }); load(); }
   async function remove(id: string) { await deleteBrandListing(id); load(); }
@@ -43,7 +43,7 @@ export function BrandWholesale() {
             <input className={input} placeholder="Vitola (e.g. Toro 6x52)" value={f.vitola} onChange={(e) => setF({ ...f, vitola: e.target.value })} />
             <label className="flex items-center gap-2 text-xs text-smoke-400">Cigars/box <input className={input + ' w-20'} inputMode="numeric" value={f.cigarsPerBox} onChange={(e) => setF({ ...f, cigarsPerBox: e.target.value })} /></label>
             <label className="flex items-center gap-2 text-xs text-smoke-400">Price/box ($) <input className={input + ' w-24'} inputMode="decimal" value={f.pricePerBox} onChange={(e) => setF({ ...f, pricePerBox: e.target.value })} /></label>
-            <label className="flex items-center gap-2 text-xs text-smoke-400">Boxes available <input className={input + ' w-20'} inputMode="numeric" value={f.boxesAvailable} onChange={(e) => setF({ ...f, boxesAvailable: e.target.value })} /></label>
+            <label className="flex items-center gap-2 text-xs text-smoke-400">Boxes available <input className={input + ' w-24'} inputMode="numeric" placeholder="No cap" value={f.boxesAvailable} onChange={(e) => setF({ ...f, boxesAvailable: e.target.value })} /></label>
             <label className="flex items-center gap-2 text-xs text-smoke-400">Min order (boxes) <input className={input + ' w-20'} inputMode="numeric" value={f.moqBoxes} onChange={(e) => setF({ ...f, moqBoxes: e.target.value })} /></label>
             {err && <p className="text-sm text-red-300 sm:col-span-2">{err}</p>}
             <div className="flex gap-2 sm:col-span-2">
@@ -67,7 +67,7 @@ export function BrandWholesale() {
 
 function ListingRow({ l, onToggle, onRemove, onSaved }: { l: WholesaleListing; onToggle: (l: WholesaleListing) => void; onRemove: (id: string) => void; onSaved: () => void }) {
   const [editing, setEditing] = useState(false);
-  const [f, setF] = useState({ cigarName: l.cigar_name, vitola: l.vitola ?? '', cigarsPerBox: String(l.cigars_per_box), pricePerBox: String(l.price_per_box_cents / 100), boxesAvailable: String(l.boxes_available), moqBoxes: String(l.moq_boxes) });
+  const [f, setF] = useState({ cigarName: l.cigar_name, vitola: l.vitola ?? '', cigarsPerBox: String(l.cigars_per_box), pricePerBox: String(l.price_per_box_cents / 100), boxesAvailable: l.boxes_available == null ? '' : String(l.boxes_available), moqBoxes: String(l.moq_boxes) });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -89,13 +89,13 @@ function ListingRow({ l, onToggle, onRemove, onSaved }: { l: WholesaleListing; o
           <input className={input} placeholder="Vitola" value={f.vitola} onChange={(e) => setF({ ...f, vitola: e.target.value })} />
           <label className="flex items-center gap-2 text-xs text-smoke-400">Cigars/box <input className={input + ' w-20'} inputMode="numeric" value={f.cigarsPerBox} onChange={(e) => setF({ ...f, cigarsPerBox: e.target.value })} /></label>
           <label className="flex items-center gap-2 text-xs text-smoke-400">Price/box ($) <input className={input + ' w-24'} inputMode="decimal" value={f.pricePerBox} onChange={(e) => setF({ ...f, pricePerBox: e.target.value })} /></label>
-          <label className="flex items-center gap-2 text-xs text-smoke-400">Boxes available <input className={input + ' w-20'} inputMode="numeric" value={f.boxesAvailable} onChange={(e) => setF({ ...f, boxesAvailable: e.target.value })} /></label>
+          <label className="flex items-center gap-2 text-xs text-smoke-400">Boxes available <input className={input + ' w-24'} inputMode="numeric" placeholder="No cap" value={f.boxesAvailable} onChange={(e) => setF({ ...f, boxesAvailable: e.target.value })} /></label>
           <label className="flex items-center gap-2 text-xs text-smoke-400">Min order <input className={input + ' w-20'} inputMode="numeric" value={f.moqBoxes} onChange={(e) => setF({ ...f, moqBoxes: e.target.value })} /></label>
         </div>
         {err && <p className="mt-1 text-sm text-red-300">{err}</p>}
         <div className="mt-2 flex gap-2">
           <button onClick={save} disabled={busy} className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-3 py-1.5 text-sm font-medium text-paper disabled:opacity-50">{busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Save</button>
-          <button onClick={() => { setEditing(false); setErr(null); setF({ cigarName: l.cigar_name, vitola: l.vitola ?? '', cigarsPerBox: String(l.cigars_per_box), pricePerBox: String(l.price_per_box_cents / 100), boxesAvailable: String(l.boxes_available), moqBoxes: String(l.moq_boxes) }); }} className="inline-flex items-center gap-1 text-xs text-smoke-400 hover:text-paper"><X size={13} /> Cancel</button>
+          <button onClick={() => { setEditing(false); setErr(null); setF({ cigarName: l.cigar_name, vitola: l.vitola ?? '', cigarsPerBox: String(l.cigars_per_box), pricePerBox: String(l.price_per_box_cents / 100), boxesAvailable: l.boxes_available == null ? '' : String(l.boxes_available), moqBoxes: String(l.moq_boxes) }); }} className="inline-flex items-center gap-1 text-xs text-smoke-400 hover:text-paper"><X size={13} /> Cancel</button>
         </div>
       </div>
     );
@@ -103,8 +103,8 @@ function ListingRow({ l, onToggle, onRemove, onSaved }: { l: WholesaleListing; o
   return (
     <div className="flex items-center justify-between gap-3 py-2.5">
       <div className="min-w-0">
-        <div className="font-medium text-paper">{l.cigar_name} {l.status === 'paused' && <span className="ml-1 text-[11px] uppercase tracking-wide text-smoke-500">paused</span>} {l.boxes_available <= 0 && <span className="ml-1 text-[11px] uppercase tracking-wide text-red-300">out of stock</span>}</div>
-        <div className="text-xs text-smoke-400">{[l.vitola, `${l.cigars_per_box}/box`, `${fmtUsd(l.price_per_box_cents)}/box`, `MOQ ${l.moq_boxes}`, `${l.boxes_available} avail`].filter(Boolean).join(' · ')}</div>
+        <div className="font-medium text-paper">{l.cigar_name} {l.status === 'paused' && <span className="ml-1 text-[11px] uppercase tracking-wide text-smoke-500">paused</span>} {l.boxes_available === 0 && <span className="ml-1 text-[11px] uppercase tracking-wide text-red-300">out of stock</span>}</div>
+        <div className="text-xs text-smoke-400">{[l.vitola, `${l.cigars_per_box}/box`, `${fmtUsd(l.price_per_box_cents)}/box`, `MOQ ${l.moq_boxes}`, l.boxes_available == null ? 'unlimited' : `${l.boxes_available} avail`].filter(Boolean).join(' · ')}</div>
       </div>
       <div className="flex items-center gap-2">
         <button onClick={() => setEditing(true)} className="text-smoke-400 hover:text-ember-100" aria-label="Edit"><Pencil size={15} /></button>

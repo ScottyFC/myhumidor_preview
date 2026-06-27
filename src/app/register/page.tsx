@@ -48,7 +48,15 @@ export default function RegisterPage() {
     const q = new URLSearchParams(window.location.search);
     if (q.get('error')) { setLinkError(true); setMode('signin'); }
     if (q.get('mode') === 'signup') setMode('signup');
-    biometricAvailable().then((b) => { setBio(b); if (b.available) hasBiometricCredentials().then(setBioHasCreds); });
+    biometricAvailable().then((b) => {
+      setBio(b);
+      if (b.available) {
+        hasBiometricCredentials().then((hasCredentials) => {
+          setBioHasCreds(hasCredentials);
+          setEnableBiometric(!hasCredentials);
+        });
+      }
+    });
     const prefEmail = q.get('email'); if (prefEmail) setEmail(prefEmail);
     const inv = q.get('invite');
     if (inv) {
@@ -444,5 +452,4 @@ function Input({
     </label>
   );
 }
-
 

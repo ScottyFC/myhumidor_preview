@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   const { data, error } = await sb.from('brand_wholesale_listings').insert({
     brand_id: s.brandId, cigar_name: String(b.cigarName).trim(), vitola: b.vitola || null, slug: b.slug || null,
     cigars_per_box: Math.max(1, parseInt(b.cigarsPerBox, 10) || 20), price_per_box_cents: price,
-    boxes_available: Math.max(0, parseInt(b.boxesAvailable, 10) || 0), moq_boxes: Math.max(1, parseInt(b.moqBoxes, 10) || 1),
+    boxes_available: (b.boxesAvailable === '' || b.boxesAvailable == null) ? null : Math.max(0, parseInt(b.boxesAvailable, 10) || 0), moq_boxes: Math.max(1, parseInt(b.moqBoxes, 10) || 1),
     image_url: b.imageUrl || null, status: 'active',
   } as never).select('id').single();
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
@@ -49,7 +49,7 @@ export async function PATCH(req: Request) {
   if (b.vitola !== undefined) patch.vitola = b.vitola || null;
   if (b.cigarsPerBox !== undefined) patch.cigars_per_box = Math.max(1, parseInt(b.cigarsPerBox, 10) || 20);
   if (b.pricePerBox !== undefined) patch.price_per_box_cents = Math.round(Number(b.pricePerBox) * 100);
-  if (b.boxesAvailable !== undefined) patch.boxes_available = Math.max(0, parseInt(b.boxesAvailable, 10) || 0);
+  if (b.boxesAvailable !== undefined) patch.boxes_available = (b.boxesAvailable === '' || b.boxesAvailable === null) ? null : Math.max(0, parseInt(b.boxesAvailable, 10) || 0);
   if (b.moqBoxes !== undefined) patch.moq_boxes = Math.max(1, parseInt(b.moqBoxes, 10) || 1);
   if (b.status !== undefined && ['active', 'paused'].includes(b.status)) patch.status = b.status;
   if (b.imageUrl !== undefined) patch.image_url = b.imageUrl || null;

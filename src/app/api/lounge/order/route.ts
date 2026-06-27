@@ -30,9 +30,11 @@ export async function POST(req: Request) {
     const boxes = Math.max(1, parseInt(it.boxes, 10) || 0);
     if (l.status !== 'active') return NextResponse.json({ ok: false, error: `${l.cigar_name} is not available.` }, { status: 400 });
     if (boxes < (l.moq_boxes as number)) return NextResponse.json({ ok: false, error: `${l.cigar_name}: minimum ${l.moq_boxes} boxes.` }, { status: 400 });
-    const avail = (l.boxes_available as number) ?? 0;
-    if (avail <= 0) return NextResponse.json({ ok: false, error: `${l.cigar_name} is out of stock.` }, { status: 400 });
-    if (boxes > avail) return NextResponse.json({ ok: false, error: `${l.cigar_name}: only ${avail} boxes available.` }, { status: 400 });
+    const avail = l.boxes_available as number | null;  // null = no cap, 0 = sold out, >0 = capped
+    if (avail !== null) {
+      if (avail <= 0) return NextResponse.json({ ok: false, error: `${l.cigar_name} is out of stock.` }, { status: 400 });
+      if (boxes > avail) return NextResponse.json({ ok: false, error: `${l.cigar_name}: only ${avail} boxes available.` }, { status: 400 });
+    }
     const price = l.price_per_box_cents as number;
     total += price * boxes;
     lineItems.push({ listing_id: l.id, cigar_name: l.cigar_name, boxes, price_per_box_cents: price });

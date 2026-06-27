@@ -23,8 +23,9 @@ export function WholesaleBrowser() {
     if (items.length === 0) { setFlash('Set a box quantity first.'); return; }
     const r = await placeOrder(b.brandId, items, note[b.brandId]);
     if (!r.ok) { setFlash(r.error ?? 'Could not place order.'); return; }
-    setFlash(`Order placed with ${b.name} — ${fmtUsd(Math.round((r.total ?? 0) * 100))}.`);
+    setFlash(`Order placed with ${b.name} — ${fmtUsd(Math.round((r.total ?? 0) * 100))}. You can place another order anytime.`);
     setQty({}); setNote({}); reloadOrders(); reloadThreads();
+    browseWholesale().then((res) => setBrands(res.brands ?? []));
   }
   async function contact(b: WholesaleBrand) {
     const body = (msg[b.brandId] ?? '').trim(); if (!body) return;
@@ -48,16 +49,21 @@ export function WholesaleBrowser() {
           {brands?.map((b) => (
             <div key={b.brandId} className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
               <div className="flex items-center gap-2 font-display text-lg text-paper"><Store size={15} className="text-ember-400" /> {b.name}</div>
+              <p className="mt-0.5 text-[11px] text-smoke-500">Order any of {b.name}’s cigars below.</p>
               <div className="mt-2 divide-y divide-ember-400/10">
-                {b.listings.map((l) => (
+                {b.listings.map((l) => {
+                  const soldOut = l.boxesAvailable !== null && l.boxesAvailable <= 0;
+                  const capped = l.boxesAvailable !== null && l.boxesAvailable > 0;
+                  return (
                   <div key={l.id} className="flex items-center justify-between gap-3 py-2">
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-paper">{l.cigarName} {l.boxesAvailable <= 0 && <span className="ml-1 text-[11px] uppercase tracking-wide text-red-300">out of stock</span>}</div>
-                      <div className="text-xs text-smoke-400">{[l.vitola, `${l.cigarsPerBox}/box`, `${fmtUsd(l.pricePerBox * 100)}/box`, `MOQ ${l.moqBoxes}`, `${l.boxesAvailable} available`].filter(Boolean).join(' · ')}</div>
+                      <div className="text-sm font-medium text-paper">{l.cigarName} {soldOut && <span className="ml-1 text-[11px] uppercase tracking-wide text-red-300">out of stock</span>}</div>
+                      <div className="text-xs text-smoke-400">{[l.vitola, `${l.cigarsPerBox}/box`, `${fmtUsd(l.pricePerBox * 100)}/box`, `MOQ ${l.moqBoxes}`, capped ? `${l.boxesAvailable} available` : 'available'].filter(Boolean).join(' · ')}</div>
                     </div>
-                    <input type="number" min={0} max={l.boxesAvailable} disabled={l.boxesAvailable <= 0} placeholder="boxes" value={qty[l.id] ?? ''} onChange={(e) => setQty({ ...qty, [l.id]: Math.min(l.boxesAvailable, parseInt(e.target.value, 10) || 0) })} className={input + ' w-24 shrink-0 disabled:opacity-40'} />
+                    <input type="number" min={0} max={capped ? l.boxesAvailable! : undefined} disabled={soldOut} placeholder="boxes" value={qty[l.id] ?? ''} onChange={(e) => { const v = parseInt(e.target.value, 10) || 0; setQty({ ...qty, [l.id]: capped ? Math.min(l.boxesAvailable!, v) : v }); }} className={input + ' w-24 shrink-0 disabled:opacity-40'} />
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <input className={input + ' min-w-[180px] flex-1'} placeholder="Note to brand (optional)" value={note[b.brandId] ?? ''} onChange={(e) => setNote({ ...note, [b.brandId]: e.target.value })} />

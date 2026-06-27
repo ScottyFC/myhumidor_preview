@@ -30,8 +30,10 @@ export async function PATCH(req: Request) {
     for (const it of ((items ?? []) as { listing_id: string | null; boxes: number }[])) {
       if (!it.listing_id) continue;
       const { data: lst } = await sb.from('brand_wholesale_listings').select('boxes_available').eq('id', it.listing_id).maybeSingle();
-      const cur = (lst as { boxes_available: number } | null)?.boxes_available ?? 0;
-      await sb.from('brand_wholesale_listings').update({ boxes_available: Math.max(0, cur - it.boxes) } as never).eq('id', it.listing_id).eq('brand_id', s.brandId);
+      const cur = (lst as { boxes_available: number | null } | null)?.boxes_available;
+      if (cur !== null && cur !== undefined) { // only draw down capped listings; null = no cap
+        await sb.from('brand_wholesale_listings').update({ boxes_available: Math.max(0, cur - it.boxes) } as never).eq('id', it.listing_id).eq('brand_id', s.brandId);
+      }
     }
   }
   const loungeId = (ord as { lounge_id: string } | null)?.lounge_id;
