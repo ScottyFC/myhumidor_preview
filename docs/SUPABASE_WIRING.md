@@ -1,3 +1,31 @@
+## Wholesale "New order" CTA + ABC retailers added (RUN MIGRATION phase102)
+
+- Wholesale page (lounge): each brand card now has an explicit "+ New order" button that opens
+  the order composer (collapsed by default, closes after placing) — placing a new order for any
+  of the brand's cigars is now obvious, including for brands you've already ordered from.
+- Brand page (lounge viewer): the wholesale CTA is now a prominent "Place a wholesale order"
+  button linking to /dashboard?tab=wholesale.
+- ABC Fine Wine & Spirits: 126 FL locations with on-site humidors added as RETAILERS
+  (venue_type='retail'). Added to src/data/stores.json (front end: searchable + in the Lounges
+  directory "Retailers" filter, tagged retail) AND phase102.sql inserts them into the lounges
+  table (idempotent on slug). Coordinates are null (CSV had none) so they are searchable and in
+  the directory but will not appear on the map / "near you" until geocoded — a follow-up.
+Build green (exit 0, 101/101).
+## phase101 re-applied + package slimmed (RUN MIGRATION phase101)
+
+Re-applied the wholesale "boxes available" optional-cap fix (lost in a workspace reset):
+NULL = no cap (orderable), 0 = sold out, >0 = capped; brand create/edit defaults blank ("No cap");
+order route + accept draw-down respect null; lounge browser shows "available" vs "N available" vs
+"out of stock" and re-fetches after each order so a brand stays orderable for other cigars. Build
+green (exit 0, 101/101).
+
+Package size: the previously shared/uploaded zip was 346MB because it included node_modules (828M),
+.next (134M), android build artifacts/.gradle (71M) and .git (38M). The shared zip now excludes all
+generated/build output (node_modules, .next, .git, android|ios build/.gradle/Pods/DerivedData, synced
+assets/public, *.apk/*.dex, seed CSVs) while KEEPING native source → ~8.5MB. After unzipping, run
+`npm install` then `npx cap sync` to regenerate native build inputs. .gitignore hardened to keep these
+artifacts out of the repo going forward. cigars.json (6.4MB, already minified) is the one large source
+file and is required by the catalog.
 ## BUILD FIX — useSearchParams Suspense boundary (Vercel build was failing)
 
 Adding useSearchParams() to MobileTabBar (rendered in the global layout) and LoungeHub made

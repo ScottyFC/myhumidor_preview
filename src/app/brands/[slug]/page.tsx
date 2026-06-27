@@ -134,7 +134,7 @@ export default async function BrandPage({ params }: PageProps) {
         </div>
       </div>
       {dbBrand?.description && <p className="mt-4 max-w-2xl text-sm leading-relaxed text-smoke-200">{dbBrand.description}</p>}
-      {dbBrand?.id && <div className="mt-4 flex flex-wrap items-center gap-3"><FollowBrandButton brandId={dbBrand.id} />{showWholesaleLink && <a href="/wholesale" className="inline-flex items-center gap-1.5 rounded-lg border-[0.5px] border-ember-400/40 bg-ember-400/10 px-4 py-2 text-sm font-medium text-ember-100 transition hover:bg-ember-400/20">Order wholesale</a>}</div>}
+      {dbBrand?.id && <div className="mt-4 flex flex-wrap items-center gap-3"><FollowBrandButton brandId={dbBrand.id} />{showWholesaleLink && <a href="/dashboard?tab=wholesale" className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-4 py-2 text-sm font-medium text-paper transition hover:bg-ember-300"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg> Place a wholesale order</a>}</div>}
       {dbBrand?.id && <BrandBadgeShowcase brandId={dbBrand.id} />}
 
       <BrandCsvDownload brand={finalLabel} rows={deduped.map((c) => ({

@@ -1,12 +1,13 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { Loader2, Boxes, ClipboardList, MessageSquare, Send, Store } from 'lucide-react';
+import { Loader2, Boxes, ClipboardList, MessageSquare, Send, Store, Plus, X } from 'lucide-react';
 import { browseWholesale, placeOrder, getLoungeOrders, getLoungeThreads, getLoungeMessages, sendLoungeMessage, fmtUsd, type WholesaleBrand, type BrokerOrder } from '@/lib/broker';
 import { MessageThread } from '@/components/MessageThread';
 
 export function WholesaleBrowser() {
   const [brands, setBrands] = useState<WholesaleBrand[] | null>(null);
   const [qty, setQty] = useState<Record<string, number>>({});
+  const [openOrder, setOpenOrder] = useState<Record<string, boolean>>({});
   const [note, setNote] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<Record<string, string>>({});
   const [flash, setFlash] = useState<string | null>(null);
@@ -24,7 +25,7 @@ export function WholesaleBrowser() {
     const r = await placeOrder(b.brandId, items, note[b.brandId]);
     if (!r.ok) { setFlash(r.error ?? 'Could not place order.'); return; }
     setFlash(`Order placed with ${b.name} — ${fmtUsd(Math.round((r.total ?? 0) * 100))}. You can place another order anytime.`);
-    setQty({}); setNote({}); reloadOrders(); reloadThreads();
+    setQty({}); setNote({}); setOpenOrder((o) => ({ ...o, [b.brandId]: false })); reloadOrders(); reloadThreads();
     browseWholesale().then((res) => setBrands(res.brands ?? []));
   }
   async function contact(b: WholesaleBrand) {
@@ -48,27 +49,39 @@ export function WholesaleBrowser() {
           {brands && brands.length === 0 && <p className="text-sm text-smoke-400">No premium brands are offering wholesale yet.</p>}
           {brands?.map((b) => (
             <div key={b.brandId} className="rounded-xl border-[0.5px] border-ember-400/15 bg-char/30 p-4">
-              <div className="flex items-center gap-2 font-display text-lg text-paper"><Store size={15} className="text-ember-400" /> {b.name}</div>
-              <p className="mt-0.5 text-[11px] text-smoke-500">Order any of {b.name}’s cigars below.</p>
-              <div className="mt-2 divide-y divide-ember-400/10">
-                {b.listings.map((l) => {
-                  const soldOut = l.boxesAvailable !== null && l.boxesAvailable <= 0;
-                  const capped = l.boxesAvailable !== null && l.boxesAvailable > 0;
-                  return (
-                  <div key={l.id} className="flex items-center justify-between gap-3 py-2">
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-paper">{l.cigarName} {soldOut && <span className="ml-1 text-[11px] uppercase tracking-wide text-red-300">out of stock</span>}</div>
-                      <div className="text-xs text-smoke-400">{[l.vitola, `${l.cigarsPerBox}/box`, `${fmtUsd(l.pricePerBox * 100)}/box`, `MOQ ${l.moqBoxes}`, capped ? `${l.boxesAvailable} available` : 'available'].filter(Boolean).join(' · ')}</div>
-                    </div>
-                    <input type="number" min={0} max={capped ? l.boxesAvailable! : undefined} disabled={soldOut} placeholder="boxes" value={qty[l.id] ?? ''} onChange={(e) => { const v = parseInt(e.target.value, 10) || 0; setQty({ ...qty, [l.id]: capped ? Math.min(l.boxesAvailable!, v) : v }); }} className={input + ' w-24 shrink-0 disabled:opacity-40'} />
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 font-display text-lg text-paper"><Store size={15} className="text-ember-400" /> {b.name}</div>
+                <button onClick={() => setOpenOrder((s) => ({ ...s, [b.brandId]: !s[b.brandId] }))}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border-[0.5px] border-ember-400/40 bg-ember-400/10 px-3 py-1.5 text-sm font-medium text-ember-100 transition hover:bg-ember-400/20">
+                  {openOrder[b.brandId] ? <><X size={14} /> Close</> : <><Plus size={14} /> New order</>}
+                </button>
+              </div>
+              {openOrder[b.brandId] ? (
+                <>
+                  <p className="mt-2 text-[11px] text-smoke-500">Order any of {b.name}’s cigars below — set box quantities, then place the order.</p>
+                  <div className="mt-2 divide-y divide-ember-400/10">
+                    {b.listings.map((l) => {
+                      const soldOut = l.boxesAvailable !== null && l.boxesAvailable <= 0;
+                      const capped = l.boxesAvailable !== null && l.boxesAvailable > 0;
+                      return (
+                      <div key={l.id} className="flex items-center justify-between gap-3 py-2">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-paper">{l.cigarName} {soldOut && <span className="ml-1 text-[11px] uppercase tracking-wide text-red-300">out of stock</span>}</div>
+                          <div className="text-xs text-smoke-400">{[l.vitola, `${l.cigarsPerBox}/box`, `${fmtUsd(l.pricePerBox * 100)}/box`, `MOQ ${l.moqBoxes}`, capped ? `${l.boxesAvailable} available` : 'available'].filter(Boolean).join(' · ')}</div>
+                        </div>
+                        <input type="number" min={0} max={capped ? l.boxesAvailable! : undefined} disabled={soldOut} placeholder="boxes" value={qty[l.id] ?? ''} onChange={(e) => { const v = parseInt(e.target.value, 10) || 0; setQty({ ...qty, [l.id]: capped ? Math.min(l.boxesAvailable!, v) : v }); }} className={input + ' w-24 shrink-0 disabled:opacity-40'} />
+                      </div>
+                      );
+                    })}
                   </div>
-                  );
-                })}
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <input className={input + ' min-w-[180px] flex-1'} placeholder="Note to brand (optional)" value={note[b.brandId] ?? ''} onChange={(e) => setNote({ ...note, [b.brandId]: e.target.value })} />
-                <button onClick={() => order(b)} className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-4 py-2 text-sm font-medium text-paper">Place order</button>
-              </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <input className={input + ' min-w-[180px] flex-1'} placeholder="Note to brand (optional)" value={note[b.brandId] ?? ''} onChange={(e) => setNote({ ...note, [b.brandId]: e.target.value })} />
+                    <button onClick={() => order(b)} className="inline-flex items-center gap-1.5 rounded-lg bg-ember-400 px-4 py-2 text-sm font-medium text-paper">Place order</button>
+                  </div>
+                </>
+              ) : (
+                <p className="mt-1 text-xs text-smoke-500">{b.listings.length} cigar{b.listings.length === 1 ? '' : 's'} available · tap <span className="text-ember-300">New order</span> to order by the box.</p>
+              )}
               <div className="mt-2 flex items-center gap-2">
                 <input className={input + ' flex-1'} placeholder={`Message ${b.name}…`} value={msg[b.brandId] ?? ''} onChange={(e) => setMsg({ ...msg, [b.brandId]: e.target.value })} onKeyDown={(e) => { if (e.key === 'Enter') contact(b); }} />
                 <button onClick={() => contact(b)} className="flex h-9 w-9 items-center justify-center rounded-lg border-[0.5px] border-ember-400/30 text-ember-100 hover:bg-ember-400/10"><Send size={15} /></button>
