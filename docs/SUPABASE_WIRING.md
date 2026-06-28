@@ -1,3 +1,15 @@
+## Wholesale listings select from listed cigars + "Lounges + Shops" rename (no migration)
+
+- Brands now create a wholesale listing by SELECTING one of their listed cigars (dropdown of their
+  brand-page products, including "coming soon"; discontinued excluded) instead of free-text. Selecting
+  auto-fills the cigar name, vitola (from size, still editable) and the product image, and stores
+  slug + image_url on the listing (columns already existed). Create is blocked unless a listed cigar
+  is chosen — only listed products can be sold wholesale. If the brand has no listed cigars, the form
+  prompts them to list one first. The product image now shows in the lounge wholesale browser rows.
+- Renamed "Lounges" → "Lounges + Shops" on the web top nav (both nav variants), the mobile bottom tab
+  bar (label now wraps to two lines so it isn't truncated), and the Lounges page heading — reflecting
+  that retailers (e.g. ABC) now appear there.
+Build green (101/101).
 ## Wholesale ordering simplified — tabbed, search-driven (no migration)
 
 WholesaleBrowser rebuilt into three clear tabs so it's obvious how to place a new order:

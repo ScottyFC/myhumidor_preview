@@ -17,14 +17,14 @@ const CONSUMER_TABS = [
   { href: '/feed', label: 'Feed', icon: Newspaper },
   { href: '/top', label: 'Cigars', icon: Flame },
   { href: '/search', label: 'Search', icon: Search },
-  { href: '/lounges', label: 'Lounges', icon: Store },
+  { href: '/lounges', label: 'Lounges + Shops', icon: Store },
 ];
 
 const LOUNGE_TABS = [
   { href: '/feed', label: 'Feed', icon: Newspaper },
   { href: '/top', label: 'Cigars', icon: Flame },
   { href: '/search', label: 'Search', icon: Search },
-  { href: '/lounges', label: 'Lounges', icon: Store },
+  { href: '/lounges', label: 'Lounges + Shops', icon: Store },
 ];
 
 export function Nav() {

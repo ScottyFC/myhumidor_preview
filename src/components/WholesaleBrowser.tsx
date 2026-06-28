@@ -122,9 +122,15 @@ export function WholesaleBrowser() {
                   const capped = l.boxesAvailable !== null && l.boxesAvailable > 0;
                   return (
                     <div key={l.id} className="flex items-center justify-between gap-3 py-2.5">
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium text-paper">{l.cigarName} {soldOut && <span className="ml-1 text-[11px] uppercase tracking-wide text-red-300">out of stock</span>}</div>
-                        <div className="text-xs text-smoke-400">{[l.vitola, `${l.cigarsPerBox}/box`, `${fmtUsd(l.pricePerBox * 100)}/box`, `MOQ ${l.moqBoxes}`, capped ? `${l.boxesAvailable} available` : 'available'].filter(Boolean).join(' · ')}</div>
+                      <div className="flex min-w-0 items-center gap-3">
+                        {l.imageUrl
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          ? <img src={l.imageUrl} alt="" className="h-11 w-9 shrink-0 rounded object-contain" />
+                          : <div className="flex h-11 w-9 shrink-0 items-center justify-center rounded bg-char/60 text-smoke-500"><Boxes size={13} /></div>}
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-paper">{l.cigarName} {soldOut && <span className="ml-1 text-[11px] uppercase tracking-wide text-red-300">out of stock</span>}</div>
+                          <div className="text-xs text-smoke-400">{[l.vitola, `${l.cigarsPerBox}/box`, `${fmtUsd(l.pricePerBox * 100)}/box`, `MOQ ${l.moqBoxes}`, capped ? `${l.boxesAvailable} available` : 'available'].filter(Boolean).join(' · ')}</div>
+                        </div>
                       </div>
                       <input type="number" min={0} max={capped ? l.boxesAvailable! : undefined} disabled={soldOut} placeholder="boxes" value={qty[l.id] ?? ''} onChange={(e) => { const v = parseInt(e.target.value, 10) || 0; setQty({ ...qty, [l.id]: capped ? Math.min(l.boxesAvailable!, v) : v }); }} className={input + ' w-24 shrink-0 disabled:opacity-40'} />
                     </div>

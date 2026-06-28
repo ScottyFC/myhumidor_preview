@@ -3,26 +3,28 @@ import { useCallback, useEffect, useState } from 'react';
 import { Loader2, Boxes, Plus, Trash2, Pause, Play, Pencil, Check, X } from 'lucide-react';
 import { getBrandListings, createBrandListing, updateBrandListing, deleteBrandListing, getVerification, fmtUsd, type WholesaleListing } from '@/lib/broker';
 import { TaxVerification } from '@/components/TaxVerification';
+import { getBrandCigars, type BrandCigar } from '@/lib/brands';
 
 export function BrandWholesale() {
   const [rows, setRows] = useState<WholesaleListing[] | null>(null);
   const [adding, setAdding] = useState(false);
-  const [f, setF] = useState({ cigarName: '', vitola: '', cigarsPerBox: '20', pricePerBox: '', boxesAvailable: '', moqBoxes: '1' });
+  const [f, setF] = useState({ cigarName: '', vitola: '', cigarsPerBox: '20', pricePerBox: '', boxesAvailable: '', moqBoxes: '1', imageUrl: '', slug: '' });
+  const [cigars, setCigars] = useState<BrandCigar[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [verified, setVerified] = useState<boolean | null>(null);
 
   const load = useCallback(async () => setRows((await getBrandListings()).listings ?? []), []);
-  useEffect(() => { load(); getVerification().then((r) => setVerified(r.ok ? r.verified : false)); }, [load]);
+  useEffect(() => { load(); getVerification().then((r) => setVerified(r.ok ? r.verified : false)); getBrandCigars().then(setCigars); }, [load]);
 
   async function create() {
     setErr(null);
-    if (!f.cigarName.trim()) return setErr('Cigar name required.');
+    if (!f.slug || !f.cigarName.trim()) return setErr('Select one of your listed cigars.');
     if (!(Number(f.pricePerBox) > 0)) return setErr('Enter a price per box.');
     setBusy(true);
     const r = await createBrandListing(f); setBusy(false);
     if (!r.ok) return setErr(r.error ?? 'Could not create.');
-    setF({ cigarName: '', vitola: '', cigarsPerBox: '20', pricePerBox: '', boxesAvailable: '', moqBoxes: '1' }); setAdding(false); load();
+    setF({ cigarName: '', vitola: '', cigarsPerBox: '20', pricePerBox: '', boxesAvailable: '', moqBoxes: '1', imageUrl: '', slug: '' }); setAdding(false); load();
   }
   async function toggle(l: WholesaleListing) { await updateBrandListing(l.id, { status: l.status === 'active' ? 'paused' : 'active' }); load(); }
   async function remove(id: string) { await deleteBrandListing(id); load(); }
@@ -39,7 +41,29 @@ export function BrandWholesale() {
         {verified === false && <div className="mt-3"><TaxVerification onVerified={() => getVerification().then((r) => setVerified(r.ok ? r.verified : false))} /></div>}
         {adding && (
           <div className="mt-3 grid gap-2 rounded-lg border-[0.5px] border-ember-400/20 bg-char/40 p-3 sm:grid-cols-2">
-            <input className={input} placeholder="Cigar name" value={f.cigarName} onChange={(e) => setF({ ...f, cigarName: e.target.value })} />
+            <div className="sm:col-span-2">
+              {cigars === null ? (
+                <div className="flex items-center gap-2 text-xs text-smoke-400"><Loader2 size={12} className="animate-spin" /> Loading your cigars…</div>
+              ) : (cigars.filter((c) => c.status !== 'discontinued').length === 0) ? (
+                <p className="text-xs text-smoke-300">You have no cigars listed on your brand page yet. List a cigar on your page first — <span className="text-ember-300">only listed products (including “coming soon”) can be sold wholesale.</span></p>
+              ) : (
+                <div className="flex items-center gap-3">
+                  {f.imageUrl
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    ? <img src={f.imageUrl} alt="" className="h-12 w-10 shrink-0 rounded object-contain" />
+                    : <div className="flex h-12 w-10 shrink-0 items-center justify-center rounded bg-char/60 text-smoke-500"><Boxes size={14} /></div>}
+                  <select
+                    className={input + ' flex-1'}
+                    value={f.slug}
+                    onChange={(e) => { const c = cigars.find((x) => x.slug === e.target.value); setF({ ...f, slug: c?.slug ?? '', cigarName: c?.name ?? '', vitola: c?.size || '', imageUrl: c?.imageUrl ?? '' }); }}>
+                    <option value="">Select one of your listed cigars…</option>
+                    {cigars.filter((c) => c.status !== 'discontinued').map((c) => (
+                      <option key={c.slug} value={c.slug}>{c.name}{c.status === 'coming_soon' ? ' — coming soon' : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
             <input className={input} placeholder="Vitola (e.g. Toro 6x52)" value={f.vitola} onChange={(e) => setF({ ...f, vitola: e.target.value })} />
             <label className="flex items-center gap-2 text-xs text-smoke-400">Cigars/box <input className={input + ' w-20'} inputMode="numeric" value={f.cigarsPerBox} onChange={(e) => setF({ ...f, cigarsPerBox: e.target.value })} /></label>
             <label className="flex items-center gap-2 text-xs text-smoke-400">Price/box ($) <input className={input + ' w-24'} inputMode="decimal" value={f.pricePerBox} onChange={(e) => setF({ ...f, pricePerBox: e.target.value })} /></label>

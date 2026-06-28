@@ -25,7 +25,7 @@ export default async function LoungesPage() {
     <div className="mx-auto max-w-5xl px-6 pt-10">
       <header className="mb-8">
         <div className="eyebrow mb-2">Where the community gathers</div>
-        <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">Lounges</h1>
+        <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">Lounges + Shops</h1>
         <p className="mt-3 max-w-2xl text-smoke-200">
           {stores.toLocaleString()} cigar lounges and shops across the country. Tap one for its
           profile, hours, and menu.
