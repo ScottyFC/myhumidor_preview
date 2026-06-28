@@ -124,6 +124,7 @@ export default async function LoungePage({ params }: PageProps) {
             src={lounge.image_url}
             className="h-16 w-16 shrink-0 text-2xl"
             rounded="rounded-xl"
+            fit={lounge.venue_type === 'retail' ? 'contain' : 'cover'}
           />
           <div className="eyebrow">{lounge.city}, {lounge.state}</div>
         </div>

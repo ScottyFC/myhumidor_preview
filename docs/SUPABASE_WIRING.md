@@ -1,3 +1,12 @@
+## Fix: retailer logos scaled to fit their box (no migration)
+
+BrandTile has a "cover" mode (crops to fill, good for venue photos) and a "contain" mode (whole mark
+visible, centered on a dark tile with padding + overflow-hidden, good for logos). Retailer logos were
+rendering in cover mode and spilling out of the box (e.g. Total Wine profile). Now logos use contain:
+- Lounge/shop profile header: fit="contain" when venue_type === 'retail' (lounge photos still cover).
+- "Recently added shops" carousel cards: fit="contain".
+- Lounge directory cards: fit="contain" for retail venues, cover otherwise.
+Build green (101/101).
 ## "Lounges & Shops", split carousel, members→feed, idle logout, retailer logos (RUN phase103)
 
 - Renamed "Lounges + Shops" → "Lounges & Shops" everywhere (web nav x2, mobile tab, page heading).

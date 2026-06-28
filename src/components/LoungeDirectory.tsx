@@ -55,7 +55,7 @@ export function LoungeDirectory({ lounges }: { lounges: CatalogStore[] }) {
             href={`/lounges/${l.slug}`}
             className="group relative flex items-start gap-4 overflow-hidden rounded-xl border-[0.5px] border-ember-400/15 bg-gradient-to-b from-char/70 to-char/30 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-ember-400/45 hover:shadow-[0_10px_28px_rgba(0,0,0,0.4)]"
           >
-            <BrandTile name={l.name} src={l.image_url} className="h-12 w-12 shrink-0 text-lg" rounded="rounded-lg" />
+            <BrandTile name={l.name} src={l.image_url} className="h-12 w-12 shrink-0 text-lg" rounded="rounded-lg" fit={l.venue_type === 'retail' ? 'contain' : 'cover'} />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <h2 className="truncate font-display text-base font-medium group-hover:text-ember-100">{l.name}</h2>
