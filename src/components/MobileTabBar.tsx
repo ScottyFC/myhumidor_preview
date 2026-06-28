@@ -14,7 +14,7 @@ const CONSUMER: Tab[] = [
   { href: '/top', label: 'Cigars', icon: Cigarette, match: (p) => p.startsWith('/top') || p.startsWith('/cigars') || p.startsWith('/brands') },
   { href: '/search', label: 'Search', icon: Search, match: (p) => p.startsWith('/search') },
   { href: '/humidor', label: 'Humidor', icon: Box, match: (p) => p.startsWith('/humidor') },
-  { href: '/lounges', label: 'Lounges + Shops', icon: Store, match: (p) => p.startsWith('/lounges') },
+  { href: '/lounges', label: 'Lounges & Shops', icon: Store, match: (p) => p.startsWith('/lounges') },
   { href: '/feed', label: 'Feed', icon: Newspaper, match: (p) => p.startsWith('/feed') },
 ];
 

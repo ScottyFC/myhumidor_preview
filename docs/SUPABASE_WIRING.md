@@ -1,3 +1,22 @@
+## "Lounges & Shops", split carousel, members→feed, idle logout, retailer logos (RUN phase103)
+
+- Renamed "Lounges + Shops" → "Lounges & Shops" everywhere (web nav x2, mobile tab, page heading).
+- Recently-added carousel split into two sections: "Recently added lounges" (venue_type lounge/both/null)
+  and "Recently added shops" (venue_type retail). recentLounges() now excludes retail; new recentShops()
+  added in src/lib/db.ts. Lounges page renders <RecentlyAdded lounges shops />.
+- "New members" removed from the Lounges page; it now lives only on the Feed page (already there).
+- Idle auto-logout (src/components/IdleLogout.tsx, mounted in layout): logs out LOUNGES and BRANDS after
+  15 min of no activity (mouse/key/scroll/touch/click reset the timer). Standard consumers are exempt —
+  no timer is armed for them. Brand detected via the non-httpOnly mh_brand_csrf cookie (→ POST
+  /api/brand-auth/logout → /brand/login); lounge via Supabase retailer session (→ signOut → /login).
+- Retailer logos: ABC Fine Wine & Spirits and Total Wine & More now use their brand logos. Set in
+  src/data/stores.json (image_url, for the directory/search cards) AND phase103.sql updates the DB
+  lounges.image_url (for the carousel + claimable profiles), only where not already set so claimed
+  locations keep custom images. BrandTile renders a plain <img>, so no next.config domain change needed.
+  NOTE: Total Wine locations are static (stores.json) and likely not in the lounges table, so the
+  phase103 Total Wine UPDATE is a no-op until/unless they're inserted — their logo still shows in the
+  static directory. (stores.json was reformatted to one entry per line; smaller + still valid.)
+Build green (101/101). Run phase103 after phase102.
 ## Wholesale listings select from listed cigars + "Lounges + Shops" rename (no migration)
 
 - Brands now create a wholesale listing by SELECTING one of their listed cigars (dropdown of their

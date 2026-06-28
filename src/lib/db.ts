@@ -126,6 +126,24 @@ export async function recentLounges(limit = 8): Promise<RecentLounge[]> {
     const { data } = await supabaseBrowser()
       .from('lounges')
       .select('slug, name, city, state, certified, image_url, created_at')
+      .or('venue_type.is.null,venue_type.eq.lounge,venue_type.eq.both')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    return (data ?? []).map((l) => ({
+      slug: l.slug, name: l.name, city: l.city ?? '', state: l.state ?? '', certified: l.certified ?? false, image_url: l.image_url ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function recentShops(limit = 8): Promise<RecentLounge[]> {
+  if (!isSupabaseConfigured) return [];
+  try {
+    const { data } = await supabaseBrowser()
+      .from('lounges')
+      .select('slug, name, city, state, certified, image_url, created_at')
+      .eq('venue_type', 'retail')
       .order('created_at', { ascending: false })
       .limit(limit);
     return (data ?? []).map((l) => ({

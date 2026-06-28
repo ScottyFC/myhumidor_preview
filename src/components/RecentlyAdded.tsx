@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { BadgeCheck } from 'lucide-react';
 import { AutoScrollRow } from '@/components/AutoScrollRow';
 import {
-  recentCigars, recentMembers, recentLounges,
+  recentCigars, recentMembers, recentLounges, recentShops,
   type RecentCigar, type RecentMember, type RecentLounge,
 } from '@/lib/db';
 import { BrandTile } from '@/components/BrandTile';
@@ -16,34 +16,39 @@ export function RecentlyAdded({
   cigars = false,
   members = false,
   lounges = false,
+  shops = false,
 }: {
   cigars?: boolean;
   members?: boolean;
   lounges?: boolean;
+  shops?: boolean;
 }) {
   const [c, setC] = useState<RecentCigar[]>([]);
   const [m, setM] = useState<RecentMember[]>([]);
   const [l, setL] = useState<RecentLounge[]>([]);
+  const [sh, setSh] = useState<RecentLounge[]>([]);
 
   useEffect(() => {
     let off = false;
     (async () => {
-      const [cc, mm, ll] = await Promise.all([
+      const [cc, mm, ll, ss] = await Promise.all([
         cigars ? recentCigars(8) : Promise.resolve([]),
         members ? recentMembers(8) : Promise.resolve([]),
         lounges ? recentLounges(8) : Promise.resolve([]),
+        shops ? recentShops(8) : Promise.resolve([]),
       ]);
       if (off) return;
       setC(cc);
       setM(mm);
       setL(ll);
+      setSh(ss);
     })();
     return () => {
       off = true;
     };
-  }, [cigars, members, lounges]);
+  }, [cigars, members, lounges, shops]);
 
-  if (c.length === 0 && m.length === 0 && l.length === 0) return null;
+  if (c.length === 0 && m.length === 0 && l.length === 0 && sh.length === 0) return null;
 
   return (
     <div className="space-y-8">
@@ -69,6 +74,29 @@ export function RecentlyAdded({
       {l.length > 0 && (
         <Block title="Recently added lounges">
           {l.map((x) => (
+            <Link
+              key={x.slug}
+              href={`/lounges/${x.slug}`}
+              className="group w-56 shrink-0 snap-start rounded-xl border-[0.5px] border-ember-400/15 bg-char/40 p-4 transition hover:border-ember-400/40"
+            >
+              <div className="flex items-center gap-3">
+                <BrandTile name={x.name} src={x.image_url} className="h-11 w-11 shrink-0 text-base" rounded="rounded-lg" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1">
+                    <span className="truncate font-display text-sm font-medium group-hover:text-ember-100">{x.name}</span>
+                    {x.certified && <BadgeCheck size={13} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
+                  </div>
+                  <div className="truncate text-xs text-smoke-400">{[x.city, x.state].filter(Boolean).join(', ')}</div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </Block>
+      )}
+
+      {sh.length > 0 && (
+        <Block title="Recently added shops">
+          {sh.map((x) => (
             <Link
               key={x.slug}
               href={`/lounges/${x.slug}`}

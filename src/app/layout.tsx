@@ -9,6 +9,7 @@ import { NativeShell } from '@/components/NativeShell';
 import { SplashVideo } from '@/components/SplashVideo';
 import { MobileTopBar } from '@/components/MobileTopBar';
 import { MobileTabBar } from '@/components/MobileTabBar';
+import { IdleLogout } from '@/components/IdleLogout';
 import { NativeAuthGate } from '@/components/NativeAuthGate';
 import { NotificationBanner } from '@/components/NotificationBanner';
 import { PageAccent } from '@/components/PageAccent';
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SplashVideo />
         <main className="pb-32">{children}</main>
         <Suspense fallback={null}><MobileTabBar /></Suspense>
+        <IdleLogout />
         <NativeAuthGate />
         <PageAccent />
         <NotificationBanner />
