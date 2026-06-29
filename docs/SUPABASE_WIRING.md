@@ -1,3 +1,13 @@
+## Homepage + mobile copy/asset tweaks (no migration)
+
+- Home hero last line: "Discover what's next." -> "Discover Something New" (in src/app/page.tsx, Scotty's
+  manually-maintained file — edited his current version surgically per request).
+- Home stats: the "24/7 / CigarTV live" cell replaced with the CigarTV logo (public/cigartv-logo.png)
+  + "Watch Now", linking out to https://cigartv.com/ (new tab). Other two stats unchanged.
+- Search tab title: "Find a cigar" -> "Search MyHumidor" (SearchClient h1; applies on web + mobile).
+- Native home: removed the dismissable "Track every cigar you smoke" promo banner (and its unused promo
+  state + X icon import).
+Build green (101/101).
 ## QA-prep sweep: Open/Closed tag, chains RLS, secret hygiene (RUN phase104)
 
 - Open/Closed tag (src/components/OpenStatus.tsx) on lounge pages when operating hours exist. Parses the

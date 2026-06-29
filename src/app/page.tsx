@@ -47,7 +47,7 @@ export default async function HomePage() {
           <br />
           <span className="text-smoke-200">Collect</span> what you love.
           <br />
-          <span className="text-smoke-400">Discover</span> what&apos;s next.
+          <span className="text-smoke-400">Discover</span> Something New
         </h1>
         <p className="mt-6 max-w-xl text-base leading-relaxed text-smoke-200">
           MyHumidor by CigarTV is your personal humidor and a community of cigar smokers. Track the
@@ -68,7 +68,6 @@ export default async function HomePage() {
           {[
             { v: `${Math.floor(catalogCount / 1000)}k+`, l: 'Cigars tracked' },
             { v: `${loungeCount}+`, l: 'Lounges & Shops' },
-            { v: '24/7', l: 'CigarTV live' },
           ].map((st) => (
             <div key={st.l} className="bg-char/80 px-4 py-3 text-center">
               <dt className="sr-only">{st.l}</dt>
@@ -76,6 +75,16 @@ export default async function HomePage() {
               <dd className="mt-0.5 text-[10px] uppercase tracking-wider text-smoke-400">{st.l}</dd>
             </div>
           ))}
+          <a
+            href="https://cigartv.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex flex-col items-center justify-center bg-char/80 px-4 py-2.5 text-center transition hover:bg-char"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/cigartv-logo.png" alt="CigarTV" className="h-9 w-9 object-contain" />
+            <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-ember-100 group-hover:text-ember-400">Watch Now</span>
+          </a>
         </dl>
       </section>
 

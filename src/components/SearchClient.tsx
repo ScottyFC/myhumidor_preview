@@ -85,7 +85,7 @@ export function SearchClient() {
     <div className="mx-auto max-w-4xl px-6 pt-10">
       <header className="mb-6">
         <div className="eyebrow mb-2">Search</div>
-        <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">Find a cigar</h1>
+        <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">Search MyHumidor</h1>
         <p className="mt-3 max-w-2xl text-smoke-200">
           Search through thousands of Cigars and Lounges. Rate what you&apos;ve smoked, add to your humidor,
           and find who carries it. You can also search for your fellow smokers.
