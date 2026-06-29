@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, User, Settings, LogOut, Sun, Moon } from 'lucide-react';
 import { NotificationBell } from '@/components/NotificationBell';
 import { signOut } from '@/lib/auth';
+import { getProfile, ensureProfile, onProfileChange } from '@/lib/profile';
 
 const AUTH_ROUTES = ['/register', '/auth', '/terms', '/privacy'];
 
@@ -18,6 +19,13 @@ export function MobileTopBar() {
   const router = useRouter();
   const pathname = usePathname() || '/';
   const [menuOpen, setMenuOpen] = useState(false);
+  const [avatar, setAvatar] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const sync = () => setAvatar(getProfile().avatarDataUrl);
+    ensureProfile().then(sync).catch(() => {});
+    return onProfileChange(sync);
+  }, []);
   const [dark, setDark] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -57,8 +65,11 @@ export function MobileTopBar() {
               <ChevronLeft size={24} strokeWidth={1.75} />
             </button>
           )}
-          <Link href="/profile" aria-label="Profile" className="flex h-9 w-9 items-center justify-center rounded-full border-[0.5px] border-ember-400/30 bg-char/60 text-ember-200 active:bg-ember-400/10">
-            <User size={18} strokeWidth={1.75} />
+          <Link href="/profile" aria-label="Profile" className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-[0.5px] border-ember-400/30 bg-char/60 text-ember-200 active:bg-ember-400/10">
+            {avatar
+              /* eslint-disable-next-line @next/next/no-img-element */
+              ? <img src={avatar} alt="" className="h-full w-full object-cover" />
+              : <User size={18} strokeWidth={1.75} />}
           </Link>
         </div>
 

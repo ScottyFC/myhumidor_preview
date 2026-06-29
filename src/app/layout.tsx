@@ -67,7 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Analytics />
         <NativeShell />
         <SplashVideo />
-        <main className="pb-32">{children}</main>
+        <main className="overflow-x-hidden pb-32">{children}</main>
         <Suspense fallback={null}><MobileTabBar /></Suspense>
         <IdleLogout />
         <NativeAuthGate />

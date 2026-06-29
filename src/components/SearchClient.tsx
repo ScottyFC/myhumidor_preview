@@ -246,31 +246,34 @@ function LoungeResults({
     <>
       <div className="grid gap-3 sm:grid-cols-2">
         {stores.map((s) => (
-          <div key={s.id} className="rounded-lg border-[0.5px] border-ember-400/15 bg-char/40 p-4">
-            <div className="flex items-start justify-between gap-2">
-              <Link
-                href={`/lounges/${s.slug}`}
-                className="font-display text-base font-medium leading-tight hover:text-ember-100"
-              >
-                {s.name}
-              </Link>
-              {s.verified && (
-                <BadgeCheck size={15} strokeWidth={1.5} className="shrink-0 text-ember-400" />
-              )}
-            </div>
-            <div className="mt-1 flex items-center gap-1 text-xs text-smoke-400">
-              <MapPin size={11} strokeWidth={1.5} />
-              {[s.address, s.city, s.state].filter(Boolean).join(', ')}
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-smoke-200">
-              {s.phone && (
-                <span className="inline-flex items-center gap-1">
-                  <Phone size={11} strokeWidth={1.5} /> {s.phone}
-                </span>
-              )}
-              <Link href={`/lounges/${s.slug}`} className="text-ember-100 hover:underline">
-                View lounge →
-              </Link>
+          <div key={s.id} className="flex items-start gap-3 rounded-lg border-[0.5px] border-ember-400/15 bg-char/40 p-4">
+            <BrandTile name={s.name} src={s.image_url} className="h-12 w-12 shrink-0 text-base" rounded="rounded-lg" fit={s.venue_type === 'retail' ? 'contain' : 'cover'} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <Link
+                  href={`/lounges/${s.slug}`}
+                  className="font-display text-base font-medium leading-tight hover:text-ember-100"
+                >
+                  {s.name}
+                </Link>
+                {s.verified && (
+                  <BadgeCheck size={15} strokeWidth={1.5} className="shrink-0 text-ember-400" />
+                )}
+              </div>
+              <div className="mt-1 flex items-center gap-1 text-xs text-smoke-400">
+                <MapPin size={11} strokeWidth={1.5} className="shrink-0" />
+                <span className="min-w-0 truncate">{[s.address, s.city, s.state].filter(Boolean).join(', ')}</span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-smoke-200">
+                {s.phone && (
+                  <span className="inline-flex items-center gap-1">
+                    <Phone size={11} strokeWidth={1.5} /> {s.phone}
+                  </span>
+                )}
+                <Link href={`/lounges/${s.slug}`} className="text-ember-100 hover:underline">
+                  View lounge →
+                </Link>
+              </div>
             </div>
           </div>
         ))}

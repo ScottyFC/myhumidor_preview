@@ -78,19 +78,19 @@ export function NearbyLounges() {
             <Link
               key={l.id}
               href={`/lounges/${l.slug}`}
-              className="group flex items-center gap-3 rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-3 transition hover:border-ember-400/40"
+              className="group flex min-w-0 items-center gap-3 overflow-hidden rounded-lg border-[0.5px] border-ember-400/15 bg-char/50 p-3 transition hover:border-ember-400/40"
             >
-              <BrandTile name={l.name} src={l.image_url} className="h-11 w-11 shrink-0 text-base" rounded="rounded-lg" />
+              <BrandTile name={l.name} src={l.image_url} className="h-11 w-11 shrink-0 text-base" rounded="rounded-lg" fit={l.venue_type === 'retail' ? 'contain' : 'cover'} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1">
                   <span className="truncate text-sm font-medium group-hover:text-ember-100">{l.name}</span>
                   {l.verified && <BadgeCheck size={13} strokeWidth={1.5} className="shrink-0 text-ember-400" />}
                 </div>
-                <div className="inline-flex items-center gap-1 text-xs text-smoke-400">
-                  <MapPin size={11} strokeWidth={1.5} /> {[l.city, l.state].filter(Boolean).join(', ')}
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-smoke-400">
+                  <span className="inline-flex min-w-0 items-center gap-1"><MapPin size={11} strokeWidth={1.5} className="shrink-0" /> <span className="truncate">{[l.city, l.state].filter(Boolean).join(', ')}</span></span>
+                  <span className="tabular text-ember-100">{l.distanceMi.toFixed(1)} mi away</span>
                 </div>
               </div>
-              <span className="shrink-0 text-xs tabular text-ember-100">{l.distanceMi.toFixed(1)} mi</span>
             </Link>
           ))}
         </div>

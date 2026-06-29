@@ -1,3 +1,15 @@
+## Mobile lounge list crop, top-bar avatar, search thumbnails (no migration)
+
+- Cropping: in NearbyLounges the distance was a right-edge element being clipped off-screen on mobile.
+  Moved distance ("X.X mi away") under the city inside the text column (nothing sits at the far right
+  now), added overflow-hidden/min-w-0 to the row, made the tile venue-aware (contain for retail logos),
+  and added overflow-x-hidden to the global <main> as a horizontal-overflow guard (web + native).
+- Top-left profile button now shows the member's avatar (loaded via getProfile()/ensureProfile() with
+  onProfileChange subscription), falling back to the User icon when there's no avatar.
+- Search results table (SearchClient LoungeResults) now renders each lounge/retailer's profile image as
+  a thumbnail (BrandTile src=image_url, contain-fit for retail logos), with a left-aligned tile + content
+  layout and truncating address.
+Build green (101/101). page.tsx left as Scotty's manual version.
 ## Fix iOS build (missing ios/App/App/public) + preserve manual page.tsx (no migration)
 
 - Xcode failed with "ios/App/App/public: No such file or directory" because the packaged zip was
