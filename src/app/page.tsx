@@ -68,7 +68,6 @@ export default async function HomePage() {
           {[
             { v: `${Math.floor(catalogCount / 1000)}k+`, l: 'Cigars tracked' },
             { v: `${loungeCount}+`, l: 'Lounges & Shops' },
-            { v: '24/7', l: 'CigarTV live' },
           ].map((st) => (
             <div key={st.l} className="bg-char/80 px-4 py-3 text-center">
               <dt className="sr-only">{st.l}</dt>
