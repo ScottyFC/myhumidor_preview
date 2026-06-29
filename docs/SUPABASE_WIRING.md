@@ -1,3 +1,14 @@
+## Fix iOS build (missing ios/App/App/public) + preserve manual page.tsx (no migration)
+
+- Xcode failed with "ios/App/App/public: No such file or directory" because the packaged zip was
+  EXCLUDING that folder. With server.url set in capacitor.config (the native app loads the hosted site),
+  ios/App/App/public and android/.../assets/public are tiny 8KB placeholders that cap copy needs and the
+  Xcode project references as a resource folder — they must exist. The zip now INCLUDES both public
+  placeholders, and they're removed from .gitignore so they stay tracked. (Still safe to run
+  `npx cap sync ios` to regenerate them, but the build no longer requires it first.)
+- src/app/page.tsx is maintained manually by Scotty (homepage copy tweaks). Installed his uploaded
+  version and will NOT modify page.tsx in future builds.
+Build green (101/101).
 ## Scanner: portrait window + submit-to-catalog on miss (no migration)
 
 - Scan guide box is now portrait (h-80 w-56) instead of landscape; captureWeb crop dims updated to match
