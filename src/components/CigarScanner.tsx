@@ -261,15 +261,16 @@ export function CigarScanner() {
                   <div className="px-1 py-1 text-center">
                     {read && (read.brand || read.line) ? (
                       <>
-                        <p className="text-sm text-smoke-200">Not in our catalog yet — we read <span className="text-ember-100">{[read.brand, read.line].filter(Boolean).join(' ')}</span>.</p>
+                        <p className="text-sm text-smoke-200">Doesn't Look Like This Cigar is in Our Catalog — we read <span className="text-ember-100">{[read.brand, read.line].filter(Boolean).join(' ')}</span>.</p>
                         <Link href={`/submit?name=${submitName}`} onClick={close} className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-ember-400 px-4 py-2.5 text-xs font-semibold text-paper hover:bg-ember-600">
-                          <Plus size={14} strokeWidth={1.75} /> Submit it to our catalog
+                          <Plus size={14} strokeWidth={1.75} /> Submit It To Our Catalog
                         </Link>
-                        <p className="mt-3 text-[11px] text-smoke-400">Or look it up elsewhere (handy for boutique brands):</p>
+                        <p className="mt-3 text-[11px] text-smoke-400">Or Look It Up Elsewhere (Handy for Boutique Brands):</p>
                         <div className="mt-2 flex flex-wrap justify-center gap-2">
                           {[
-                            { label: 'halfwheel', href: `https://halfwheel.com/?s=${searchQ}` },
+                            { label: 'Halfwheel', href: `https://halfwheel.com/?s=${searchQ}` },
                             { label: 'Cigar Aficionado', href: `https://www.cigaraficionado.com/search?q=${searchQ}` },
+                            { label: 'Cigars International', href: `https://www.cigarsinternational.com/search?q=${searchQ}` },
                             { label: 'Google', href: `https://www.google.com/search?q=${searchQ}` },
                           ].map((s) => (
                             <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-full border-[0.5px] border-ember-400/30 px-3 py-1.5 text-xs text-ember-100 hover:bg-ember-400/10">{s.label} <ExternalLink size={11} /></a>
