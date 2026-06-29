@@ -56,10 +56,10 @@ export default async function HomePage() {
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href="/top" className="btn-primary">
-            Top cigars right now <ArrowRight size={14} strokeWidth={1.5} />
+            Top Cigars Right Now <ArrowRight size={14} strokeWidth={1.5} />
           </Link>
           <Link href="/humidor" className="btn-ghost">
-            Open your humidor
+            Open Your Humidor
           </Link>
         </div>
 
@@ -67,7 +67,7 @@ export default async function HomePage() {
         <dl className="mt-10 grid max-w-xl grid-cols-3 gap-px overflow-hidden rounded-xl border-[0.5px] border-ember-400/15 bg-ember-400/10">
           {[
             { v: `${Math.floor(catalogCount / 1000)}k+`, l: 'Cigars tracked' },
-            { v: `${loungeCount}+`, l: 'Lounges & shops' },
+            { v: `${loungeCount}+`, l: 'Lounges & Shops' },
             { v: '24/7', l: 'CigarTV live' },
           ].map((st) => (
             <div key={st.l} className="bg-char/80 px-4 py-3 text-center">
