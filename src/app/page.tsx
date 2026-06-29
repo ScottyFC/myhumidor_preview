@@ -47,7 +47,7 @@ export default async function HomePage() {
           <br />
           <span className="text-smoke-200">Collect</span> what you love.
           <br />
-          <span className="text-smoke-400">Discover</span> what&apos;s next.
+          <span className="text-smoke-400">Discover</span> something new.
         </h1>
         <p className="mt-6 max-w-xl text-base leading-relaxed text-smoke-200">
           MyHumidor by CigarTV is your personal humidor and a community of cigar smokers. Track the
