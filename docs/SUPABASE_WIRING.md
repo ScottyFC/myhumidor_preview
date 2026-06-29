@@ -1,3 +1,12 @@
+## Scanner: portrait window + submit-to-catalog on miss (no migration)
+
+- Scan guide box is now portrait (h-80 w-56) instead of landscape; captureWeb crop dims updated to match
+  (224x320, clamped) so the cropped band still aligns with what's framed.
+- No-match fallback now leads with a "Submit it to our catalog" button linking to
+  /submit?name=<brand line> — the submit page (SubmitCigarPage) already reads ?name= and pre-fills the
+  cigar name from the scan. Web-search links (halfwheel/CA/Google) remain as secondary options. If the
+  read returned nothing, a plain "Submit a cigar to our catalog" link is offered too.
+Build green (101/101).
 ## Cigar scanner — bundle 1: resolution, crop-to-band, boutique fallback (no migration)
 
 CigarScanner.tsx (web getUserMedia path):

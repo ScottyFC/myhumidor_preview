@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Loader2, ScanLine, X, ChevronRight, RotateCcw, ExternalLink } from 'lucide-react';
+import { Camera, Loader2, ScanLine, X, ChevronRight, RotateCcw, ExternalLink, Plus } from 'lucide-react';
 import { subscribeAficionado } from '@/lib/aficionado';
 import { CigarThumb } from '@/components/CigarThumb';
 import { CigarName } from '@/components/CigarName';
@@ -127,8 +127,8 @@ export function CigarScanner() {
     // video's native pixels and crop to it — the model gets a tight, sharp band
     // instead of the whole scene (the single biggest read-accuracy win).
     const scale = Math.max(cw / vw, ch / vh);
-    const boxW = Math.min(288, cw * 0.9); // matches the w-72 guide, clamped
-    const boxH = Math.min(176, ch * 0.6); // matches the h-44 guide, clamped
+    const boxW = Math.min(224, cw * 0.85); // matches the w-56 portrait guide, clamped
+    const boxH = Math.min(320, ch * 0.6); // matches the h-80 portrait guide, clamped
     const offsetX = (vw * scale - cw) / 2;
     const offsetY = (vh * scale - ch) / 2;
     let srcX = ((cw - boxW) / 2 + offsetX) / scale;
@@ -164,6 +164,7 @@ export function CigarScanner() {
   const top = candidates[0];
   const rest = candidates.slice(1, 4);
   const searchQ = encodeURIComponent([read?.brand, read?.line, 'cigar'].filter(Boolean).join(' '));
+  const submitName = encodeURIComponent([read?.brand, read?.line].filter(Boolean).join(' '));
 
   return (
     <>
@@ -198,7 +199,7 @@ export function CigarScanner() {
 
           {state === 'camera' && (
             <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
-              <div className="h-44 w-72 rounded-2xl border-2 border-ember-400/70 shadow-[0_0_0_100vmax_rgba(0,0,0,0.35)]" />
+              <div className="h-80 w-56 rounded-2xl border-2 border-ember-400/70 shadow-[0_0_0_100vmax_rgba(0,0,0,0.35)]" />
               <p className="mt-4 rounded-full bg-black/50 px-3 py-1 text-xs text-paper backdrop-blur">Center the band, then tap to scan</p>
             </div>
           )}
@@ -261,7 +262,10 @@ export function CigarScanner() {
                     {read && (read.brand || read.line) ? (
                       <>
                         <p className="text-sm text-smoke-200">Not in our catalog yet — we read <span className="text-ember-100">{[read.brand, read.line].filter(Boolean).join(' ')}</span>.</p>
-                        <p className="mt-1.5 text-[11px] text-smoke-400">Look it up elsewhere{read.brand ? ' (handy for boutique brands)' : ''}:</p>
+                        <Link href={`/submit?name=${submitName}`} onClick={close} className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-ember-400 px-4 py-2.5 text-xs font-semibold text-paper hover:bg-ember-600">
+                          <Plus size={14} strokeWidth={1.75} /> Submit it to our catalog
+                        </Link>
+                        <p className="mt-3 text-[11px] text-smoke-400">Or look it up elsewhere (handy for boutique brands):</p>
                         <div className="mt-2 flex flex-wrap justify-center gap-2">
                           {[
                             { label: 'halfwheel', href: `https://halfwheel.com/?s=${searchQ}` },
@@ -273,7 +277,12 @@ export function CigarScanner() {
                         </div>
                       </>
                     ) : (
-                      <p className="py-1 text-sm text-smoke-300">No match found. Try a sharper, well-lit shot of the band.</p>
+                      <>
+                        <p className="py-1 text-sm text-smoke-300">No match found. Try a sharper, well-lit shot of the band.</p>
+                        <Link href="/submit" onClick={close} className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-md border-[0.5px] border-ember-400/30 px-4 py-2 text-xs font-medium text-ember-100 hover:bg-ember-400/10">
+                          <Plus size={13} /> Submit a cigar to our catalog
+                        </Link>
+                      </>
                     )}
                   </div>
                 )}
