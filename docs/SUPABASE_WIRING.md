@@ -1,3 +1,14 @@
+## QA-prep sweep: Open/Closed tag, chains RLS, secret hygiene (RUN phase104)
+
+- Open/Closed tag (src/components/OpenStatus.tsx) on lounge pages when operating hours exist. Parses the
+  day's hours string, evaluates against the venue's local time (US state -> IANA timezone map; falls back
+  to viewer local), handles overnight ranges and "closed"/"24h"; renders "Open now" (green) / "Closed"
+  (red); hidden when hours are absent or today's entry is unparseable. Refreshes each minute.
+- phase104.sql: enable RLS + public-read policy on the `chains` reference table (only table found without
+  RLS). Defense-in-depth.
+- Packaging: shared zip now EXCLUDES .env.local (it contains the live SUPABASE_SERVICE_ROLE_KEY and
+  RECAPTCHA_SECRET_KEY). See security report for rotation guidance.
+Build green (101/101). page.tsx left as Scotty's manual version.
 ## Mobile lounge list crop, top-bar avatar, search thumbnails (no migration)
 
 - Cropping: in NearbyLounges the distance was a right-edge element being clipped off-screen on mobile.

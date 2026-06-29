@@ -47,7 +47,7 @@ export default async function HomePage() {
           <br />
           <span className="text-smoke-200">Collect</span> what you love.
           <br />
-          <span className="text-smoke-400">Discover</span> something new.
+          <span className="text-smoke-400">Discover</span> what&apos;s next.
         </h1>
         <p className="mt-6 max-w-xl text-base leading-relaxed text-smoke-200">
           MyHumidor by CigarTV is your personal humidor and a community of cigar smokers. Track the
@@ -64,10 +64,11 @@ export default async function HomePage() {
         </div>
 
         {/* Live catalog stats — real numbers, computed at build/request time */}
-        <dl className="mt-10 grid max-w-xl grid-cols-2 gap-px overflow-hidden rounded-xl border-[0.5px] border-ember-400/15 bg-ember-400/10">
+        <dl className="mt-10 grid max-w-xl grid-cols-3 gap-px overflow-hidden rounded-xl border-[0.5px] border-ember-400/15 bg-ember-400/10">
           {[
             { v: `${Math.floor(catalogCount / 1000)}k+`, l: 'Cigars tracked' },
             { v: `${loungeCount}+`, l: 'Lounges & Shops' },
+            { v: '24/7', l: 'CigarTV live' },
           ].map((st) => (
             <div key={st.l} className="bg-char/80 px-4 py-3 text-center">
               <dt className="sr-only">{st.l}</dt>

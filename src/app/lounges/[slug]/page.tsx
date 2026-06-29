@@ -22,6 +22,7 @@ function groupHours(hoursJson: Record<string, string | undefined>): Array<{ labe
   }));
 }
 import { ProtectMedia } from '@/components/ProtectMedia';
+import { OpenStatus } from '@/components/OpenStatus';
 import { ShareButton } from '@/components/ShareButton';
 import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, BadgeCheck, Navigation, ShoppingBag, UtensilsCrossed, Building2, Wine } from 'lucide-react';
 import { EliteBanner } from '@/components/EliteBanner';
@@ -145,6 +146,7 @@ export default async function LoungePage({ params }: PageProps) {
 
         <div className="mt-3 flex items-center gap-2">
           <VenueTag type={lounge.venue_type} />
+          <OpenStatus hoursJson={lounge.hoursJson} state={lounge.state} />
           <ShareButton title={lounge.name} text={`Check out ${lounge.name} on MyHumidor`} />
         </div>
         {lounge.venue_type === 'retail' && (
