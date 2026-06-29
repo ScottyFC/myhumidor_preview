@@ -124,7 +124,7 @@ export default async function HomePage() {
       <section className="py-10">
         <SectionHeader
           title="Featured Brands"
-          subtitle="Houses worth exploring"
+          subtitle="Try Something New"
           href="/search"
           icon={<Award size={14} strokeWidth={1.5} className="text-ember-400" />}
         />
@@ -136,7 +136,7 @@ export default async function HomePage() {
       {/* ─── FEATURED LOUNGES CAROUSEL ────────────────────────────────── */}
       <section className="py-10">
         <SectionHeader
-          title="Featured Lounges"
+          title="Featured Lounges & Shops"
           subtitle="Lounges and shops across the country"
           href="/lounges"
           icon={<MapPin size={14} strokeWidth={1.5} className="text-ember-400" />}
