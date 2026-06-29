@@ -64,7 +64,7 @@ export default async function HomePage() {
         </div>
 
         {/* Live catalog stats — real numbers, computed at build/request time */}
-        <dl className="mt-10 grid max-w-xl grid-cols-3 gap-px overflow-hidden rounded-xl border-[0.5px] border-ember-400/15 bg-ember-400/10">
+        <dl className="mt-10 grid max-w-xl grid-cols-2 gap-px overflow-hidden rounded-xl border-[0.5px] border-ember-400/15 bg-ember-400/10">
           {[
             { v: `${Math.floor(catalogCount / 1000)}k+`, l: 'Cigars tracked' },
             { v: `${loungeCount}+`, l: 'Lounges & Shops' },
