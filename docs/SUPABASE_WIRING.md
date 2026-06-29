@@ -1,3 +1,19 @@
+## Cigar scanner — bundle 1: resolution, crop-to-band, boutique fallback (no migration)
+
+CigarScanner.tsx (web getUserMedia path):
+- Camera now requests a high-res rear stream (ideal 2560x1440) instead of the browser default
+  (~640x480), then reads track.getCapabilities() and applyConstraints() to push to device max +
+  continuous autofocus where supported. Fixes the "low resolution" look and feeds the reader sharper
+  frames.
+- Capture is cropped to the on-screen band guide box (mapped through the object-cover transform back to
+  the video's native pixels) and saved at JPEG 0.9 — the model receives a tight, high-effective-res band
+  instead of the whole scene. Biggest read-accuracy win.
+- No-match fallback: when the vision read returns a brand/line but nothing matches the catalog (common
+  for boutique brands), the result card now shows what was read plus one-tap web searches (halfwheel,
+  Cigar Aficionado, Google) instead of a dead-end "No match found".
+Build green (101/101). Compile-verified only — camera resolution + read quality must be checked on a
+real device. Native (Capacitor Camera plugin) high-res capture + Sonnet escalation + web-search-on-miss
++ crowd-sourced submissions are later bundles.
 ## Fix: retailer logos scaled to fit their box (no migration)
 
 BrandTile has a "cover" mode (crops to fill, good for venue photos) and a "contain" mode (whole mark

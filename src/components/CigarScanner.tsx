@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { Camera, Loader2, ScanLine, X, ChevronRight, RotateCcw } from 'lucide-react';
+import { Camera, Loader2, ScanLine, X, ChevronRight, RotateCcw, ExternalLink } from 'lucide-react';
 import { subscribeAficionado } from '@/lib/aficionado';
 import { CigarThumb } from '@/components/CigarThumb';
 import { CigarName } from '@/components/CigarName';
@@ -80,11 +80,29 @@ export function CigarScanner() {
     try {
       let stream: MediaStream;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        // Ask for a high-resolution rear camera — without this the browser
+        // defaults to ~640×480, which both looks soft and starves the reader.
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 2560 }, height: { ideal: 1440 } },
+          audio: false,
+        });
       } catch {
-        // Retry with a plain video constraint (some devices reject facingMode).
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+        } catch {
+          // Retry with a plain video constraint (some devices reject facingMode).
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
       }
+      // Push to the device's max resolution and continuous autofocus where supported.
+      try {
+        const track = stream.getVideoTracks()[0];
+        const caps = (track.getCapabilities?.() ?? {}) as { width?: { max?: number }; height?: { max?: number }; focusMode?: string[] };
+        const adv: MediaTrackConstraintSet[] = [];
+        if (caps.width?.max && caps.height?.max) adv.push({ width: caps.width.max, height: caps.height.max } as MediaTrackConstraintSet);
+        if (caps.focusMode?.includes('continuous')) adv.push({ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet);
+        if (adv.length) await track.applyConstraints({ advanced: adv });
+      } catch { /* best-effort; not all devices expose capabilities */ }
       streamRef.current = stream;
       setState('camera'); // effect attaches the stream once the <video> mounts
     } catch {
@@ -103,10 +121,28 @@ export function CigarScanner() {
     const v = videoRef.current;
     if (!v || !v.videoWidth) return;
     v.pause();
+    const vw = v.videoWidth, vh = v.videoHeight;
+    const cw = window.innerWidth, ch = window.innerHeight;
+    // The preview is object-cover, so map the on-screen guide box back to the
+    // video's native pixels and crop to it — the model gets a tight, sharp band
+    // instead of the whole scene (the single biggest read-accuracy win).
+    const scale = Math.max(cw / vw, ch / vh);
+    const boxW = Math.min(288, cw * 0.9); // matches the w-72 guide, clamped
+    const boxH = Math.min(176, ch * 0.6); // matches the h-44 guide, clamped
+    const offsetX = (vw * scale - cw) / 2;
+    const offsetY = (vh * scale - ch) / 2;
+    let srcX = ((cw - boxW) / 2 + offsetX) / scale;
+    let srcY = ((ch - boxH) / 2 + offsetY) / scale;
+    let srcW = boxW / scale;
+    let srcH = boxH / scale;
+    srcX = Math.max(0, Math.min(srcX, vw)); srcY = Math.max(0, Math.min(srcY, vh));
+    srcW = Math.max(1, Math.min(srcW, vw - srcX)); srcH = Math.max(1, Math.min(srcH, vh - srcY));
     const canvas = document.createElement('canvas');
-    canvas.width = v.videoWidth; canvas.height = v.videoHeight;
-    canvas.getContext('2d')?.drawImage(v, 0, 0);
-    scan(canvas.toDataURL('image/jpeg', 0.8));
+    canvas.width = Math.round(srcW); canvas.height = Math.round(srcH);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(v, srcX, srcY, srcW, srcH, 0, 0, canvas.width, canvas.height);
+    scan(canvas.toDataURL('image/jpeg', 0.9));
   }
 
   function scanAgain() {
@@ -127,6 +163,7 @@ export function CigarScanner() {
 
   const top = candidates[0];
   const rest = candidates.slice(1, 4);
+  const searchQ = encodeURIComponent([read?.brand, read?.line, 'cigar'].filter(Boolean).join(' '));
 
   return (
     <>
@@ -220,7 +257,25 @@ export function CigarScanner() {
                     )}
                   </>
                 ) : (
-                  <p className="px-1 py-2 text-center text-sm text-smoke-300">No match found. Try a sharper, well-lit shot of the band.</p>
+                  <div className="px-1 py-1 text-center">
+                    {read && (read.brand || read.line) ? (
+                      <>
+                        <p className="text-sm text-smoke-200">Not in our catalog yet — we read <span className="text-ember-100">{[read.brand, read.line].filter(Boolean).join(' ')}</span>.</p>
+                        <p className="mt-1.5 text-[11px] text-smoke-400">Look it up elsewhere{read.brand ? ' (handy for boutique brands)' : ''}:</p>
+                        <div className="mt-2 flex flex-wrap justify-center gap-2">
+                          {[
+                            { label: 'halfwheel', href: `https://halfwheel.com/?s=${searchQ}` },
+                            { label: 'Cigar Aficionado', href: `https://www.cigaraficionado.com/search?q=${searchQ}` },
+                            { label: 'Google', href: `https://www.google.com/search?q=${searchQ}` },
+                          ].map((s) => (
+                            <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-full border-[0.5px] border-ember-400/30 px-3 py-1.5 text-xs text-ember-100 hover:bg-ember-400/10">{s.label} <ExternalLink size={11} /></a>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <p className="py-1 text-sm text-smoke-300">No match found. Try a sharper, well-lit shot of the band.</p>
+                    )}
+                  </div>
                 )}
                 <button onClick={scanAgain} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border-[0.5px] border-ember-400/30 py-2 text-xs font-medium text-ember-100">
                   <RotateCcw size={13} /> Scan again
