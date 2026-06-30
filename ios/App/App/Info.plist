@@ -57,6 +57,13 @@
 	<string>MyHumidor uses the camera to scan or add cigar photos.</string>
 	<key>NSCameraReactionEffectGesturesEnabledDefault</key>
 	<true/>
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UILaunchScreen</key>
+		<dict/>
+		<key>MyHumidorSplash.png</key>
+		<string></string>
+	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>MyHumidor uses your location to find cigar lounges near you.</string>
 </dict>
