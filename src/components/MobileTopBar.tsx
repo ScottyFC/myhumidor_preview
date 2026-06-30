@@ -57,7 +57,7 @@ export function MobileTopBar() {
   }
 
   return (
-    <header className="native-only native-topbar fixed inset-x-0 top-0 z-50 items-center justify-between border-b border-ember-400/15 bg-ink px-3">
+    <header className="native-only native-topbar fixed inset-x-0 top-0 z-50 items-center justify-between border-b border-white/10 bg-ink/45 px-3 backdrop-blur-2xl backdrop-saturate-150">
       <div className="relative flex h-14 w-full items-center justify-between">
         <div className="flex min-w-0 items-center gap-1">
           {!isRoot && (
@@ -84,7 +84,7 @@ export function MobileTopBar() {
               <Settings size={20} strokeWidth={1.75} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-11 z-50 w-48 overflow-hidden rounded-xl border-[0.5px] border-ember-400/20 bg-char/95 py-1 shadow-xl backdrop-blur-lg">
+              <div className="absolute right-0 top-11 z-50 w-48 overflow-hidden rounded-2xl border border-white/12 bg-ink/70 py-1 shadow-2xl backdrop-blur-2xl backdrop-saturate-150">
                 <Link href="/account" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-smoke-200 active:bg-ember-400/10">
                   <Settings size={15} strokeWidth={1.5} className="text-ember-300" /> Account settings
                 </Link>

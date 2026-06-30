@@ -45,11 +45,13 @@ export function MobileTabBar() {
   if (['/register', '/auth', '/terms', '/privacy'].some((r) => pathname.startsWith(r))) return null;
 
   return (
-    <nav className="native-only native-tabbar fixed inset-x-0 bottom-0 z-50 bg-ink shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
-      {/* Fade content out just above the bar so nothing leaks behind it. */}
-      <div className="pointer-events-none absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-ink to-transparent" />
-      <div className="relative w-full border-t border-ember-400/20 bg-gradient-to-b from-char/30 to-ink">
-      <div className={cn('grid w-full pt-1', tabs.length === 5 ? 'grid-cols-5' : 'grid-cols-6')}>
+    <nav
+      className="native-only fixed inset-x-0 z-50 flex justify-center px-4"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom) + 10px)' }}
+    >
+      <div className="relative flex items-center gap-0.5 overflow-hidden rounded-full border border-white/15 bg-ink/55 px-2 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.55)] backdrop-blur-2xl backdrop-saturate-150">
+        {/* specular top highlight — the liquid-glass sheen */}
+        <span className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/12 to-transparent" />
         {tabs.map((t) => {
           const active = t.tab ? (pathname.startsWith('/dashboard') && currentTab === t.tab) : t.match(pathname);
           const Icon = t.icon;
@@ -57,17 +59,17 @@ export function MobileTabBar() {
             <Link
               key={t.href}
               href={t.href}
+              aria-label={t.label}
               className={cn(
-                'flex min-w-0 flex-col items-center gap-1 px-0.5 pt-2 pb-1.5 text-[10px] font-medium transition-colors',
-                active ? 'text-ember-300' : 'text-smoke-400 active:text-ember-100'
+                'relative flex h-11 w-11 items-center justify-center rounded-full transition-colors',
+                active ? 'text-ember-400' : 'text-smoke-300 active:text-ember-100'
               )}
             >
-              <Icon size={19} strokeWidth={active ? 2 : 1.5} className={active ? 'text-ember-400' : ''} />
-              <span className="line-clamp-2 w-full text-center leading-[1.05]">{t.label}</span>
+              {active && <span className="absolute inset-1 rounded-full bg-ember-400/15 ring-1 ring-ember-400/30" />}
+              <Icon size={22} strokeWidth={active ? 2 : 1.6} className="relative" />
             </Link>
           );
         })}
-      </div>
       </div>
     </nav>
   );

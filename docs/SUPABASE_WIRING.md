@@ -1,3 +1,16 @@
+## Mobile nav redesign — liquid glass (no migration)
+
+- Bottom tab bar (MobileTabBar): now a FLOATING translucent pill (icons only, labels removed) centered
+  above the home indicator — rounded-full, bg-ink/55 + backdrop-blur-2xl + saturate, white/15 hairline
+  ring, soft shadow, and a top specular sheen for the iOS liquid-glass look. Active tab shown via an
+  ember-tinted rounded highlight behind the icon; aria-label retained on each icon for accessibility.
+  No longer edge-to-edge; safe-area offset via env(safe-area-inset-bottom)+10px.
+- Top bar (MobileTopBar): same glass treatment (bg-ink/45 + backdrop-blur-2xl + saturate, white/10
+  border) with ALL buttons unchanged (back, avatar, wordmark, bell, settings menu). Settings dropdown
+  also moved to the glass style.
+- Establishes the liquid-glass pattern (translucent + backdrop-blur + hairline ring + sheen) to extend
+  to other surfaces going forward.
+Build green (101/101). page.tsx untouched.
 ## Homepage + mobile copy/asset tweaks (no migration)
 
 - Home hero last line: "Discover what's next." -> "Discover Something New" (in src/app/page.tsx, Scotty's
