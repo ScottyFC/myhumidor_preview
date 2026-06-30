@@ -30,7 +30,7 @@ const config: CapacitorConfig = {
     ],
   },
   ios: {
-    contentInset: 'always',
+    contentInset: 'never',
     backgroundColor: '#14110d',
   },
   android: {
@@ -40,7 +40,7 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchShowDuration: 1200,
       launchAutoHide: false, // we hide it from JS once the app is interactive
-      backgroundColor: '#14110d',
+      backgroundColor: '#7a471d',
       androidScaleType: 'CENTER_CROP',
       showSpinner: false,
     },

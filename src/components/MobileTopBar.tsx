@@ -57,15 +57,19 @@ export function MobileTopBar() {
   }
 
   return (
-    <header className="native-only native-topbar fixed inset-x-0 top-0 z-50 items-center justify-between border-b border-white/10 bg-ink/45 px-3 backdrop-blur-2xl backdrop-saturate-150">
-      <div className="relative flex h-14 w-full items-center justify-between">
-        <div className="flex min-w-0 items-center gap-1">
+    <header
+      className="native-only fixed inset-x-0 top-0 z-50 flex justify-center px-4"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)' }}
+    >
+      <div className="relative flex w-full items-center gap-2 rounded-full border border-white/15 bg-ink/55 px-2.5 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-2xl backdrop-saturate-150">
+        {/* left — contextual back + profile */}
+        <div className="flex items-center gap-1">
           {!isRoot && (
-            <button onClick={() => router.back()} aria-label="Back" className="-ml-1 flex h-9 w-9 items-center justify-center rounded-full text-smoke-200 active:bg-ember-400/10">
-              <ChevronLeft size={24} strokeWidth={1.75} />
+            <button onClick={() => router.back()} aria-label="Back" className="flex h-9 w-9 items-center justify-center rounded-full text-smoke-100 active:bg-white/10">
+              <ChevronLeft size={22} strokeWidth={1.75} />
             </button>
           )}
-          <Link href="/profile" aria-label="Profile" className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-[0.5px] border-ember-400/30 bg-char/60 text-ember-200 active:bg-ember-400/10">
+          <Link href="/profile" aria-label="Profile" className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-char/50 text-ember-200 active:bg-ember-400/10">
             {avatar
               /* eslint-disable-next-line @next/next/no-img-element */
               ? <img src={avatar} alt="" className="h-full w-full object-cover" />
@@ -73,29 +77,32 @@ export function MobileTopBar() {
           </Link>
         </div>
 
+        {/* center — wordmark */}
         <Link href="/" aria-label="MyHumidor home" className="absolute left-1/2 flex -translate-x-1/2 items-center">
-          <img src="/logo.svg" alt="MyHumidor" className="h-7 w-auto" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="MyHumidor" className="h-6 w-auto" />
         </Link>
 
-        <div className="flex items-center gap-1">
+        {/* right — notifications + settings */}
+        <div className="relative ml-auto flex items-center gap-0.5">
           <NotificationBell />
           <div className="relative" ref={menuRef}>
-            <button onClick={() => setMenuOpen((o) => !o)} aria-label="Settings" className="flex h-9 w-9 items-center justify-center rounded-full text-smoke-200 active:bg-ember-400/10">
+            <button onClick={() => setMenuOpen((o) => !o)} aria-label="Settings" className="flex h-9 w-9 items-center justify-center rounded-full text-smoke-200 active:bg-white/10">
               <Settings size={20} strokeWidth={1.75} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-11 z-50 w-48 overflow-hidden rounded-2xl border border-white/12 bg-ink/70 py-1 shadow-2xl backdrop-blur-2xl backdrop-saturate-150">
+              <div className="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-2xl border border-white/12 bg-ink/70 py-1 shadow-2xl backdrop-blur-2xl backdrop-saturate-150">
                 <Link href="/account" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-smoke-200 active:bg-ember-400/10">
                   <Settings size={15} strokeWidth={1.5} className="text-ember-300" /> Account settings
                 </Link>
                 <Link href="/settings" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-smoke-200 active:bg-ember-400/10">
                   <User size={15} strokeWidth={1.5} className="text-ember-300" /> Notifications
                 </Link>
-                <button onClick={toggleTheme} className="flex w-full items-center gap-2 border-t border-ember-400/10 px-4 py-2.5 text-left text-sm text-smoke-200 active:bg-ember-400/10">
+                <button onClick={toggleTheme} className="flex w-full items-center gap-2 border-t border-white/10 px-4 py-2.5 text-left text-sm text-smoke-200 active:bg-ember-400/10">
                   {dark ? <Sun size={15} strokeWidth={1.5} className="text-ember-300" /> : <Moon size={15} strokeWidth={1.5} className="text-ember-300" />}
                   {dark ? 'Light mode' : 'Dark mode'}
                 </button>
-                <button onClick={logout} className="flex w-full items-center gap-2 border-t border-ember-400/10 px-4 py-2.5 text-left text-sm text-smoke-200 active:bg-ember-400/10">
+                <button onClick={logout} className="flex w-full items-center gap-2 border-t border-white/10 px-4 py-2.5 text-left text-sm text-smoke-200 active:bg-ember-400/10">
                   <LogOut size={15} strokeWidth={1.5} className="text-ember-300" /> Log out
                 </button>
               </div>

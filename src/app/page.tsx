@@ -43,11 +43,11 @@ export default async function HomePage() {
         />
         <div className="eyebrow mb-3">Premium cigars, tracked.</div>
         <h1 className="font-display text-5xl leading-[0.95] tracking-tightest sm:text-6xl lg:text-7xl">
-          <span className="italic text-ember-400">Rate</span> What You Smoke.
+          <span className="italic text-ember-400">Rate</span> what you smoke.
           <br />
-          <span className="text-smoke-200">Collect</span> What You Love.
+          <span className="text-smoke-200">Collect</span> what you love.
           <br />
-          <span className="text-smoke-400">Discover</span> Something New.
+          <span className="text-smoke-400">Discover</span> Something New
         </h1>
         <p className="mt-6 max-w-xl text-base leading-relaxed text-smoke-200">
           MyHumidor by CigarTV is your personal humidor and a community of cigar smokers. Track the

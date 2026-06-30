@@ -1,3 +1,18 @@
+## Native: bounce fix, glass top bar, new splash + icon (no migration)
+
+- Bottom-bar lift fixed: native app now uses a fixed shell (globals.css) — the document no longer scrolls,
+  only <main> does — so WKWebView rubber-banding can't drag the floating bars. iOS contentInset 'always'
+  -> 'never' (CSS env() handles safe areas). VERIFY ON DEVICE; if any residual bounce, the definitive
+  native backstop is `webView.scrollView.bounces = false` in AppDelegate.
+- Top bar is now a floating liquid-glass pill matching the bottom: profile (left), wordmark (center),
+  notifications + settings (right), contextual back chevron. Settings dropdown kept (glass).
+- App icon: iOS single 1024 icon replaced with 2.png. Android mipmaps regenerated (launcher + round +
+  adaptive foreground at all densities); adaptive background color -> #7a471d.
+- Splash: composed a 2732 splash (brand brown + cropped wordmark + peach dot) -> iOS Splash.imageset +
+  Android splash drawables. SplashScreen.backgroundColor -> #7a471d. Sources staged in assets/ for
+  `npx @capacitor/assets generate` if you want a full clean regen.
+- After unzip: `npx cap sync` (and `npx cap copy`) to push web + native assets into the native projects.
+Build green (101/101). page.tsx untouched.
 ## Mobile nav redesign — liquid glass (no migration)
 
 - Bottom tab bar (MobileTabBar): now a FLOATING translucent pill (icons only, labels removed) centered
