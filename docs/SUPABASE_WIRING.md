@@ -1,3 +1,12 @@
+## Full-bleed native (edge-to-edge) — no migration
+
+- Switched ios contentInset 'always' -> 'never' so the webview fills the ENTIRE screen (bleeds under the
+  status bar / notch and to the very bottom edge). html bg-ink + fixed body now cover those areas instead
+  of black bands. Bars go back to env()-based safe offsets: top paddingTop calc(env(top)+8px), bottom
+  calc(env(bottom)+10px); main padding calc(env(top)+56px)/calc(env(bottom)+84px). This is the correct
+  full-bleed model — 'always' had fixed the bar HEIGHT but boxed the content inside the safe area.
+- (Prior turn's height fix is preserved via env(): bar sits just below the status bar, not doubled.)
+Build green (101/101). page.tsx untouched.
 ## Native inset fix + heading unification (no migration)
 
 - Top bar sat too low: it was double-insetting (native safe-area inset + CSS env() on top). Now the native

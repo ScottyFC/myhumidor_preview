@@ -59,7 +59,7 @@ export function MobileTopBar() {
   return (
     <header
       className="native-only fixed inset-x-0 top-0 z-50 flex justify-center px-4"
-      style={{ paddingTop: '8px' }}
+      style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)' }}
     >
       <div className="relative flex w-full items-center gap-2 rounded-full border border-white/15 bg-ink/55 px-2.5 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.18)] backdrop-blur-2xl backdrop-saturate-150">
         {/* left — contextual back + profile */}
