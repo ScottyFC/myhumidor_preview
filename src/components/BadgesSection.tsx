@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Award } from 'lucide-react';
 import { BadgeMedal } from '@/components/BadgeMedal';
 import { BadgeCelebration } from '@/components/BadgeCelebration';
-import { listBadges, earnedBadgeIds, evaluateAndAward, buildStats, type BadgeDef } from '@/lib/badges';
+import { listBadges, earnedBadgeIds, evaluateAndAward, buildStats, fetchLoungeStats, type BadgeDef } from '@/lib/badges';
 import { subscribeAficionado } from '@/lib/aficionado';
 import type { CollectionItem } from '@/lib/collection';
 import type { UserRating } from '@/lib/ratings';
@@ -43,7 +43,8 @@ export function BadgesSection({
         } catch {
           /* price/country badges just won't evaluate */
         }
-        const awarded = await evaluateAndAward(userId, all, buildStats(humidor, ratings, enrich), member);
+        const lounge = await fetchLoungeStats(userId);
+        const awarded = await evaluateAndAward(userId, all, buildStats(humidor, ratings, enrich, lounge), member);
         if (!off && awarded.length) setCelebration(awarded);
       }
       const mine = await earnedBadgeIds(userId);

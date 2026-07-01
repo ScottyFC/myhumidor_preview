@@ -80,11 +80,58 @@ export interface BadgeStats {
   reviewNotes: string[];
   prices: number[];        // prices of rated cigars (from enrichment)
   countries: string[];     // lowercased countries of rated cigars (from enrichment)
+  // Lounge check-in stats (from fetchLoungeStats)
+  distinctLounges: number;
+  loungeStates: number;
+  certifiedVisits: number;
+  retailVisits: number;
 }
 
 export type Enrichment = Record<string, { price: number | null; country: string | null }>;
 
-export function buildStats(humidor: CollectionItem[], ratings: UserRating[], enrich: Enrichment = {}): BadgeStats {
+export interface LoungeStats {
+  distinctLounges: number;
+  states: number;
+  certified: number;
+  retail: number;
+}
+
+/** Aggregate the user's lounge check-ins into badge-relevant counts. */
+export async function fetchLoungeStats(userId: string): Promise<LoungeStats> {
+  const empty: LoungeStats = { distinctLounges: 0, states: 0, certified: 0, retail: 0 };
+  if (!isSupabaseConfigured || !userId) return empty;
+  try {
+    const { data } = await supabaseBrowser()
+      .from('check_ins')
+      .select('lounge_id, lounges(state, venue_type, certified)')
+      .eq('user_id', userId)
+      .not('lounge_id', 'is', null);
+    const rows = (data ?? []) as unknown as Array<{
+      lounge_id: string | null;
+      lounges?: { state?: string | null; venue_type?: string | null; certified?: boolean | null } | null;
+    }>;
+    const lounges = new Set<string>();
+    const states = new Set<string>();
+    let certified = 0;
+    let retail = 0;
+    for (const r of rows) {
+      if (r.lounge_id) lounges.add(r.lounge_id);
+      const st = (r.lounges?.state ?? '').trim().toUpperCase();
+      if (st) states.add(st);
+      if (r.lounges?.certified) certified++;
+      const vt = (r.lounges?.venue_type ?? '').toLowerCase();
+      if (vt === 'retail' || vt === 'both') retail++;
+    }
+    return { distinctLounges: lounges.size, states: states.size, certified, retail };
+  } catch { return empty; }
+}
+
+export function buildStats(
+  humidor: CollectionItem[],
+  ratings: UserRating[],
+  enrich: Enrichment = {},
+  lounge: LoungeStats = { distinctLounges: 0, states: 0, certified: 0, retail: 0 },
+): BadgeStats {
   const lc = (x?: string) => (x ?? '').toLowerCase();
   const prices: number[] = [];
   const countries: string[] = [];
@@ -105,6 +152,10 @@ export function buildStats(humidor: CollectionItem[], ratings: UserRating[], enr
     reviewNotes: ratings.map((r) => `${lc(r.notes)} ${(r.tastingNotes ?? []).map(lc).join(' ')}`),
     prices,
     countries,
+    distinctLounges: lounge.distinctLounges,
+    loungeStates: lounge.states,
+    certifiedVisits: lounge.certified,
+    retailVisits: lounge.retail,
   };
 }
 
@@ -118,6 +169,17 @@ export function evaluateCriteria(criteria: string | undefined, s: BadgeStats): {
   const num = (re: RegExp, fb = 1) => { const m = t.match(re); return m ? parseInt(m[1], 10) : fb; };
 
   if (/rate your first cigar|first light/.test(t)) return { recognized: true, met: s.reviewCount >= 1 };
+
+  // ── Lounge check-ins ──────────────────────────────────────────────────────
+  if (/first lounge|check in at your first/.test(t)) return { recognized: true, met: s.distinctLounges >= 1 };
+  if (/check in at\s+(\d+)\s+.*lounges?/.test(t)) {
+    return { recognized: true, met: s.distinctLounges >= num(/check in at\s+(\d+)/) };
+  }
+  if (/lounges?\s+in\s+(\d+)\s+.*states?|(\d+)\s+different states?/.test(t)) {
+    return { recognized: true, met: s.loungeStates >= num(/(\d+)\s+(?:different\s+)?states?/) };
+  }
+  if (/certified lounge/.test(t)) return { recognized: true, met: s.certifiedVisits >= 1 };
+  if (/cigar shop|check in at a shop|retail shop/.test(t)) return { recognized: true, met: s.retailVisits >= 1 };
 
   if (/humidor|active cigars/.test(t) && /\d/.test(t)) {
     return { recognized: true, met: s.humidorCount >= num(/(\d+)/) };
@@ -146,10 +208,21 @@ export function evaluateCriteria(criteria: string | undefined, s: BadgeStats): {
     return { recognized: true, met: count >= n };
   }
 
+  // World tour: distinct tobacco countries
+  if (/(\d+)\s+different countries/.test(t)) {
+    const n = num(/(\d+)\s+different countries/);
+    return { recognized: true, met: new Set(s.countries).size >= n };
+  }
+
   // Country / tobacco origin
-  const COUNTRY: Record<string, string> = {
-    nicaraguan: 'nicaragua', nicaragua: 'nicaragua', dominican: 'dominican',
-    cuban: 'cuba', honduran: 'honduras', mexican: 'mexico', ecuadorian: 'ecuador',
+  const COUNTRY: Record<string, string[]> = {
+    nicaraguan: ['nicaragua'], nicaragua: ['nicaragua'],
+    dominican: ['dominican'], cuban: ['cuba'], cuba: ['cuba'],
+    honduran: ['honduras'], honduras: ['honduras'],
+    mexican: ['mexico'], mexico: ['mexico'],
+    ecuadorian: ['ecuador'], ecuador: ['ecuador'],
+    american: ['u.s.a', 'usa', 'united states'], usa: ['u.s.a', 'usa'],
+    jamaican: ['jamaica'], brazilian: ['brazil'],
   };
   m = t.match(/(\d+)?\s*(?:different\s+|authentic\s+)?cigars?\s+with\s+(\w+)\s+tobacco/)
     || t.match(/(\d+)?\s*(?:different\s+)?authentic\s+(\w+)\s+cigars?/)
@@ -157,10 +230,10 @@ export function evaluateCriteria(criteria: string | undefined, s: BadgeStats): {
   if (m) {
     const firstish = /your first/.test(t);
     const word = (m[2] ?? m[1] ?? '').toLowerCase();
-    const key = COUNTRY[word];
-    if (key) {
+    const keys = COUNTRY[word];
+    if (keys) {
       const n = firstish ? 1 : (m[1] && /^\d+$/.test(m[1]) ? parseInt(m[1], 10) : 1);
-      const count = s.countries.filter((c) => c.includes(key)).length;
+      const count = s.countries.filter((c) => keys.some((k) => c.includes(k))).length;
       return { recognized: true, met: count >= n };
     }
   }
@@ -175,6 +248,11 @@ export function evaluateCriteria(criteria: string | undefined, s: BadgeStats): {
     return { recognized: true, met: distinct >= n };
   }
 
+  if (/(\d+)\s+different vitolas/.test(t)) {
+    const n = num(/(\d+)\s+different vitolas/);
+    return { recognized: true, met: new Set(s.sizes.filter(Boolean)).size >= n };
+  }
+
   m = t.match(/rate\s+(\d+)\s+(.+?)\s+vitolas?/);
   if (m) {
     const n = parseInt(m[1], 10);
@@ -182,7 +260,7 @@ export function evaluateCriteria(criteria: string | undefined, s: BadgeStats): {
     return { recognized: true, met: s.sizes.filter((sz) => sz.includes(vitola)).length >= n };
   }
 
-  if ((t.includes('note in') || t.includes('tag ')) && quoted(t).length > 0) {
+  if (quoted(t).length > 0 && /note|tag|flavou?r/.test(t)) {
     const notes = quoted(t);
     const n = (t.match(/in\s+(\d+)/) ? num(/in\s+(\d+)/) : num(/(\d+)\s+reviews/));
     return { recognized: true, met: s.reviewNotes.filter((h) => notes.some((q) => h.includes(q))).length >= n };

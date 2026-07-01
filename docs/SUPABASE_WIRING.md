@@ -1,3 +1,20 @@
+## Badge system overhaul (RUN phase105.sql)
+
+- phase105.sql: (1) deletes ALL user_badges (every user resets to zero; future users start at zero),
+  (2) deletes the POC global achievement catalog (badges with no lounge/brand owner), (3) inserts a new
+  45-badge catalog grounded in the live data. Owner-created lounge/brand collectible badges are PRESERVED
+  (users re-collect on next check-in). SQL is syntax-checked, not executed here.
+- New catalog families: volume (reviews/humidor), origin (Nicaragua/Dominican/Honduras/Mexico/USA/Cuba +
+  world-tour distinct countries), brand loyalty (Fuente/Padron/Montecristo/Rocky Patel/Oliva/Romeo y Julieta),
+  price bands (<$8 / >$15 / >$30 vs the ~$8.50 median), vitolas (toro/robusto/churchill/figurado + variety),
+  tasting notes (cocoa/pepper/coffee/cedar/leather/cream), reviewer quality (flawless / honest critic), and
+  LOUNGES (first lounge, 5/15 distinct lounges, 3/7 states, certified stop, cigar shop).
+- badges.ts: extended BadgeStats + buildStats with lounge fields; added fetchLoungeStats(userId) (aggregates
+  check_ins joined to lounges for distinct lounges/states/certified/retail); evaluateCriteria now parses the
+  lounge families, world-tour (distinct countries), distinct-vitola variety, and an expanded country map.
+  BadgesSection fetches lounge stats and passes them into evaluation. All 45 criteria strings verified to be
+  recognized by the parser.
+Build green (101/101). page.tsx untouched.
 ## True full-bleed: removed the fixed-shell (no migration)
 
 - Root cause of the black top/bottom bands: the fixed-shell (position:fixed body) I added earlier for the
