@@ -255,8 +255,8 @@ html.camera-active body::before { display: none !important; }
    page rubber-bands at the top/bottom and drags `position: fixed` bars with it
    (the bottom glass bar "lifts"). Pinning body and scrolling inside <main>
    removes the document-level bounce, so the floating bars stay put. */
-html.native-app { height: 100%; overflow: hidden; }
-.native-app body { position: fixed; inset: 0; height: 100%; overflow: hidden; }
+html.native-app { height: 100%; overflow: hidden; background-color: rgb(var(--ink)); }
+.native-app body { position: fixed; inset: 0; height: 100%; overflow: hidden; background-color: rgb(var(--ink)); }
 .native-app main {
   position: absolute; inset: 0;
   overflow-y: auto; overflow-x: hidden;

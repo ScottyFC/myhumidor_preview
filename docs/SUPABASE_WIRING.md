@@ -1,3 +1,14 @@
+## Full-bleed fix: paint theme bg across the fixed body (no migration)
+
+- Black top/bottom bands were the fixed-shell body relying on html->canvas background propagation, which
+  WKWebView drops when body is position:fixed. Fix: paint background-color: rgb(var(--ink)) directly on
+  html.native-app AND .native-app body (theme-aware: cream in light, ink in dark). Since the fixed body is
+  inset:0 = full visual viewport (viewport-fit=cover), it now fills the safe-area regions seamlessly.
+- If ANY black band still remains after cap sync + rebuild, that means the native WKWebView frame itself is
+  safe-area-constrained (not the CSS): in that case pin the webview to the view's edges (superview, not
+  safeAreaLayoutGuide) in the iOS project, or the definitive combined fix is to drop the fixed-shell and use
+  native scrollView.bounces = false for the bounce instead.
+Build green (101/101). page.tsx untouched.
 ## Full-bleed native (edge-to-edge) — no migration
 
 - Switched ios contentInset 'always' -> 'never' so the webview fills the ENTIRE screen (bleeds under the
