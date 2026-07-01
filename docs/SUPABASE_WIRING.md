@@ -1,3 +1,17 @@
+## True full-bleed: removed the fixed-shell (no migration)
+
+- Root cause of the black top/bottom bands: the fixed-shell (position:fixed body) I added earlier for the
+  scroll-bounce. In WKWebView a fixed body only covers the safe area and kills root-background propagation,
+  so the notch/home-indicator strips fell through to the black native window — no CSS painted on the body
+  could reach them.
+- Fix: removed the fixed-shell entirely. Normal document flow restored, so html's bg-ink paints edge-to-edge
+  under the notch and home indicator (true full-bleed). Kept overscroll-behavior: none on .native-app.
+- TRADEOFF: the document-scroll bounce can return (a floating bar may lift at the scroll extremes). The clean
+  native fix that does NOT touch full-bleed: in the iOS project set webView.scrollView.bounces = false (one
+  line). That keeps full-bleed AND kills the lift.
+- Top bar nudged up (paddingTop env+4) and main padding-top raised to env+80 so the greeting no longer
+  crowds the bar.
+Build green (101/101). page.tsx untouched.
 ## Full-bleed fix: paint theme bg across the fixed body (no migration)
 
 - Black top/bottom bands were the fixed-shell body relying on html->canvas background propagation, which

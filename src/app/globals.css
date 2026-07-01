@@ -181,7 +181,7 @@ video {
 
 /* Make room for the fixed top bar (56px) and bottom tab bar (~64px). */
 .native-app main {
-  padding-top: calc(env(safe-area-inset-top) + 56px);
+  padding-top: calc(env(safe-area-inset-top) + 80px);
   padding-bottom: calc(env(safe-area-inset-bottom) + 84px) !important;
 }
 
@@ -250,16 +250,11 @@ html.camera-active body::before { display: none !important; }
 
 @keyframes badgePop { 0% { transform: scale(0.3); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
 
-/* ── Native: fixed app shell ─────────────────────────────────────────────────
-   The document itself must not scroll — only <main> does. With WKWebView the
-   page rubber-bands at the top/bottom and drags `position: fixed` bars with it
-   (the bottom glass bar "lifts"). Pinning body and scrolling inside <main>
-   removes the document-level bounce, so the floating bars stay put. */
-html.native-app { height: 100%; overflow: hidden; background-color: rgb(var(--ink)); }
-.native-app body { position: fixed; inset: 0; height: 100%; overflow: hidden; background-color: rgb(var(--ink)); }
-.native-app main {
-  position: absolute; inset: 0;
-  overflow-y: auto; overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: none;
-}
+/* ── Native: full-bleed edge-to-edge ─────────────────────────────────────────
+   Normal document scroll, so the root (html) background paints all the way under
+   the notch and home indicator. A `position: fixed` body breaks that propagation
+   in WKWebView and leaves black safe-area bands — so we DON'T pin the body.
+   overscroll-behavior contains scroll-chaining; the floating bars are truly
+   fixed. If a bar still lifts at the scroll extremes on device, disable the
+   native rubber-band once in the iOS project: webView.scrollView.bounces = false. */
+.native-app { overscroll-behavior: none; }
