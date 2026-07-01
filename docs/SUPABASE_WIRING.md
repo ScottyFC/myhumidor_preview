@@ -1,3 +1,16 @@
+## Native inset fix + heading unification (no migration)
+
+- Top bar sat too low: it was double-insetting (native safe-area inset + CSS env() on top). Now the native
+  layer owns the inset (ios contentInset 'always') and the bars use small fixed margins (top bar paddingTop
+  8px, bottom bar bottom 10px) instead of env(). main padding reduced to 62px/90px (no env). Result: bar sits
+  just under the status bar; webview background (#14110d) fills the notch/home-indicator area for a full-bleed
+  look. VERIFY ON DEVICE after `npx cap sync` — if the bar ends up UNDER the notch (too high), the single
+  lever is MobileTopBar paddingTop: change '8px' -> 'calc(env(safe-area-inset-top) + 8px)'.
+- Cigars page (/top): Concierge (CigarAgent) moved from above the header to directly under the title.
+- Headings unified: all core app page titles (Cigars, Search, Lounges & Shops, My Humidor, Feed, Profile)
+  now use font-display text-5xl tracking-tightest sm:text-6xl. (feed + profile were the outliers.) Settings/
+  account/auth/brand/marketing pages left as-is — can extend on request.
+Build green (101/101). page.tsx untouched.
 ## Native: bounce fix, glass top bar, new splash + icon (no migration)
 
 - Bottom-bar lift fixed: native app now uses a fixed shell (globals.css) — the document no longer scrolls,

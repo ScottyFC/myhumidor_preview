@@ -18,7 +18,6 @@ export default async function TopCigarsPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 pt-10">
-      <CigarAgent />
       <header className="mb-8">
         <div className="eyebrow mb-2">The catalog</div>
         <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">
@@ -30,6 +29,10 @@ export default async function TopCigarsPage() {
           full catalog.
         </p>
       </header>
+
+      <div className="mb-8">
+        <CigarAgent />
+      </div>
 
       <div className="mb-8">
         <CigarScanner />

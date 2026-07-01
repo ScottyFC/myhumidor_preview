@@ -181,8 +181,8 @@ video {
 
 /* Make room for the fixed top bar (56px) and bottom tab bar (~64px). */
 .native-app main {
-  padding-top: calc(env(safe-area-inset-top) + 56px);
-  padding-bottom: calc(env(safe-area-inset-bottom) + 80px) !important;
+  padding-top: 62px;
+  padding-bottom: 90px !important;
 }
 
 /* App-like feel: no tap-highlight flash, no rubber-band overscroll, no

@@ -110,7 +110,7 @@ export default function ProfilePage() {
           ) : (
             <div className="eyebrow mb-1">Member</div>
           )}
-          <h1 className="font-display text-4xl tracking-tightest sm:text-5xl">{profile.displayName}</h1>
+          <h1 className="font-display text-5xl tracking-tightest sm:text-6xl">{profile.displayName}</h1>
           {profile.aficionado && (
             <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border-[0.5px] border-ember-400/40 bg-ember-400/10 px-2.5 py-0.5 text-xs font-medium text-ember-100">
               <Crown size={12} strokeWidth={1.5} className="text-ember-400" /> Verified Aficionado
