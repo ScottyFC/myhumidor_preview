@@ -17,6 +17,6 @@
   "name": "myhumidor",
   "compatibility_date": "2026-07-10",
   "assets": {
-    "directory": "./.next" // Change this to "./build" or ".next" if needed
+    "directory": "./dist" // Change this to "./build" or ".next" if needed
   }
 }
