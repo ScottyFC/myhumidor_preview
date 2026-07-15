@@ -1,5 +1,6 @@
 {
   "name": "myhumidor",
+  "main": ".open-next/worker.js",
   "compatibility_date": "2026-07-15",
   "observability": {
     "enabled": false,
