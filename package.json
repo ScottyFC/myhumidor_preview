@@ -56,6 +56,8 @@
     "@capacitor/android": "^8.4.0",
     "@capacitor/cli": "^8.4.0",
     "@capacitor/ios": "^8.4.0",
+    "@cloudflare/next-on-pages": "^1.13.16",
+    "@cloudflare/workers-types": "^5.20260715.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/mapbox-gl": "^3.4.0",
     "@types/node": "^22.7.4",
