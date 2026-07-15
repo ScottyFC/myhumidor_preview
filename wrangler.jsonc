@@ -1,4 +1,6 @@
 {
+  "name": "myhumidor",
+  "compatibility_date": "2026-07-15",
   "observability": {
     "enabled": false,
     "head_sampling_rate": 1,
@@ -13,8 +15,5 @@
       "persist": true,
       "head_sampling_rate": 1
     }
-  {
-  "name": "myhumidor",
-  "compatibility_date": "2026-07-15"
-}
+  }
 }
