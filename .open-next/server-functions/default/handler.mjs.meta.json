@@ -3728,12 +3728,12 @@
       "imports": [],
       "format": "cjs"
     },
-    ".open-next/server-functions/default/.next/server/app/api/brand-auth/verify/route_client-reference-manifest.js": {
+    ".open-next/server-functions/default/.next/server/app/api/brand-auth/signup/route_client-reference-manifest.js": {
       "bytes": 326,
       "imports": [],
       "format": "cjs"
     },
-    ".open-next/server-functions/default/.next/server/app/api/brand-auth/signup/route_client-reference-manifest.js": {
+    ".open-next/server-functions/default/.next/server/app/api/brand-auth/verify/route_client-reference-manifest.js": {
       "bytes": 326,
       "imports": [],
       "format": "cjs"
@@ -3858,17 +3858,17 @@
       "imports": [],
       "format": "cjs"
     },
+    ".open-next/server-functions/default/.next/server/app/api/invite/accept/route_client-reference-manifest.js": {
+      "bytes": 322,
+      "imports": [],
+      "format": "cjs"
+    },
     ".open-next/server-functions/default/.next/server/app/api/stores/nearby/route_client-reference-manifest.js": {
       "bytes": 322,
       "imports": [],
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/lounge/orders/route_client-reference-manifest.js": {
-      "bytes": 322,
-      "imports": [],
-      "format": "cjs"
-    },
-    ".open-next/server-functions/default/.next/server/app/api/invite/accept/route_client-reference-manifest.js": {
       "bytes": 322,
       "imports": [],
       "format": "cjs"
@@ -4112,14 +4112,14 @@
           "original": "/Users/ScottJeffery/Desktop/myhumidor/.open-next/server-functions/default/.next/server/app/api/admin/verify-brand/route_client-reference-manifest.js"
         },
         {
-          "path": ".open-next/server-functions/default/.next/server/app/api/brand-auth/verify/route_client-reference-manifest.js",
-          "kind": "require-call",
-          "original": "/Users/ScottJeffery/Desktop/myhumidor/.open-next/server-functions/default/.next/server/app/api/brand-auth/verify/route_client-reference-manifest.js"
-        },
-        {
           "path": ".open-next/server-functions/default/.next/server/app/api/brand-auth/signup/route_client-reference-manifest.js",
           "kind": "require-call",
           "original": "/Users/ScottJeffery/Desktop/myhumidor/.open-next/server-functions/default/.next/server/app/api/brand-auth/signup/route_client-reference-manifest.js"
+        },
+        {
+          "path": ".open-next/server-functions/default/.next/server/app/api/brand-auth/verify/route_client-reference-manifest.js",
+          "kind": "require-call",
+          "original": "/Users/ScottJeffery/Desktop/myhumidor/.open-next/server-functions/default/.next/server/app/api/brand-auth/verify/route_client-reference-manifest.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/brand-auth/logout/route_client-reference-manifest.js",
@@ -4242,6 +4242,11 @@
           "original": "/Users/ScottJeffery/Desktop/myhumidor/.open-next/server-functions/default/.next/server/app/api/cigar-insight/route_client-reference-manifest.js"
         },
         {
+          "path": ".open-next/server-functions/default/.next/server/app/api/invite/accept/route_client-reference-manifest.js",
+          "kind": "require-call",
+          "original": "/Users/ScottJeffery/Desktop/myhumidor/.open-next/server-functions/default/.next/server/app/api/invite/accept/route_client-reference-manifest.js"
+        },
+        {
           "path": ".open-next/server-functions/default/.next/server/app/api/stores/nearby/route_client-reference-manifest.js",
           "kind": "require-call",
           "original": "/Users/ScottJeffery/Desktop/myhumidor/.open-next/server-functions/default/.next/server/app/api/stores/nearby/route_client-reference-manifest.js"
@@ -4250,11 +4255,6 @@
           "path": ".open-next/server-functions/default/.next/server/app/api/lounge/orders/route_client-reference-manifest.js",
           "kind": "require-call",
           "original": "/Users/ScottJeffery/Desktop/myhumidor/.open-next/server-functions/default/.next/server/app/api/lounge/orders/route_client-reference-manifest.js"
-        },
-        {
-          "path": ".open-next/server-functions/default/.next/server/app/api/invite/accept/route_client-reference-manifest.js",
-          "kind": "require-call",
-          "original": "/Users/ScottJeffery/Desktop/myhumidor/.open-next/server-functions/default/.next/server/app/api/invite/accept/route_client-reference-manifest.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/cigars/enrich/route_client-reference-manifest.js",
@@ -21328,10 +21328,10 @@
         ".open-next/server-functions/default/.next/server/app/api/admin/verify-brand/route_client-reference-manifest.js": {
           "bytesInOutput": 487
         },
-        ".open-next/server-functions/default/.next/server/app/api/brand-auth/verify/route_client-reference-manifest.js": {
+        ".open-next/server-functions/default/.next/server/app/api/brand-auth/signup/route_client-reference-manifest.js": {
           "bytesInOutput": 485
         },
-        ".open-next/server-functions/default/.next/server/app/api/brand-auth/signup/route_client-reference-manifest.js": {
+        ".open-next/server-functions/default/.next/server/app/api/brand-auth/verify/route_client-reference-manifest.js": {
           "bytesInOutput": 485
         },
         ".open-next/server-functions/default/.next/server/app/api/brand-auth/logout/route_client-reference-manifest.js": {
@@ -21406,13 +21406,13 @@
         ".open-next/server-functions/default/.next/server/app/api/cigar-insight/route_client-reference-manifest.js": {
           "bytesInOutput": 477
         },
+        ".open-next/server-functions/default/.next/server/app/api/invite/accept/route_client-reference-manifest.js": {
+          "bytesInOutput": 477
+        },
         ".open-next/server-functions/default/.next/server/app/api/stores/nearby/route_client-reference-manifest.js": {
           "bytesInOutput": 477
         },
         ".open-next/server-functions/default/.next/server/app/api/lounge/orders/route_client-reference-manifest.js": {
-          "bytesInOutput": 477
-        },
-        ".open-next/server-functions/default/.next/server/app/api/invite/accept/route_client-reference-manifest.js": {
           "bytesInOutput": 477
         },
         ".open-next/server-functions/default/.next/server/app/api/cigars/enrich/route_client-reference-manifest.js": {
