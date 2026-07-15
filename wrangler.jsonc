@@ -2,6 +2,9 @@
   "name": "myhumidor",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-07-15",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "observability": {
     "enabled": false,
     "head_sampling_rate": 1,
