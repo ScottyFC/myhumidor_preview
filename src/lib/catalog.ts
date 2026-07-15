@@ -1,4 +1,4 @@
-import rawCigars from '@/data/cigars.json'; // Adjust the relative path if needed based on the file location
+import rawCigars from '../data/cigars.json'; // Direct import!
 import { fixMojibake } from '@/lib/text';
 /**
  * Server-only catalog access for the full datasets loaded from Cigars.csv and
