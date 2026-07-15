@@ -1,3 +1,4 @@
+import rawCigars from '@/data/cigars.json'; // Adjust the relative path if needed based on the file location
 import { fixMojibake } from '@/lib/text';
 /**
  * Server-only catalog access for the full datasets loaded from Cigars.csv and
@@ -28,7 +29,7 @@ function load<T>(file: string): T[] {
 
 export function allCigars(): CatalogCigar[] {
   if (!cigarsCache) {
-    cigarsCache = load<CatalogCigar>('cigars.json').map((c) => ({
+    cigarsCache = (rawCigars as CatalogCigar[]).map((c) => ({
       ...c,
       brand: fixMojibake(c.brand),
       name: fixMojibake(c.name),
