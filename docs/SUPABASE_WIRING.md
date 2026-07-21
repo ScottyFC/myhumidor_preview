@@ -1,3 +1,15 @@
+## Native apps: dev-run fix (no migration)
+
+- iOS/Android "missing package dependencies" = node_modules not installed. Both native projects reference
+  Capacitor plugins THROUGH node_modules (iOS via CapApp-SPM/Package.swift SPM paths; Android via
+  capacitor.settings.gradle). Fix: `npm install --legacy-peer-deps`, then open the native IDEs (Xcode
+  resolves SPM automatically; Android Studio Gradle-syncs). See MOBILE_DEV_SETUP.md.
+- Verified: Xcode project links the CapApp-SPM local package; all plugin Package.swift files resolve after
+  install; `npx cap copy` succeeds for both platforms; server.url = https://www.myhumidor.shop on both.
+- WARNING documented: do NOT `npx cap sync` on iOS — it re-adds @capacitor-mlkit/barcode-scanning to
+  Package.swift, which is deliberately excluded (mlkit needs CocoaPods-only GoogleMLKit; iOS uses a custom
+  AVFoundation BarcodeScannerPlugin instead). Use `npx cap copy` to refresh assets.
+No code changes; the native projects were already structurally complete — they only needed node_modules.
 ## Badge system overhaul (RUN phase105.sql)
 
 - phase105.sql: (1) deletes ALL user_badges (every user resets to zero; future users start at zero),
