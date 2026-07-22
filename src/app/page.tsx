@@ -14,7 +14,7 @@ import { AficionadoSection } from '@/components/AficionadoSection';
 import { NativeHome } from '@/components/NativeHome';
 
 export const revalidate = 3600;
-
+ 
 export default async function HomePage() {
   const catalogCount = allCigars().length;
   const loungeCount = Math.floor(allStores().length / 10) * 10;
