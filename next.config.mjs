@@ -2,12 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   // Ensure the catalog datasets are bundled into the API serverless functions
-  experimental: {
-    outputFileTracingIncludes: {
-      '/api/cigars': ['./src/data/cigars.json'],
-      '/api/stores': ['./src/data/stores.json'],
-      '/api/stores/nearby': ['./src/data/stores.json'],
-    },
+  outputFileTracingIncludes: {
+    '/api/cigars': ['./src/data/cigars.json'],
+    '/api/stores': ['./src/data/stores.json'],
+    '/api/stores/nearby': ['./src/data/stores.json'],
   },
   images: {
     remotePatterns: [
